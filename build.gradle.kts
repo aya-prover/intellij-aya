@@ -5,9 +5,11 @@ fun properties(key: String) = project.findProperty(key).toString()
 
 plugins {
   // Java support
-  id("java")
+  java
+  // Antlr support
+  antlr
   // Kotlin support
-  id("org.jetbrains.kotlin.jvm") version "1.6.0"
+  kotlin("jvm") version "1.6.0"
   // Gradle IntelliJ Plugin
   id("org.jetbrains.intellij") version "1.3.0"
   // Gradle Changelog Plugin
@@ -58,10 +60,6 @@ tasks {
     withType<KotlinCompile> {
       kotlinOptions.jvmTarget = it
     }
-  }
-
-  wrapper {
-    gradleVersion = properties("gradleVersion")
   }
 
   patchPluginXml {
@@ -115,4 +113,37 @@ tasks {
     // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
     channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
   }
+}
+
+dependencies {
+  antlr("org.antlr", "antlr4", properties("version.antlr"))
+}
+
+val rootDir = projectDir
+val genDir = rootDir.resolve("src/main/gen")
+val parserPackageName = "org.aya.intellij.parser"
+val parserLibDir = genDir.resolve(parserPackageName.replace('.', '/')).absoluteFile
+
+sourceSets.main {
+  java.srcDirs(genDir)
+}
+
+tasks.withType<JavaCompile>().configureEach {
+  dependsOn("generateGrammarSource")
+}
+
+tasks.withType<KotlinCompile>().configureEach {
+  dependsOn("generateGrammarSource")
+}
+
+tasks.withType<AntlrTask>().configureEach {
+  outputDirectory = genDir
+  doFirst { parserLibDir.mkdirs() }
+  arguments.addAll(
+    listOf(
+      "-package", parserPackageName,
+      "-no-listener",
+      "-lib", "$parserLibDir",
+    ),
+  )
 }
