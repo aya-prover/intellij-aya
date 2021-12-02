@@ -1,13 +1,12 @@
-package com.github.imkiva.intellijaya.listeners
+package org.aya.intellij.listeners
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
-import com.github.imkiva.intellijaya.services.MyProjectService
+import org.aya.intellij.services.MyProjectService
 
 internal class MyProjectManagerListener : ProjectManagerListener {
-
-    override fun projectOpened(project: Project) {
-        project.service<MyProjectService>()
-    }
+  override fun projectOpened(project: Project) {
+    project.service<MyProjectService>()
+  }
 }
