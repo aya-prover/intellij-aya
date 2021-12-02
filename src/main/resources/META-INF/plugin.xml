@@ -1,18 +1,11 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
-    <id>org.aya.intellij</id>
-    <name>Aya Prover</name>
-    <vendor>imkiva</vendor>
+  <id>org.aya.intellij</id>
+  <name>Aya Prover</name>
+  <vendor>Aya Prover</vendor>
 
-    <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.modules.platform</depends>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="org.aya.intellij.services.MyApplicationService"/>
-        <projectService serviceImplementation="org.aya.intellij.services.MyProjectService"/>
-    </extensions>
-
-    <applicationListeners>
-        <listener class="org.aya.intellij.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
+  <extensions defaultExtensionNs="com.intellij">
+  </extensions>
 </idea-plugin>
