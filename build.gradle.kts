@@ -117,6 +117,7 @@ tasks {
 
 dependencies {
   antlr("org.antlr", "antlr4", properties("version.antlr"))
+  implementation("org.antlr:antlr4-intellij-adaptor:0.1")
 }
 
 val rootDir = projectDir
@@ -128,12 +129,20 @@ sourceSets.main {
   java.srcDirs(genDir)
 }
 
+val generateLexerToken = tasks.register<org.aya.gradle.GenerateLexerTokenTask>("generateLexerToken") {
+  basePackage = "org.aya.intellij.parser"
+  outputDir = genDir.resolve("org/aya/intellij/parser")
+  lexerG4 = rootDir.resolve("src/main/antlr/org/aya/intellij/parser/AyaLexer.g4")
+}
+
 tasks.withType<JavaCompile>().configureEach {
   dependsOn("generateGrammarSource")
+  dependsOn(generateLexerToken)
 }
 
 tasks.withType<KotlinCompile>().configureEach {
   dependsOn("generateGrammarSource")
+  dependsOn(generateLexerToken)
 }
 
 tasks.withType<AntlrTask>().configureEach {

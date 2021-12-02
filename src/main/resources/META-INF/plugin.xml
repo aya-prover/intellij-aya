@@ -7,5 +7,16 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
+    <fileType name="Aya File"
+              implementationClass="org.aya.intellij.AyaFileType"
+              language="Aya"
+              extensions="aya"/>
+    <lang.parserDefinition
+      language="Aya"
+      implementationClass="org.aya.intellij.AyaParserDefinition"/>
+
+    <lang.syntaxHighlighterFactory
+      language="Aya"
+      implementationClass="org.aya.intellij.AyaSyntaxHighlighterFactory"/>
   </extensions>
 </idea-plugin>
