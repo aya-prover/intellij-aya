@@ -107,6 +107,7 @@ class AyaParserDefinition : ParserDefinition {
       AyaParser.RULE_primDecl -> AyaDecl(node, type, "primDecl/ID")
       AyaParser.RULE_dataDecl -> AyaDecl(node, type, "dataDecl/declNameOrInfix/ID")
       AyaParser.RULE_structDecl -> AyaDecl(node, type, "structDecl/declNameOrInfix/ID")
+      AyaParser.RULE_tele -> AyaTele(node, type)
       else -> ANTLRPsiNode(node)
     }
   }

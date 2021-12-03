@@ -18,5 +18,10 @@
     <lang.syntaxHighlighterFactory
       language="Aya"
       implementationClass="org.aya.intellij.AyaSyntaxHighlighterFactory"/>
+
+    <lang.ast.factory
+      language="Aya"
+      implementationClass="org.aya.intellij.AyaPsiFactory"/>
+
   </extensions>
 </idea-plugin>
