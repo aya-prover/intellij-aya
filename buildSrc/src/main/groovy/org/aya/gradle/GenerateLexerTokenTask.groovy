@@ -26,28 +26,28 @@ class GenerateLexerTokenTask extends DefaultTask {
 
     var keywords = new HashMap<String, String>()
     var inside = false
-    var reader = new BufferedReader(new FileReader(lexerG4))
-    reader.lines().forEach({ line ->
-      if (line == START) inside = true
-      else if (line == END) inside = false
-      else if (inside && !line.isEmpty() && !line.startsWith("//")) {
-        var lineNoColon = line.substring(0, line.lastIndexOf(';'))
-        var a = lineNoColon.split(":", 2)
-        var token = a[0].trim()
-        var text = a[1].split("\\|")[0].trim()
-        text = text.substring(1, text.length() - 1)
-        keywords.put(token, text)
-      }
-    })
+    try (var reader = new BufferedReader(new FileReader(lexerG4))) {
+      reader.lines().forEach(line -> {
+        if (line == START) inside = true
+        else if (line == END) inside = false
+        else if (inside && !line.isEmpty() && !line.startsWith("//")) {
+          var lineNoColon = line.substring(0, line.lastIndexOf(';'))
+          var a = lineNoColon.split(":", 2)
+          var token = a[0].trim()
+          var text = a[1].split("\\|")[0].trim()
+          text = text.substring(1, text.length() - 1)
+          keywords.put(token, text)
+        }
+      })
+    }
 
     outputDir.mkdirs()
     genJavaCode(keywords)
   }
 
   def genJavaCode(HashMap<String, String> keywords) {
-    var content = keywords.entrySet().stream().map({ e ->
-      String.format("entry(AyaLexer.${e.key}, \"${e.value}\")")
-    }
+    var content = keywords.entrySet().stream().map(e ->
+      String.format("          entry(AyaLexer.${e.key}, \"${e.value}\")")
     ).collect(Collectors.joining(",\n"))
 
     def code = """\
@@ -56,7 +56,7 @@ class GenerateLexerTokenTask extends DefaultTask {
       import java.util.Map;
       public class $className {
         public static final Map<Integer, String> KEYWORDS = Map.ofEntries(
-          $content
+$content
         );
       }""".stripIndent()
     def outFile = new File(outputDir, "${className}.java")

@@ -1,5 +1,6 @@
 package org.aya.intellij
 
+import com.intellij.icons.AllIcons
 import com.intellij.lang.ASTNode
 import com.intellij.lang.Language
 import com.intellij.lang.ParserDefinition
@@ -30,7 +31,8 @@ import javax.swing.*
 object AyaLanguage : Language("Aya")
 
 object AyaIcons {
-  val FILE = IconLoader.getIcon("/icons/jar-gray.png", AyaIcons::class.java)
+  // TODO: make a file type icon
+  val FILE = AllIcons.FileTypes.Java
 }
 
 object AyaFileType : LanguageFileType(AyaLanguage) {

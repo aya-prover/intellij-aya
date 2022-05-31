@@ -1,7 +1,5 @@
 lexer grammar AyaLexer;
 
-REPL_COMMAND : ':' [a-zA-Z0-9-]+;
-
 // Do not change the line like `---- AyaLexer xxx: XXX`
 // They are used to generate `GeneratedLexerTokens` class.
 
@@ -21,7 +19,7 @@ EXAMPLE : 'example';
 COUNTEREXAMPLE : 'counterexample';
 
 // universe
-ULEVEL : 'universe';
+ULIFT : 'ulift' | '\u2191';
 TYPE : 'Type';
 
 // other keywords
@@ -41,7 +39,7 @@ OVERLAP : 'overlap';
 MODULE_KW : 'module';
 BIND_KW : 'bind';
 MATCH : 'match';
-ABSURD : 'impossible';
+// ABSURD : 'impossible';
 VARIABLE : 'variable';
 DEF : 'def';
 STRUCT : 'struct';
@@ -49,20 +47,30 @@ DATA : 'data';
 PRIM : 'prim';
 EXTENDS : 'extends';
 NEW_KW : 'new';
-LSUC_KW : 'lsuc';
-LMAX_KW : 'lmax';
 PATTERN_KW : 'pattern';
+I: 'I';
+DO_KW : 'do';
+
+// Unimplemented but reserved
+CODATA_KW : 'codata';
+LET_KW : 'let';
+IN_KW : 'in';
+COMPLETED : 'completed';
 
 // symbols
 SIGMA : 'Sig' | '\u03A3';
 LAMBDA : '\\' | '\u03BB';
 PI : 'Pi' | '\u03A0';
 FORALL : 'forall' | '\u2200';
+LAND : '/\\' | '\u2227';
+LOR : '\\/' | '\u2228';
 
 // ---- AyaLexer end: Keywords
 
 TO : '->' | '\u2192';
+LARROW : '<-' | '\u2190';
 IMPLIES : '=>' | '\u21D2';
+DEFINE_AS : ':=';
 SUCHTHAT : '**';
 DOT : '.';
 BAR : '|';
@@ -75,6 +83,10 @@ LBRACE : '{';
 RBRACE : '}';
 LPAREN : '(';
 RPAREN : ')';
+LIDIOM : '(|' | '\u2987';
+RIDIOM : '|)' | '\u2988';
+LARRAY : '[';
+RARRAY : ']';
 LGOAL : '{?';
 RGOAL : '?}';
 
@@ -94,6 +106,7 @@ fragment AYA_SIMPLE_LETTER : [~!@#$%^&*+=<>?/|[\u005Da-zA-Z_\u2200-\u22FF];
 fragment AYA_UNICODE : [\u0080-\uFEFE] | [\uFF00-\u{10FFFF}]; // exclude U+FEFF which is a truly invisible char
 fragment AYA_LETTER : AYA_SIMPLE_LETTER | AYA_UNICODE;
 fragment AYA_LETTER_FOLLOW : AYA_LETTER | [0-9'-];
+REPL_COMMAND : ':' AYA_LETTER_FOLLOW+;
 ID : AYA_LETTER AYA_LETTER_FOLLOW* | '-' AYA_LETTER AYA_LETTER_FOLLOW*;
 
 // whitespaces

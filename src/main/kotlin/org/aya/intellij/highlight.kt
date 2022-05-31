@@ -44,23 +44,24 @@ class AyaSyntaxHighlighter : SyntaxHighlighterBase() {
   }
 
   override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey?> {
-    if (tokenType !is TokenIElementType) return EMPTY_KEYS
-    val type = tokenType.antlrTokenType
-    if (GeneratedLexerTokens.KEYWORDS.containsKey(type)) return arrayOf(KEYWORD)
-    return when (type) {
+    if (tokenType !is TokenIElementType) return NO_HIGHLIGHT
+    return when (tokenType.antlrTokenType) {
+      in GeneratedLexerTokens.KEYWORDS -> arrayOf(KEYWORD)
       AyaLexer.ID -> arrayOf(ID)
+      AyaLexer.NUMBER -> arrayOf(INTEGER)
       AyaLexer.STRING -> arrayOf(STRING)
       AyaLexer.COMMENT -> arrayOf(LINE_COMMENT)
       AyaLexer.LINE_COMMENT -> arrayOf(BLOCK_COMMENT)
-      else -> EMPTY_KEYS
+      else -> NO_HIGHLIGHT
     }
   }
 
   companion object {
-    private val EMPTY_KEYS = arrayOfNulls<TextAttributesKey>(0)
+    private val NO_HIGHLIGHT = arrayOfNulls<TextAttributesKey>(0)
     val ID = TextAttributesKey.createTextAttributesKey("AYA_ID", DefaultLanguageHighlighterColors.IDENTIFIER)
     val KEYWORD = TextAttributesKey.createTextAttributesKey("AYA_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD)
     val STRING = TextAttributesKey.createTextAttributesKey("AYA_STRING", DefaultLanguageHighlighterColors.STRING)
+    val INTEGER = TextAttributesKey.createTextAttributesKey("AYA_INTEGER", DefaultLanguageHighlighterColors.NUMBER)
     val LINE_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
     val BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT)
 
