@@ -8,7 +8,6 @@ import com.intellij.lang.PsiParser
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.IconLoader
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -23,8 +22,8 @@ import org.antlr.intellij.adaptor.parser.ANTLRParserAdaptor
 import org.antlr.intellij.adaptor.psi.ANTLRPsiNode
 import org.antlr.v4.runtime.Parser
 import org.antlr.v4.runtime.tree.ParseTree
-import org.aya.intellij.parser.AyaLexer
-import org.aya.intellij.parser.AyaParser
+import org.aya.parser.AyaLexer
+import org.aya.parser.AyaParser
 import javax.swing.*
 
 
