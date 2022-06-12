@@ -8,20 +8,20 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Aya File"
-              implementationClass="org.aya.intellij.AyaFileType"
+              implementationClass="org.aya.intellij.language.AyaFileType"
               language="Aya"
               extensions="aya"/>
     <lang.parserDefinition
       language="Aya"
-      implementationClass="org.aya.intellij.AyaParserDefinition"/>
+      implementationClass="org.aya.intellij.language.AyaParserDefinition"/>
 
     <lang.syntaxHighlighterFactory
       language="Aya"
-      implementationClass="org.aya.intellij.AyaSyntaxHighlighterFactory"/>
+      implementationClass="org.aya.intellij.actions.SyntaxHighlight$Factory"/>
 
     <lang.ast.factory
       language="Aya"
-      implementationClass="org.aya.intellij.AyaPsiFactory"/>
+      implementationClass="org.aya.intellij.psi.AyaPsiFactory"/>
 
   </extensions>
 </idea-plugin>

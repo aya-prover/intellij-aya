@@ -1,13 +1,11 @@
 import org.jetbrains.changelog.markdownToHTML
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
+val javaVersion = properties("javaVersion").toInt()
 
 plugins {
   // Java support
   java
-  // Kotlin support
-  kotlin("jvm") version "1.6.21"
   // Gradle IntelliJ Plugin
   id("org.jetbrains.intellij") version "1.7.0-SNAPSHOT"
   // Gradle Changelog Plugin
@@ -49,14 +47,13 @@ qodana {
 }
 
 tasks {
-  // Set the JVM compatibility versions
-  properties("javaVersion").let {
-    withType<JavaCompile> {
-      sourceCompatibility = it
-      targetCompatibility = it
-    }
-    withType<KotlinCompile> {
-      kotlinOptions.jvmTarget = it
+  withType<JavaCompile>().configureEach {
+    modularity.inferModulePath.set(true)
+    options.apply {
+      encoding = "UTF-8"
+      isDeprecation = true
+      release.set(javaVersion)
+      compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
     }
   }
 
@@ -120,5 +117,6 @@ dependencies {
   implementation("org.aya-prover", "parser", properties("version.aya"))
   implementation("org.aya-prover", "pretty", properties("version.aya"))
   implementation("org.aya-prover", "tools", properties("version.aya"))
+  implementation("org.glavo.kala", "kala-common", properties("version.kala"))
   implementation("org.antlr:antlr4-intellij-adaptor:0.1")
 }
