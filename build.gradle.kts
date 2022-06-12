@@ -118,5 +118,6 @@ dependencies {
   implementation("org.aya-prover", "pretty", properties("version.aya"))
   implementation("org.aya-prover", "tools", properties("version.aya"))
   implementation("org.glavo.kala", "kala-common", properties("version.kala"))
+  implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j", properties("version.lsp4j"))
   implementation("org.antlr:antlr4-intellij-adaptor:0.1")
 }
