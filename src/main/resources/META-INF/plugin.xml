@@ -7,10 +7,15 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <fileType name="Aya File"
-              implementationClass="org.aya.intellij.language.AyaFileType"
-              language="Aya"
-              extensions="aya"/>
+    <postStartupActivity
+      implementation="org.aya.intellij.lsp.AyaStartup" />
+
+    <fileType
+      name="Aya File"
+      implementationClass="org.aya.intellij.language.AyaFileType"
+      language="Aya"
+      extensions="aya"/>
+
     <lang.parserDefinition
       language="Aya"
       implementationClass="org.aya.intellij.language.AyaParserDefinition"/>
