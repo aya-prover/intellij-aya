@@ -6,12 +6,10 @@ fun properties(key: String) = project.findProperty(key).toString()
 plugins {
   // Java support
   java
-  // Antlr support
-  antlr
   // Kotlin support
   kotlin("jvm") version "1.6.21"
   // Gradle IntelliJ Plugin
-  id("org.jetbrains.intellij") version "1.6.0"
+  id("org.jetbrains.intellij") version "1.7.0-SNAPSHOT"
   // Gradle Changelog Plugin
   id("org.jetbrains.changelog") version "1.3.1"
   // Gradle Qodana Plugin
@@ -116,43 +114,11 @@ tasks {
 }
 
 dependencies {
-  antlr("org.antlr", "antlr4", properties("version.antlr"))
+  implementation("org.aya-prover", "base", properties("version.aya"))
+  implementation("org.aya-prover", "cli", properties("version.aya"))
+  implementation("org.aya-prover", "lsp", properties("version.aya"))
+  implementation("org.aya-prover", "parser", properties("version.aya"))
+  implementation("org.aya-prover", "pretty", properties("version.aya"))
+  implementation("org.aya-prover", "tools", properties("version.aya"))
   implementation("org.antlr:antlr4-intellij-adaptor:0.1")
-}
-
-val rootDir = projectDir
-val genDir = rootDir.resolve("src/main/gen")
-val parserPackageName = "org.aya.intellij.parser"
-val parserLibDir = genDir.resolve(parserPackageName.replace('.', '/')).absoluteFile
-
-sourceSets.main {
-  java.srcDirs(genDir)
-}
-
-val generateLexerToken = tasks.register<org.aya.gradle.GenerateLexerTokenTask>("generateLexerToken") {
-  basePackage = "org.aya.intellij.parser"
-  outputDir = genDir.resolve("org/aya/intellij/parser")
-  lexerG4 = rootDir.resolve("src/main/antlr/org/aya/intellij/parser/AyaLexer.g4")
-}
-
-tasks.withType<JavaCompile>().configureEach {
-  dependsOn("generateGrammarSource")
-  dependsOn(generateLexerToken)
-}
-
-tasks.withType<KotlinCompile>().configureEach {
-  dependsOn("generateGrammarSource")
-  dependsOn(generateLexerToken)
-}
-
-tasks.withType<AntlrTask>().configureEach {
-  outputDirectory = genDir
-  doFirst { parserLibDir.mkdirs() }
-  arguments.addAll(
-    listOf(
-      "-package", parserPackageName,
-      "-no-listener",
-      "-lib", "$parserLibDir",
-    ),
-  )
 }

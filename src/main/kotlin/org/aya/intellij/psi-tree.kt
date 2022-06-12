@@ -12,7 +12,7 @@ import org.antlr.intellij.adaptor.psi.ANTLRPsiLeafNode
 import org.antlr.intellij.adaptor.psi.IdentifierDefSubtree
 import org.antlr.intellij.adaptor.psi.ScopeNode
 import org.antlr.intellij.adaptor.psi.Trees
-import org.aya.intellij.parser.AyaLexer
+import org.aya.parser.AyaLexer
 import org.jetbrains.annotations.NonNls
 
 class AyaPsiFactory : DefaultASTFactoryImpl() {

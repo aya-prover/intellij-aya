@@ -12,9 +12,9 @@ import com.intellij.psi.tree.IElementType
 import org.antlr.intellij.adaptor.lexer.ANTLRLexerAdaptor
 import org.antlr.intellij.adaptor.lexer.PSIElementTypeFactory
 import org.antlr.intellij.adaptor.lexer.TokenIElementType
-import org.aya.intellij.parser.AyaLexer
-import org.aya.intellij.parser.AyaParser
-import org.aya.intellij.parser.GeneratedLexerTokens
+import org.aya.parser.AyaLexer
+import org.aya.parser.AyaParser
+import org.aya.parser.GeneratedLexerTokens
 
 
 /** A highlighter is really just a mapping from token type to
