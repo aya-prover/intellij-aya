@@ -3,21 +3,14 @@ package org.aya.intellij.actions;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
 import org.antlr.intellij.adaptor.lexer.ANTLRLexerAdaptor;
-import org.antlr.intellij.adaptor.lexer.PSIElementTypeFactory;
 import org.antlr.intellij.adaptor.lexer.TokenIElementType;
 import org.aya.intellij.language.AyaLanguage;
 import org.aya.parser.AyaLexer;
-import org.aya.parser.AyaParser;
 import org.aya.parser.GeneratedLexerTokens;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A highlighter is really just a mapping from token type to
@@ -41,16 +34,13 @@ import org.jetbrains.annotations.Nullable;
  * for bad characters HighlighterColors.BAD_CHARACTER can be used."
  */
 public class SyntaxHighlight extends SyntaxHighlighterBase {
-  private final @NotNull TextAttributesKey ID = TextAttributesKey.createTextAttributesKey("AYA_ID", DefaultLanguageHighlighterColors.IDENTIFIER);
+  private final @NotNull TextAttributesKey ID = TextAttributesKey.createTextAttributesKey("AYA_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
   private final @NotNull TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("AYA_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
   private final @NotNull TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey("AYA_STRING", DefaultLanguageHighlighterColors.STRING);
-  private final @NotNull TextAttributesKey INTEGER = TextAttributesKey.createTextAttributesKey("AYA_INTEGER", DefaultLanguageHighlighterColors.NUMBER);
+  private final @NotNull TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey("AYA_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
   private final @NotNull TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
   private final @NotNull TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
-
-  public SyntaxHighlight() {
-    PSIElementTypeFactory.defineLanguageIElementTypes(AyaLanguage.INSTANCE, AyaParser.tokenNames, AyaParser.ruleNames);
-  }
+  private final @NotNull TextAttributesKey DOC_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT);
 
   @Override public @NotNull Lexer getHighlightingLexer() {
     var lexer = new AyaLexer(null);
@@ -63,17 +53,12 @@ public class SyntaxHighlight extends SyntaxHighlighterBase {
     if (GeneratedLexerTokens.KEYWORDS.containsKey(type)) return new TextAttributesKey[]{KEYWORD};
     return switch (type) {
       case AyaLexer.ID -> new TextAttributesKey[]{ID};
-      case AyaLexer.NUMBER -> new TextAttributesKey[]{INTEGER};
+      case AyaLexer.NUMBER -> new TextAttributesKey[]{NUMBER};
       case AyaLexer.STRING -> new TextAttributesKey[]{STRING};
-      case AyaLexer.COMMENT -> new TextAttributesKey[]{LINE_COMMENT};
-      case AyaLexer.LINE_COMMENT -> new TextAttributesKey[]{BLOCK_COMMENT};
+      case AyaLexer.COMMENT -> new TextAttributesKey[]{BLOCK_COMMENT};
+      case AyaLexer.LINE_COMMENT -> new TextAttributesKey[]{LINE_COMMENT};
+      case AyaLexer.DOC_COMMENT -> new TextAttributesKey[]{DOC_COMMENT};
       default -> new TextAttributesKey[0];
     };
-  }
-
-  public static final class Factory extends SyntaxHighlighterFactory {
-    @Override public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
-      return new SyntaxHighlight();
-    }
   }
 }

@@ -5,7 +5,10 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -19,12 +22,14 @@ import org.antlr.intellij.adaptor.parser.ANTLRParserAdaptor;
 import org.antlr.intellij.adaptor.psi.ANTLRPsiNode;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.aya.intellij.psi.AyaPsiFileRoot;
+import org.aya.intellij.actions.SyntaxHighlight;
+import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class AyaParserDefinition implements ParserDefinition {
+public class AyaParserDefinition extends SyntaxHighlighterFactory implements ParserDefinition {
   private final @NotNull IFileElementType FILE = new IFileElementType(AyaLanguage.INSTANCE);
   public final @NotNull TokenIElementType ID;
   private final @NotNull TokenSet COMMENTS;
@@ -35,20 +40,17 @@ public class AyaParserDefinition implements ParserDefinition {
     PSIElementTypeFactory.defineLanguageIElementTypes(AyaLanguage.INSTANCE, AyaParser.tokenNames, AyaParser.ruleNames);
     var types = PSIElementTypeFactory.getTokenIElementTypes(AyaLanguage.INSTANCE);
     ID = types.get(AyaParser.ID);
-    COMMENTS = PSIElementTypeFactory.createTokenSet(
-      AyaLanguage.INSTANCE,
-      AyaParser.COMMENT,
-      AyaParser.LINE_COMMENT,
-      AyaParser.DOC_COMMENT
-    );
-    WHITESPACE = PSIElementTypeFactory.createTokenSet(
-      AyaLanguage.INSTANCE,
-      AyaParser.WS
-    );
-    STRING = PSIElementTypeFactory.createTokenSet(
-      AyaLanguage.INSTANCE,
-      AyaParser.STRING
-    );
+    COMMENTS = PSIElementTypeFactory.createTokenSet(AyaLanguage.INSTANCE,
+      AyaParser.COMMENT, AyaParser.LINE_COMMENT, AyaParser.DOC_COMMENT);
+    WHITESPACE = PSIElementTypeFactory.createTokenSet(AyaLanguage.INSTANCE,
+      AyaParser.WS);
+    STRING = PSIElementTypeFactory.createTokenSet(AyaLanguage.INSTANCE,
+      AyaParser.STRING);
+  }
+
+  @Override
+  public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
+    return new SyntaxHighlight();
   }
 
   @Override public @NotNull Lexer createLexer(Project project) {
@@ -79,7 +81,7 @@ public class AyaParserDefinition implements ParserDefinition {
    * it back via: {@link PsiFile#getNode()}
    */
   @Override public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
-    return new AyaPsiFileRoot(viewProvider);
+    return new AyaPsiFile(viewProvider);
   }
 
   /**
@@ -99,7 +101,7 @@ public class AyaParserDefinition implements ParserDefinition {
    * See {@link ANTLRParserAdaptor#parse(IElementType, PsiBuilder)}
    * <p>
    * If you don't care to distinguish PSI nodes by type, it is
-   * sufficient to create a {@link ANTLRPsiNode] around
+   * sufficient to create a {@link ANTLRPsiNode} around
    * the parse tree node
    */
   @Override public @NotNull PsiElement createElement(@NotNull ASTNode node) {
