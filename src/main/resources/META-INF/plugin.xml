@@ -17,7 +17,7 @@
 
     <lang.syntaxHighlighterFactory
       language="Aya"
-      implementationClass="org.aya.intellij.actions.SyntaxHighlight$Factory"/>
+      implementationClass="org.aya.intellij.language.AyaParserDefinition"/>
 
     <lang.ast.factory
       language="Aya"

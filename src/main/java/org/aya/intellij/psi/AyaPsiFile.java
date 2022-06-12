@@ -11,8 +11,8 @@ import org.aya.intellij.language.AyaLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class AyaPsiFileRoot extends PsiFileBase implements ScopeNode {
-  public AyaPsiFileRoot(@NotNull FileViewProvider viewProvider) {
+public class AyaPsiFile extends PsiFileBase implements ScopeNode {
+  public AyaPsiFile(@NotNull FileViewProvider viewProvider) {
     super(viewProvider, AyaLanguage.INSTANCE);
   }
 
