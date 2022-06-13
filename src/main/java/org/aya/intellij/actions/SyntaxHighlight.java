@@ -9,9 +9,11 @@ import com.intellij.psi.tree.IElementType;
 import org.antlr.intellij.adaptor.lexer.ANTLRLexerAdaptor;
 import org.antlr.intellij.adaptor.lexer.TokenIElementType;
 import org.aya.intellij.language.AyaLanguage;
+import org.aya.lsp.models.HighlightResult;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.GeneratedLexerTokens;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A highlighter is really just a mapping from token type to
@@ -81,6 +83,24 @@ public class SyntaxHighlight extends SyntaxHighlighterBase {
       case AyaLexer.DOC_COMMENT -> pack(DOC_COMMENT);
       case AyaLexer.ERROR_CHAR -> pack(HighlighterColors.BAD_CHARACTER);
       default -> pack(SEMANTIC);
+    };
+  }
+
+  public static @Nullable TextAttributesKey choose(@Nullable HighlightResult.Kind kind) {
+    return switch (kind) {
+      case FnDef -> FN_DEF;
+      case DataDef -> DATA_DEF;
+      case StructDef -> STRUCT_DEF;
+      case ConDef -> CON_DEF;
+      case FieldDef -> FIELD_DEF;
+      case PrimDef -> PRIM_DEF;
+      case FnCall -> FN_CALL;
+      case DataCall -> DATA_CALL;
+      case StructCall -> STRUCT_CALL;
+      case ConCall -> CON_CALL;
+      case FieldCall -> FIELD_CALL;
+      case PrimCall -> PRIM_CALL;
+      case default, null -> null;
     };
   }
 }

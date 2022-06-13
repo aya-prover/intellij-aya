@@ -12,6 +12,7 @@ import org.aya.intellij.lsp.AyaStartup;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiLeafElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class SemanticHighlight extends RainbowVisitor {
   private static final HighlightInfoType SEMANTIC_TYPE = new HighlightInfoType.HighlightInfoTypeImpl(
@@ -24,17 +25,21 @@ public class SemanticHighlight extends RainbowVisitor {
 
   @Override public void visit(@NotNull PsiElement element) {
     if (!(element instanceof AyaPsiLeafElement psi)) return;
-    var project = psi.getContainingFile().getProject();
+    var file = psi.getContainingFile();
+    var project = file.getProject();
     var lsp = AyaStartup.of(project);
     if (lsp == null) return;
-    // TODO: search HighlightResult in server
+    var range = element.getTextRange();
+    var kind = lsp.highlight(file, range);
+    render(element, SyntaxHighlight.choose(kind));
   }
 
   @Override public @NotNull HighlightVisitor clone() {
     return new SemanticHighlight();
   }
 
-  private void render(@NotNull PsiElement element, @NotNull TextAttributesKey color) {
+  private void render(@NotNull PsiElement element, @Nullable TextAttributesKey color) {
+    if (color == null) return;
     addInfo(HighlightInfo.newHighlightInfo(SEMANTIC_TYPE)
       .textAttributes(color)
       .range(element)
