@@ -32,6 +32,6 @@ public final class AyaFileType extends LanguageFileType {
 
   @Override
   public Icon getIcon() {
-    return AyaIcons.FILE;
+    return AyaIcons.AYA_FILE;
   }
 }
