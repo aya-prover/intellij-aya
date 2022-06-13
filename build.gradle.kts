@@ -2,8 +2,7 @@ import org.aya.gradle.StripPreview
 import org.jetbrains.changelog.markdownToHTML
 
 fun properties(key: String) = project.findProperty(key).toString()
-val ideaJavaVersion = properties("ideaJavaVersion").toInt()
-val ayaJavaVersion = properties("ayaJavaVersion").toInt()
+val javaVersion = properties("javaVersion").toInt()
 
 plugins {
   // Java support
@@ -53,7 +52,7 @@ java {
   withSourcesJar()
   if (hasProperty("release")) withJavadocJar()
   toolchain {
-    languageVersion.set(JavaLanguageVersion.of(ayaJavaVersion))
+    languageVersion.set(JavaLanguageVersion.of(javaVersion))
   }
 }
 
@@ -63,7 +62,7 @@ tasks {
     options.apply {
       encoding = "UTF-8"
       isDeprecation = true
-      release.set(ayaJavaVersion)
+      release.set(javaVersion)
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
     }
 
@@ -72,10 +71,7 @@ tasks {
       tree.include("**/*.class")
       tree.exclude("module-info.class")
       val root = project.buildDir.toPath().resolve("classes/java/main")
-      tree.forEach {
-        val forceJava17 = ayaJavaVersion > ideaJavaVersion
-        StripPreview.stripPreview(root, it.toPath(), forceJava17)
-      }
+      tree.forEach { StripPreview.stripPreview(root, it.toPath(), false) }
     }
   }
 
@@ -135,6 +131,5 @@ tasks {
 dependencies {
   implementation("org.aya-prover", "cli", properties("version.aya"))
   implementation("org.aya-prover", "lsp", properties("version.aya"))
-  implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j", properties("version.lsp4j"))
-  implementation("org.antlr:antlr4-intellij-adaptor:0.1")
+  implementation("org.antlr", "antlr4-intellij-adaptor", properties("version.antlr4-adapter"))
 }
