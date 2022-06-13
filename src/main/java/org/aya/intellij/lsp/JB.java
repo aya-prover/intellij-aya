@@ -11,7 +11,7 @@ import java.nio.file.Path;
 
 public interface JB {
   static @NotNull TextRange toRange(@NotNull SourcePos sourcePos) {
-    return new TextRange(sourcePos.tokenStartIndex(), sourcePos.tokenEndIndex());
+    return new TextRange(sourcePos.tokenStartIndex(), sourcePos.tokenEndIndex() + 1);
   }
 
   static boolean fileSupported(@NotNull VirtualFile file) {
