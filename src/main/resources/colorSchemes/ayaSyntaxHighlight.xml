@@ -1,0 +1,63 @@
+<?xml version='1.0'?>
+<list>
+  <option name="AYA_FN_DEF">
+    <value>
+      <option name="FOREGROUND" value="ffc66d"/>
+    </value>
+  </option>
+  <option name="AYA_FN_CALL">
+    <value>
+      <option name="FOREGROUND" value="ffc66d"/>
+    </value>
+  </option>
+  <option name="AYA_PRIM_DEF">
+    <value>
+      <option name="FOREGROUND" value="ffc66d"/>
+    </value>
+  </option>
+  <option name="AYA_PRIM_CALL">
+    <value>
+      <option name="FOREGROUND" value="ffc66d"/>
+    </value>
+  </option>
+  <option name="AYA_DATA_DEF">
+    <value>
+      <option name="FOREGROUND" value="79c0ff"/>
+    </value>
+  </option>
+  <option name="AYA_DATA_CALL">
+    <value>
+      <option name="FOREGROUND" value="79c0ff"/>
+    </value>
+  </option>
+  <option name="AYA_STRUCT_DEF">
+    <value>
+      <option name="FOREGROUND" value="79c0ff"/>
+    </value>
+  </option>
+  <option name="AYA_STRUCT_CALL">
+    <value>
+      <option name="FOREGROUND" value="79c0ff"/>
+    </value>
+  </option>
+  <option name="AYA_CON_DEF">
+    <value>
+      <option name="FOREGROUND" value="d2a8ff"/>
+    </value>
+  </option>
+  <option name="AYA_CON_CALL">
+    <value>
+      <option name="FOREGROUND" value="d2a8ff"/>
+    </value>
+  </option>
+  <option name="AYA_FIELD_DEF">
+    <value>
+      <option name="FOREGROUND" value="d2a8ff"/>
+    </value>
+  </option>
+  <option name="AYA_FIELD_CALL">
+    <value>
+      <option name="FOREGROUND" value="d2a8ff"/>
+    </value>
+  </option>
+</list>
