@@ -2,6 +2,7 @@ package org.aya.intellij.actions;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
@@ -34,13 +35,33 @@ import org.jetbrains.annotations.NotNull;
  * for bad characters HighlighterColors.BAD_CHARACTER can be used."
  */
 public class SyntaxHighlight extends SyntaxHighlighterBase {
-  private final @NotNull TextAttributesKey ID = TextAttributesKey.createTextAttributesKey("AYA_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
-  private final @NotNull TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("AYA_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
-  private final @NotNull TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey("AYA_STRING", DefaultLanguageHighlighterColors.STRING);
-  private final @NotNull TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey("AYA_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
-  private final @NotNull TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
-  private final @NotNull TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
-  private final @NotNull TextAttributesKey DOC_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT);
+  public static final @NotNull TextAttributesKey ID = TextAttributesKey.createTextAttributesKey("AYA_IDENTIFIER", DefaultLanguageHighlighterColors.IDENTIFIER);
+  public static final @NotNull TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("AYA_KEYWORD", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final @NotNull TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey("AYA_STRING", DefaultLanguageHighlighterColors.STRING);
+  public static final @NotNull TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey("AYA_NUMBER", DefaultLanguageHighlighterColors.NUMBER);
+  public static final @NotNull TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
+  public static final @NotNull TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
+  public static final @NotNull TextAttributesKey DOC_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT);
+  public static final @NotNull TextAttributesKey FN_DEF = TextAttributesKey.createTextAttributesKey("AYA_FN_DEF", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+  public static final @NotNull TextAttributesKey FN_CALL = TextAttributesKey.createTextAttributesKey("AYA_FN_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
+
+  public static final @NotNull TextAttributesKey PRIM_DEF = TextAttributesKey.createTextAttributesKey("AYA_PRIM_DEF", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
+  public static final @NotNull TextAttributesKey PRIM_CALL = TextAttributesKey.createTextAttributesKey("AYA_PRIM_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
+
+  public static final @NotNull TextAttributesKey DATA_DEF = TextAttributesKey.createTextAttributesKey("AYA_DATA_DEF", DefaultLanguageHighlighterColors.CLASS_NAME);
+  public static final @NotNull TextAttributesKey DATA_CALL = TextAttributesKey.createTextAttributesKey("AYA_DATA_CALL", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+
+  public static final @NotNull TextAttributesKey STRUCT_DEF = TextAttributesKey.createTextAttributesKey("AYA_STRUCT_DEF", DefaultLanguageHighlighterColors.CLASS_NAME);
+  public static final @NotNull TextAttributesKey STRUCT_CALL = TextAttributesKey.createTextAttributesKey("AYA_STRUCT_CALL", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
+
+  public static final @NotNull TextAttributesKey FIELD_DEF = TextAttributesKey.createTextAttributesKey("AYA_FIELD_DEF", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+  public static final @NotNull TextAttributesKey FIELD_CALL = TextAttributesKey.createTextAttributesKey("AYA_FIELD_CALL", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
+
+  public static final @NotNull TextAttributesKey CON_DEF = TextAttributesKey.createTextAttributesKey("AYA_CON_DEF", DefaultLanguageHighlighterColors.INSTANCE_METHOD);
+  public static final @NotNull TextAttributesKey CON_CALL = TextAttributesKey.createTextAttributesKey("AYA_CON_CALL", DefaultLanguageHighlighterColors.INSTANCE_METHOD);
+
+
+  public static final @NotNull TextAttributesKey SEMANTIC = TextAttributesKey.createTextAttributesKey("AYA_SEMANTIC");
 
   @Override public @NotNull Lexer getHighlightingLexer() {
     var lexer = new AyaLexer(null);
@@ -58,7 +79,8 @@ public class SyntaxHighlight extends SyntaxHighlighterBase {
       case AyaLexer.COMMENT -> pack(BLOCK_COMMENT);
       case AyaLexer.LINE_COMMENT -> pack(LINE_COMMENT);
       case AyaLexer.DOC_COMMENT -> pack(DOC_COMMENT);
-      default -> TextAttributesKey.EMPTY_ARRAY;
+      case AyaLexer.ERROR_CHAR -> pack(HighlighterColors.BAD_CHARACTER);
+      default -> pack(SEMANTIC);
     };
   }
 }

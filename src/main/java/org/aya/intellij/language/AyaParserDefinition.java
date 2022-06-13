@@ -23,6 +23,7 @@ import org.antlr.intellij.adaptor.psi.ANTLRPsiNode;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.aya.intellij.actions.SyntaxHighlight;
+import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.AyaParser;
@@ -105,7 +106,7 @@ public class AyaParserDefinition extends SyntaxHighlighterFactory implements Par
    * the parse tree node
    */
   @Override public @NotNull PsiElement createElement(@NotNull ASTNode node) {
-    return new ANTLRPsiNode(node);
+    return new AyaPsiElement(node);
   }
 
   @Override public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
