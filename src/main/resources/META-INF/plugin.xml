@@ -8,7 +8,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity
-      implementation="org.aya.intellij.lsp.AyaStartup" />
+      implementation="org.aya.intellij.lsp.AyaStartup"/>
 
     <fileType
       name="Aya File"
@@ -20,6 +20,9 @@
       language="Aya"
       implementationClass="org.aya.intellij.language.AyaParserDefinition"/>
 
+    <highlightVisitor
+      implementation="org.aya.intellij.actions.SemanticHighlight"/>
+
     <lang.syntaxHighlighterFactory
       language="Aya"
       implementationClass="org.aya.intellij.language.AyaParserDefinition"/>
@@ -27,6 +30,9 @@
     <lang.ast.factory
       language="Aya"
       implementationClass="org.aya.intellij.psi.AyaPsiFactory"/>
+
+    <colorSettingsPage
+      implementation="org.aya.intellij.settings.AyaColorSettingsPage"/>
 
   </extensions>
 </idea-plugin>

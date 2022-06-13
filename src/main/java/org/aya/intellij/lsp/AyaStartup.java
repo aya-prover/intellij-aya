@@ -25,7 +25,7 @@ public class AyaStartup implements StartupActivity {
     }
   }
 
-  public @Nullable AyaLSP of(@NotNull Project project) {
+  public static @Nullable AyaLSP of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
   }
 
