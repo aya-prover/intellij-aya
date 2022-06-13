@@ -44,25 +44,24 @@ public class SyntaxHighlight extends SyntaxHighlighterBase {
   public static final @NotNull TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
   public static final @NotNull TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
   public static final @NotNull TextAttributesKey DOC_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT);
+  public static final @NotNull TextAttributesKey COMMA = TextAttributesKey.createTextAttributesKey("AYA_COMMA", DefaultLanguageHighlighterColors.COMMA);
+  public static final @NotNull TextAttributesKey DOT = TextAttributesKey.createTextAttributesKey("AYA_DOT", DefaultLanguageHighlighterColors.DOT);
+  public static final @NotNull TextAttributesKey PARENTHESES = TextAttributesKey.createTextAttributesKey("AYA_PARENTHESES", DefaultLanguageHighlighterColors.PARENTHESES);
+  public static final @NotNull TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey("AYA_BRACES", DefaultLanguageHighlighterColors.BRACES);
+  public static final @NotNull TextAttributesKey BRACKETS = TextAttributesKey.createTextAttributesKey("AYA_BRACKETS", DefaultLanguageHighlighterColors.BRACKETS);
+  public static final @NotNull TextAttributesKey GOAL = TextAttributesKey.createTextAttributesKey("AYA_GOAL", DefaultLanguageHighlighterColors.METADATA);
   public static final @NotNull TextAttributesKey FN_DEF = TextAttributesKey.createTextAttributesKey("AYA_FN_DEF", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
   public static final @NotNull TextAttributesKey FN_CALL = TextAttributesKey.createTextAttributesKey("AYA_FN_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
-
   public static final @NotNull TextAttributesKey PRIM_DEF = TextAttributesKey.createTextAttributesKey("AYA_PRIM_DEF", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
   public static final @NotNull TextAttributesKey PRIM_CALL = TextAttributesKey.createTextAttributesKey("AYA_PRIM_CALL", DefaultLanguageHighlighterColors.FUNCTION_CALL);
-
   public static final @NotNull TextAttributesKey DATA_DEF = TextAttributesKey.createTextAttributesKey("AYA_DATA_DEF", DefaultLanguageHighlighterColors.CLASS_NAME);
   public static final @NotNull TextAttributesKey DATA_CALL = TextAttributesKey.createTextAttributesKey("AYA_DATA_CALL", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
-
   public static final @NotNull TextAttributesKey STRUCT_DEF = TextAttributesKey.createTextAttributesKey("AYA_STRUCT_DEF", DefaultLanguageHighlighterColors.CLASS_NAME);
   public static final @NotNull TextAttributesKey STRUCT_CALL = TextAttributesKey.createTextAttributesKey("AYA_STRUCT_CALL", DefaultLanguageHighlighterColors.CLASS_REFERENCE);
-
   public static final @NotNull TextAttributesKey FIELD_DEF = TextAttributesKey.createTextAttributesKey("AYA_FIELD_DEF", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
   public static final @NotNull TextAttributesKey FIELD_CALL = TextAttributesKey.createTextAttributesKey("AYA_FIELD_CALL", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
-
   public static final @NotNull TextAttributesKey CON_DEF = TextAttributesKey.createTextAttributesKey("AYA_CON_DEF", DefaultLanguageHighlighterColors.INSTANCE_METHOD);
   public static final @NotNull TextAttributesKey CON_CALL = TextAttributesKey.createTextAttributesKey("AYA_CON_CALL", DefaultLanguageHighlighterColors.INSTANCE_METHOD);
-
-
   public static final @NotNull TextAttributesKey SEMANTIC = TextAttributesKey.createTextAttributesKey("AYA_SEMANTIC");
 
   @Override public @NotNull Lexer getHighlightingLexer() {
@@ -81,6 +80,14 @@ public class SyntaxHighlight extends SyntaxHighlighterBase {
       case AyaLexer.COMMENT -> pack(BLOCK_COMMENT);
       case AyaLexer.LINE_COMMENT -> pack(LINE_COMMENT);
       case AyaLexer.DOC_COMMENT -> pack(DOC_COMMENT);
+      case AyaLexer.DOT -> pack(DOT);
+      case AyaLexer.COMMA -> pack(COMMA);
+      case AyaLexer.LPAREN, AyaLexer.RPAREN -> pack(PARENTHESES);
+      case AyaLexer.LBRACE, AyaLexer.RBRACE -> pack(BRACES);
+      case AyaLexer.LARRAY, AyaLexer.RARRAY -> pack(BRACKETS);
+      case AyaLexer.LGOAL, AyaLexer.RGOAL -> pack(GOAL);
+      case AyaLexer.COLON, AyaLexer.DEFINE_AS, AyaLexer.TO, AyaLexer.BAR,
+        AyaLexer.IMPLIES, AyaLexer.LARROW, AyaLexer.SUCHTHAT -> pack(KEYWORD);
       case AyaLexer.ERROR_CHAR -> pack(HighlighterColors.BAD_CHARACTER);
       default -> pack(SEMANTIC);
     };

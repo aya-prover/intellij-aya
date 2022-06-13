@@ -34,5 +34,9 @@
     <colorSettingsPage
       implementation="org.aya.intellij.settings.AyaColorSettingsPage"/>
 
+    <additionalTextAttributes
+      scheme="Darcula"
+      file="colorSchemes/ayaSyntaxHighlight.xml"/>
+
   </extensions>
 </idea-plugin>
