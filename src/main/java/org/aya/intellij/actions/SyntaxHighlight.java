@@ -48,17 +48,17 @@ public class SyntaxHighlight extends SyntaxHighlighterBase {
   }
 
   @Override public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
-    if (!(tokenType instanceof TokenIElementType antlrTokenType)) return new TextAttributesKey[0];
+    if (!(tokenType instanceof TokenIElementType antlrTokenType)) return TextAttributesKey.EMPTY_ARRAY;
     var type = antlrTokenType.getANTLRTokenType();
-    if (GeneratedLexerTokens.KEYWORDS.containsKey(type)) return new TextAttributesKey[]{KEYWORD};
+    if (GeneratedLexerTokens.KEYWORDS.containsKey(type)) return pack(KEYWORD);
     return switch (type) {
-      case AyaLexer.ID -> new TextAttributesKey[]{ID};
-      case AyaLexer.NUMBER -> new TextAttributesKey[]{NUMBER};
-      case AyaLexer.STRING -> new TextAttributesKey[]{STRING};
-      case AyaLexer.COMMENT -> new TextAttributesKey[]{BLOCK_COMMENT};
-      case AyaLexer.LINE_COMMENT -> new TextAttributesKey[]{LINE_COMMENT};
-      case AyaLexer.DOC_COMMENT -> new TextAttributesKey[]{DOC_COMMENT};
-      default -> new TextAttributesKey[0];
+      case AyaLexer.ID -> pack(ID);
+      case AyaLexer.NUMBER -> pack(NUMBER);
+      case AyaLexer.STRING -> pack(STRING);
+      case AyaLexer.COMMENT -> pack(BLOCK_COMMENT);
+      case AyaLexer.LINE_COMMENT -> pack(LINE_COMMENT);
+      case AyaLexer.DOC_COMMENT -> pack(DOC_COMMENT);
+      default -> TextAttributesKey.EMPTY_ARRAY;
     };
   }
 }
