@@ -16,10 +16,9 @@ public class AyaStartup implements StartupActivity {
   @Override public void runActivity(@NotNull Project project) {
     var ayaJson = findAyaJson(project);
     if (ayaJson != null) {
-      // TODO: support non-local libraries in Aya language server
-      if (!ayaJson.isInLocalFileSystem()) return;
+      if (!JB.fileSupported(ayaJson)) return;
       var lsp = new AyaLSP();
-      lsp.service().registerLibrary(ayaJson.getParent().toNioPath());
+      lsp.service().registerLibrary(JB.canonicalize(ayaJson.getParent()));
       project.putUserData(AYA_LSP, lsp);
       System.out.println("[intellij-aya] Hello, this is Aya Language Server");
     }
