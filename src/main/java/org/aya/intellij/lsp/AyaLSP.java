@@ -1,8 +1,14 @@
 package org.aya.intellij.lsp;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiFile;
+import kala.collection.Seq;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
+import org.aya.generic.Constants;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaServer;
@@ -15,19 +21,50 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public record AyaLSP(
   @NotNull AyaServer server,
-  @NotNull MutableMap<Path, MutableMap<TextRange, HighlightResult.Kind>> highlightCache
+  @NotNull MutableMap<Path, MutableMap<TextRange, HighlightResult.Kind>> highlightCache,
+  @NotNull MutableSet<VirtualFile> libraryPathCache,
+  @NotNull ExecutorService compilerPool
 ) implements AyaLanguageClient {
   public AyaLSP() {
-    this(new AyaServer(), MutableMap.create());
+    this(new AyaServer(), MutableMap.create(), MutableSet.create(), Executors.newFixedThreadPool(1));
     server.connect(this);
+  }
+
+  void fireVfsEvent(List<? extends VFileEvent> events) {
+    Seq.wrapJava(events).view()
+      .filterIsInstance(VFileContentChangeEvent.class)
+      .forEach(ev -> {
+        var file = ev.getFile();
+        if (isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX)) {
+          System.out.println("[intellij-aya] compiling, reason: aya source changed: " + file.getUrl());
+          compilerPool.execute(() -> service().loadFile(JB.canonicalize(file))
+            .forEach(this::publishSyntaxHighlight));
+        }
+      });
   }
 
   public @NotNull AyaService service() {
     return server.getTextDocumentService();
+  }
+
+  public void registerLibrary(@NotNull VirtualFile library) {
+    libraryPathCache.add(library);
+    service().registerLibrary(JB.canonicalize(library));
+  }
+
+  public boolean isInLibrary(@Nullable VirtualFile file) {
+    while (file != null && file.isValid()) {
+      if (libraryPathCache.contains(file)) return true;
+      file = file.getParent();
+    }
+    return false;
   }
 
   public @Nullable HighlightResult.Kind highlight(@NotNull PsiFile file, @NotNull TextRange range) {
