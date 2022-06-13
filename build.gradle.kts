@@ -1,7 +1,9 @@
+import org.aya.gradle.StripPreview
 import org.jetbrains.changelog.markdownToHTML
 
 fun properties(key: String) = project.findProperty(key).toString()
-val javaVersion = properties("javaVersion").toInt()
+val ideaJavaVersion = properties("ideaJavaVersion").toInt()
+val ayaJavaVersion = properties("ayaJavaVersion").toInt()
 
 plugins {
   // Java support
@@ -19,6 +21,7 @@ version = properties("pluginVersion")
 
 // Configure project's dependencies
 repositories {
+  mavenLocal()
   mavenCentral()
 }
 
@@ -46,14 +49,33 @@ qodana {
   showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
 }
 
+java {
+  withSourcesJar()
+  if (hasProperty("release")) withJavadocJar()
+  toolchain {
+    languageVersion.set(JavaLanguageVersion.of(ayaJavaVersion))
+  }
+}
+
 tasks {
   withType<JavaCompile>().configureEach {
     modularity.inferModulePath.set(true)
     options.apply {
       encoding = "UTF-8"
       isDeprecation = true
-      release.set(javaVersion)
+      release.set(ayaJavaVersion)
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
+    }
+
+    doLast {
+      val tree = fileTree(destinationDirectory)
+      tree.include("**/*.class")
+      tree.exclude("module-info.class")
+      val root = project.buildDir.toPath().resolve("classes/java/main")
+      tree.forEach {
+        val forceJava17 = ayaJavaVersion > ideaJavaVersion
+        StripPreview.stripPreview(root, it.toPath(), forceJava17)
+      }
     }
   }
 
