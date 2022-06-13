@@ -8,9 +8,11 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.antlr.intellij.adaptor.lexer.TokenIElementType;
 import org.aya.intellij.lsp.AyaStartup;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiLeafElement;
+import org.aya.parser.GeneratedLexerTokens;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +27,8 @@ public class SemanticHighlight extends RainbowVisitor {
 
   @Override public void visit(@NotNull PsiElement element) {
     if (!(element instanceof AyaPsiLeafElement psi)) return;
+    if (!(psi.getElementType() instanceof TokenIElementType type)) return;
+    if (GeneratedLexerTokens.KEYWORDS.containsKey(type.getANTLRTokenType())) return;
     var file = psi.getContainingFile();
     var project = file.getProject();
     var lsp = AyaStartup.of(project);

@@ -71,9 +71,8 @@ public record AyaLSP(
     var vf = file.getVirtualFile();
     if (!JB.fileSupported(vf)) return null;
     var path = vf.toNioPath();
-    return highlightCache
-      .getOrPut(path, MutableMap::create)
-      .getOrNull(range);
+    var fileCache = highlightCache.getOrNull(path);
+    return fileCache == null ? null : fileCache.getOrNull(range);
   }
 
   @Override public void publishSyntaxHighlight(@NotNull HighlightResult highlight) {
