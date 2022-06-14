@@ -1,4 +1,4 @@
-package org.aya.intellij.language;
+package org.aya.intellij.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
@@ -22,6 +22,7 @@ import org.antlr.intellij.adaptor.parser.ANTLRParserAdaptor;
 import org.antlr.intellij.adaptor.psi.ANTLRPsiNode;
 import org.antlr.v4.runtime.Parser;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.aya.intellij.AyaLanguage;
 import org.aya.intellij.actions.SyntaxHighlight;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiFile;

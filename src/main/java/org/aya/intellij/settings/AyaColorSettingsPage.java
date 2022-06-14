@@ -8,9 +8,9 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.util.NlsContexts;
+import org.aya.intellij.AyaIcons;
+import org.aya.intellij.AyaLanguage;
 import org.aya.intellij.actions.SyntaxHighlight;
-import org.aya.intellij.language.AyaIcons;
-import org.aya.intellij.language.AyaLanguage;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +69,7 @@ public class AyaColorSettingsPage implements ColorSettingsPage, RainbowColorSett
   }
 
   @Override public boolean isRainbowType(TextAttributesKey type) {
-    return SyntaxHighlight.SEMANTIC.equals(type);
+    return SyntaxHighlight.LSP.equals(type);
   }
 
   @Override public @Nullable Language getLanguage() {

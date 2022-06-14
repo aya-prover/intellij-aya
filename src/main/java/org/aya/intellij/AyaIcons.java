@@ -1,4 +1,4 @@
-package org.aya.intellij.language;
+package org.aya.intellij;
 
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;

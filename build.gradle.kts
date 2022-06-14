@@ -1,5 +1,6 @@
 import org.aya.gradle.StripPreview
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
 val javaVersion = properties("javaVersion").toInt()
@@ -7,6 +8,8 @@ val javaVersion = properties("javaVersion").toInt()
 plugins {
   // Java support
   java
+  // Kotlin support
+  kotlin("jvm") version "1.6.21"
   // Gradle IntelliJ Plugin
   id("org.jetbrains.intellij") version "1.7.0-SNAPSHOT"
   // Gradle Changelog Plugin
@@ -73,6 +76,11 @@ tasks {
       val root = project.buildDir.toPath().resolve("classes/java/main")
       tree.forEach { StripPreview.stripPreview(root, it.toPath(), false) }
     }
+  }
+
+  withType<KotlinCompile>().configureEach {
+    sourceCompatibility = javaVersion.toString()
+    targetCompatibility = javaVersion.toString()
   }
 
   patchPluginXml {

@@ -16,10 +16,10 @@ import org.aya.parser.GeneratedLexerTokens;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class SemanticHighlight extends RainbowVisitor {
+public class LspHighlight extends RainbowVisitor {
   private static final HighlightInfoType SEMANTIC_TYPE = new HighlightInfoType.HighlightInfoTypeImpl(
     HighlightSeverity.TEXT_ATTRIBUTES,
-    SyntaxHighlight.SEMANTIC);
+    SyntaxHighlight.LSP);
 
   @Override public boolean suitableForFile(@NotNull PsiFile file) {
     return file instanceof AyaPsiFile;
@@ -39,7 +39,7 @@ public class SemanticHighlight extends RainbowVisitor {
   }
 
   @Override public @NotNull HighlightVisitor clone() {
-    return new SemanticHighlight();
+    return new LspHighlight();
   }
 
   private void render(@NotNull PsiElement element, @Nullable TextAttributesKey color) {
