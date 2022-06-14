@@ -59,6 +59,12 @@ java {
   }
 }
 
+val genDir = file("src/main/gen")
+idea.module.generatedSourceDirs.add(genDir)
+sourceSets.main {
+  java.srcDirs(genDir)
+}
+
 tasks {
   withType<JavaCompile>().configureEach {
     modularity.inferModulePath.set(true)
@@ -139,5 +145,4 @@ tasks {
 dependencies {
   implementation("org.aya-prover", "cli", properties("version.aya"))
   implementation("org.aya-prover", "lsp", properties("version.aya"))
-  implementation("org.antlr", "antlr4-intellij-adaptor", properties("version.antlr4-adapter"))
 }

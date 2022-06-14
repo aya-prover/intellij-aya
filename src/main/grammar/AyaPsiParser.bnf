@@ -1,0 +1,279 @@
+{
+  parserClass='org.aya.intellij.parser.AyaPsiParser'
+  implements='org.aya.intellij.psi.AyaPsiElement'
+  extends='org.aya.intellij.psi.AyaPsiElementImpl'
+
+  elementTypeHolderClass='org.aya.intellij.psi.AyaPsiElementTypes'
+  elementTypeClass='org.aya.intellij.psi.AyaPsiElementType'
+  tokenTypeClass='org.aya.intellij.psi.AyaPsiTokenType'
+
+  psiClassPrefix='AyaPsi'
+  psiImplClassSuffix='Impl'
+  psiPackage='org.aya.intellij.psi.concrete'
+  psiImplPackage='org.aya.intellij.psi.concrete.impl'
+
+  tokens = [
+    // ---- AyaLexer begin: Keywords
+    // add `KW_` prefix to avoid conflict with a AyaPsiTokenType name.
+
+    // associativities
+    KW_INFIX  = 'infix'
+    KW_INFIXL = 'infixl'
+    KW_INFIXR = 'infixr'
+
+    // operator precedence
+    KW_TIGHTER = 'tighter'
+    KW_LOOSER = 'looser'
+
+    // samples
+    KW_EXAMPLE = 'example'
+    KW_COUNTEREXAMPLE = 'counterexample'
+
+    // universe
+    KW_ULIFT = 'regexp:ulift|\u2191'
+    KW_TYPE = 'Type'
+
+    KW_AS = 'as'
+    KW_OPEN = 'open'
+    KW_IMPORT = 'import'
+    KW_PUBLIC = 'public'
+    KW_PRIVATE = 'private'
+    KW_USING = 'using'
+    KW_HIDING = 'hiding'
+    KW_COERCE = 'coerce'
+    KW_OPAQUE = 'opaque'
+    KW_INLINE = 'inline'
+    KW_OVERLAP = 'overlap'
+    KW_MODULE = 'module'
+    KW_BIND = 'bind'
+    KW_MATCH = 'match'
+    KW_VARIABLE = 'variable'
+    KW_DEF = 'def'
+    KW_STRUCT = 'struct'
+    KW_DATA = 'data'
+    KW_PRIM = 'prim'
+    KW_EXTENDS = 'extends'
+    KW_NEW = 'new'
+    KW_PATTERN = 'pattern'
+    KW_INTERVAL = 'I'
+    KW_DO = 'do'
+
+    // Unimplemented but reserved
+    KW_CODATA = 'codata'
+    KW_LET = 'let'
+    KW_IN = 'in'
+    KW_COMPLETED = 'completed'
+
+    // symbols
+    KW_SIGMA =  'regexp:Sig|\u03a3'
+    KW_LAMBDA = 'regexp:\\|\u03bb'
+    KW_PI = 'regexp:Pi|\u03a0'
+    KW_FORALL = 'regexp:forall|\u2200'
+    KW_LAND = 'regexp:/\\|\u2227'
+    KW_LOR = 'regexp:\\/|\u2228'
+
+    // ---- AyaLexer end: Keywords
+
+    TO = 'regexp:->|\u2192'
+    LARROW = 'regexp:<-|\u2190'
+    IMPLIES = 'regexp:=>|\u21d2'
+    DEFINE_AS = ':='
+    SUCHTHAT = '**'
+    DOT = '.'
+    BAR = '|'
+    COMMA = ','
+    COLON = ':'
+    COLON2 = '::'
+
+    // markers
+    LBRACE = '{'
+    RBRACE = '}'
+    LPAREN = '('
+    RPAREN = ')'
+    LIDIOM = 'regexp:\(\||\u2987'
+    RIDIOM = 'regexp:\|\)|\u2988'
+    LARRAY = '['
+    RARRAY = ']'
+    LGOAL = '{?'
+    RGOAL = '?}'
+
+    CALM_FACE = '_'
+
+    // used for bootstrapping lexer
+    ID = 'regexp:[a-zA-Z_][a-zA-Z0-9_]*'
+    NUMBER = 'regexp:[0-9]+'
+    STRING = 'regexp:"[^"]*"'
+  ]
+
+  extends("expr|.+Expr") = expr
+  extends("decl|.+Decl") = decl
+  extends("stmt|decl|importCmd|openCmd|module|remark|generalize") = stmt
+}
+
+program ::= stmt* EOF
+
+repl ::= stmt+ | REPL_COMMAND? expr 
+
+// statements
+stmt ::= decl
+     | importCmd
+     | openCmd
+     | module
+     | remark
+     | generalize
+
+remark ::= DOC_COMMENT+
+
+importCmd ::= IMPORT qualifiedId (AS weakId)?
+openCmd ::= PUBLIC? OPEN IMPORT? qualifiedId useHide?
+module ::= MODULE_KW weakId LBRACE stmt* RBRACE
+
+useHide ::= USING useList+ | HIDING hideList+
+hideList ::= LPAREN idsComma RPAREN
+useList ::= LPAREN useIdsComma RPAREN
+useIdsComma ::= (useId COMMA)* useId?
+useId ::= weakId useAs?
+useAs ::= AS assoc? weakId bindBlock?
+
+generalize ::= VARIABLE ids type
+
+// declarations
+
+sampleModifiers ::= EXAMPLE | COUNTEREXAMPLE
+
+decl ::= PRIVATE?
+     ( fnDecl
+     | structDecl
+     | dataDecl
+     | primDecl
+     )
+
+assoc ::= INFIX | INFIXL | INFIXR
+
+declNameOrInfix ::= weakId | assoc weakId
+
+bindBlock ::= BIND_KW (TIGHTER | LOOSER) qIdsComma
+          | BIND_KW LBRACE (tighters | loosers)* RBRACE 
+tighters ::= TIGHTER qIdsComma
+loosers ::= LOOSER qIdsComma
+
+fnDecl ::= sampleModifiers? DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
+
+fnBody ::= IMPLIES expr
+       | (BAR clause)* 
+
+fnModifiers ::= OPAQUE
+            | INLINE
+            | OVERLAP
+            | PATTERN_KW
+            
+
+structDecl ::= sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?
+
+primDecl ::= PRIM weakId tele* type? 
+
+field ::= COERCE? declNameOrInfix tele* type clauses? bindBlock?
+      | declNameOrInfix tele* type? IMPLIES expr    bindBlock?
+
+dataDecl ::= sampleModifiers? (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* bindBlock?
+
+dataBody ::= (BAR dataCtor)
+           | dataCtorClause
+
+dataCtor ::= COERCE? declNameOrInfix tele* clauses? bindBlock?
+
+dataCtorClause ::= BAR patterns IMPLIES dataCtor
+
+
+// expressions
+expr ::= atomExpr
+       | newExpr
+       | appExpr
+       | arrowExpr
+       | projExpr
+       | piExpr
+       | forallExpr
+       | sigmaExpr
+       | lambdaExpr
+       | matchExpr
+       | doExpr
+       | idiomExpr
+       | arrayExpr
+
+// ulift is written here because we want `x ulift + y` to work
+atomExpr ::= KW_ULIFT* literal
+           | LPAREN exprList RPAREN
+newExpr ::= KW_NEW expr newBody?
+appExpr ::= expr argument+
+arrowExpr ::= expr TO expr
+projExpr ::= expr projFix
+piExpr ::= KW_PI tele+ TO expr
+forallExpr ::= KW_FORALL tele+ TO expr
+sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
+lambdaExpr ::= KW_LAMBDA tele+ IMPLIES expr
+matchExpr ::= KW_MATCH exprList clauses
+doExpr ::= KW_DO LBRACE? doBlock RBRACE?
+idiomExpr ::= LIDIOM idiomBlock? RIDIOM
+arrayExpr ::= LARRAY arrayBlock? RARRAY
+
+arrayBlock ::= exprList | expr BAR listComp
+idiomBlock ::= barred* expr+
+listComp ::= (doBinding COMMA)* doBinding
+
+doBlock ::= (doBlockContent COMMA)* doBlockContent
+doBlockContent ::= doBinding | expr
+
+newArg ::= BAR weakId ids IMPLIES expr
+// New body new body but you!
+newBody ::= LBRACE newArg* RBRACE
+
+argument ::= atomExpr projFix*
+           | LBRACE exprList RBRACE
+           | LBRACE weakId DEFINE_AS expr? RBRACE
+
+projFix ::= DOT (NUMBER | qualifiedId)
+
+clauses ::= LBRACE clause? (BAR clause)* RBRACE
+clause ::= patterns (IMPLIES expr)?
+
+patterns ::= pattern (COMMA pattern)*
+pattern ::= atomPatterns
+
+atomPatterns ::= atomPattern+
+atomPattern ::= LPAREN patterns RPAREN (KW_AS weakId)?
+              | LBRACE patterns RBRACE (KW_AS weakId)?
+              | NUMBER
+              | LPAREN RPAREN
+              | weakId
+              | CALM_FACE
+
+literal ::= qualifiedId
+          | CALM_FACE
+          | LGOAL expr? RGOAL
+          | NUMBER
+          | STRING
+          | KW_TYPE
+          | KW_INTERVAL
+
+tele ::= literal
+       | LPAREN teleBinder RPAREN
+       | LBRACE teleMaybeTyped RBRACE
+
+// Explicit arguments may be anonymous
+teleBinder ::= expr
+             | teleMaybeTyped
+
+teleMaybeTyped ::= KW_PATTERN? ids type?
+
+// utilities
+exprList ::= (expr COMMA)* expr
+barred ::= expr+ BAR
+idsComma ::= (weakId COMMA)* weakId?
+qIdsComma ::= (qualifiedId COMMA)* qualifiedId?
+ids ::= weakId*
+type ::= COLON expr
+doBinding ::= weakId LARROW expr
+
+qualifiedId ::= weakId (COLON2 weakId)*
+weakId ::= ID | REPL_COMMAND
+
