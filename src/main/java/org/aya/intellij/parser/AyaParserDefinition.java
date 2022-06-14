@@ -2,8 +2,8 @@ package org.aya.intellij.parser;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
-import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
+import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -12,42 +12,24 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
-import org.antlr.intellij.adaptor.lexer.ANTLRLexerAdaptor;
-import org.antlr.intellij.adaptor.lexer.PSIElementTypeFactory;
-import org.antlr.intellij.adaptor.lexer.TokenIElementType;
-import org.antlr.intellij.adaptor.parser.ANTLRParserAdaptor;
-import org.antlr.intellij.adaptor.psi.ANTLRPsiNode;
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.aya.intellij.AyaLanguage;
 import org.aya.intellij.actions.SyntaxHighlight;
-import org.aya.intellij.psi.AyaPsiElement;
+import org.aya.intellij.psi.AyaPsiElementTypes;
 import org.aya.intellij.psi.AyaPsiFile;
-import org.aya.parser.AyaLexer;
-import org.aya.parser.AyaParser;
+import org.aya.intellij.psi.AyaPsiTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AyaParserDefinition extends SyntaxHighlighterFactory implements ParserDefinition {
   private final @NotNull IFileElementType FILE = new IFileElementType(AyaLanguage.INSTANCE);
-  public final @NotNull TokenIElementType ID;
-  private final @NotNull TokenSet COMMENTS;
-  private final @NotNull TokenSet WHITESPACE;
-  private final @NotNull TokenSet STRING;
+  public static final @NotNull AyaPsiTokenType LINE_COMMENT = new AyaPsiTokenType("LINE_COMMENT");
+  public static final @NotNull AyaPsiTokenType BLOCK_COMMENT = new AyaPsiTokenType("BLOCK_COMMENT");
+  public static final @NotNull TokenSet COMMENTS = TokenSet.create(LINE_COMMENT, BLOCK_COMMENT, AyaPsiElementTypes.DOC_COMMENT);
+  public static final @NotNull TokenSet STRINGS = TokenSet.create(AyaPsiElementTypes.STRING);
 
   public AyaParserDefinition() {
-    PSIElementTypeFactory.defineLanguageIElementTypes(AyaLanguage.INSTANCE, AyaParser.tokenNames, AyaParser.ruleNames);
-    var types = PSIElementTypeFactory.getTokenIElementTypes(AyaLanguage.INSTANCE);
-    ID = types.get(AyaParser.ID);
-    COMMENTS = PSIElementTypeFactory.createTokenSet(AyaLanguage.INSTANCE,
-      AyaParser.COMMENT, AyaParser.LINE_COMMENT, AyaParser.DOC_COMMENT);
-    WHITESPACE = PSIElementTypeFactory.createTokenSet(AyaLanguage.INSTANCE,
-      AyaParser.WS);
-    STRING = PSIElementTypeFactory.createTokenSet(AyaLanguage.INSTANCE,
-      AyaParser.STRING);
   }
 
   @Override
@@ -56,18 +38,11 @@ public class AyaParserDefinition extends SyntaxHighlighterFactory implements Par
   }
 
   @Override public @NotNull Lexer createLexer(Project project) {
-    var lexer = new AyaLexer(null);
-    return new ANTLRLexerAdaptor(AyaLanguage.INSTANCE, lexer);
+    return new FlexAdapter(new _AyaPsiLexer());
   }
 
   @Override public @NotNull PsiParser createParser(Project project) {
-    var ayaParser = new AyaParser(null);
-    return new ANTLRParserAdaptor(AyaLanguage.INSTANCE, ayaParser) {
-      @Override
-      protected ParseTree parse(Parser unused, IElementType root) {
-        return ayaParser.program();
-      }
-    };
+    return new AyaPsiParser();
   }
 
   /**
@@ -86,36 +61,12 @@ public class AyaParserDefinition extends SyntaxHighlighterFactory implements Par
     return new AyaPsiFile(viewProvider);
   }
 
-  /**
-   * Convert from *NON-LEAF* parse node (AST they call it)
-   * to PSI node. Leaves are created in the AST factory.
-   * Rename re-factoring can cause this to be
-   * called on a TokenIElementType since we want to rename ID nodes.
-   * In that case, this method is called to create the root node
-   * but with ID type. Kind of strange, but we can simply create a
-   * ASTWrapperPsiElement to make everything work correctly.
-   * <p>
-   * RuleIElementType.  Ah! It's that ID is the root
-   * IElementType requested to parse, which means that the root
-   * node returned from parsetree->PSI conversion.  But, it
-   * must be a CompositeElement! The adaptor calls
-   * rootMarker.done(root) to finish off the PSI conversion.
-   * See {@link ANTLRParserAdaptor#parse(IElementType, PsiBuilder)}
-   * <p>
-   * If you don't care to distinguish PSI nodes by type, it is
-   * sufficient to create a {@link ANTLRPsiNode} around
-   * the parse tree node
-   */
   @Override public @NotNull PsiElement createElement(@NotNull ASTNode node) {
-    return new AyaPsiElement(node);
+    return AyaPsiElementTypes.Factory.createElement(node);
   }
 
   @Override public @NotNull SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
-  }
-
-  @Override public @NotNull TokenSet getWhitespaceTokens() {
-    return WHITESPACE;
   }
 
   @Override public @NotNull TokenSet getCommentTokens() {
@@ -123,7 +74,7 @@ public class AyaParserDefinition extends SyntaxHighlighterFactory implements Par
   }
 
   @Override public @NotNull TokenSet getStringLiteralElements() {
-    return STRING;
+    return STRINGS;
   }
 
   @Override public @NotNull IFileElementType getFileNodeType() {

@@ -1,17 +1,13 @@
 package org.aya.intellij.actions;
 
+import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
-import org.antlr.intellij.adaptor.lexer.ANTLRLexerAdaptor;
-import org.antlr.intellij.adaptor.lexer.TokenIElementType;
-import org.aya.intellij.AyaLanguage;
+import org.aya.intellij.parser._AyaPsiLexer;
 import org.aya.lsp.models.HighlightResult;
-import org.aya.parser.AyaLexer;
-import org.aya.parser.GeneratedLexerTokens;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,32 +61,11 @@ public class SyntaxHighlight extends SyntaxHighlighterBase {
   public static final @NotNull TextAttributesKey LSP = TextAttributesKey.createTextAttributesKey("AYA_SEMANTIC");
 
   @Override public @NotNull Lexer getHighlightingLexer() {
-    var lexer = new AyaLexer(null);
-    return new ANTLRLexerAdaptor(AyaLanguage.INSTANCE, lexer);
+    return new FlexAdapter(new _AyaPsiLexer());
   }
 
   @Override public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
-    if (!(tokenType instanceof TokenIElementType antlrTokenType)) return TextAttributesKey.EMPTY_ARRAY;
-    var type = antlrTokenType.getANTLRTokenType();
-    if (GeneratedLexerTokens.KEYWORDS.containsKey(type)) return pack(KEYWORD);
-    return switch (type) {
-      case AyaLexer.ID -> pack(ID);
-      case AyaLexer.NUMBER -> pack(NUMBER);
-      case AyaLexer.STRING -> pack(STRING);
-      case AyaLexer.COMMENT -> pack(BLOCK_COMMENT);
-      case AyaLexer.LINE_COMMENT -> pack(LINE_COMMENT);
-      case AyaLexer.DOC_COMMENT -> pack(DOC_COMMENT);
-      case AyaLexer.DOT -> pack(DOT);
-      case AyaLexer.COMMA -> pack(COMMA);
-      case AyaLexer.LPAREN, AyaLexer.RPAREN -> pack(PARENTHESES);
-      case AyaLexer.LBRACE, AyaLexer.RBRACE -> pack(BRACES);
-      case AyaLexer.LARRAY, AyaLexer.RARRAY -> pack(BRACKETS);
-      case AyaLexer.LGOAL, AyaLexer.RGOAL -> pack(GOAL);
-      case AyaLexer.COLON, AyaLexer.DEFINE_AS, AyaLexer.TO, AyaLexer.BAR,
-        AyaLexer.IMPLIES, AyaLexer.LARROW, AyaLexer.SUCHTHAT -> pack(KEYWORD);
-      case AyaLexer.ERROR_CHAR -> pack(HighlighterColors.BAD_CHARACTER);
-      default -> pack(LSP);
-    };
+    return pack(LSP);
   }
 
   public static @Nullable TextAttributesKey choose(@Nullable HighlightResult.Kind kind) {
