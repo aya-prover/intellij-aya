@@ -12,20 +12,20 @@
 
     <fileType
       name="Aya File"
-      implementationClass="org.aya.intellij.language.AyaFileType"
+      implementationClass="org.aya.intellij.AyaFileType"
       language="Aya"
       extensions="aya"/>
 
     <lang.parserDefinition
       language="Aya"
-      implementationClass="org.aya.intellij.language.AyaParserDefinition"/>
+      implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
 
     <highlightVisitor
-      implementation="org.aya.intellij.actions.SemanticHighlight"/>
+      implementation="org.aya.intellij.actions.LspHighlight"/>
 
     <lang.syntaxHighlighterFactory
       language="Aya"
-      implementationClass="org.aya.intellij.language.AyaParserDefinition"/>
+      implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
 
     <lang.ast.factory
       language="Aya"

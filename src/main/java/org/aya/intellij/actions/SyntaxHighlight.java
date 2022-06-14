@@ -8,7 +8,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import org.antlr.intellij.adaptor.lexer.ANTLRLexerAdaptor;
 import org.antlr.intellij.adaptor.lexer.TokenIElementType;
-import org.aya.intellij.language.AyaLanguage;
+import org.aya.intellij.AyaLanguage;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.parser.AyaLexer;
 import org.aya.parser.GeneratedLexerTokens;
@@ -62,7 +62,7 @@ public class SyntaxHighlight extends SyntaxHighlighterBase {
   public static final @NotNull TextAttributesKey FIELD_CALL = TextAttributesKey.createTextAttributesKey("AYA_FIELD_CALL", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
   public static final @NotNull TextAttributesKey CON_DEF = TextAttributesKey.createTextAttributesKey("AYA_CON_DEF", DefaultLanguageHighlighterColors.INSTANCE_METHOD);
   public static final @NotNull TextAttributesKey CON_CALL = TextAttributesKey.createTextAttributesKey("AYA_CON_CALL", DefaultLanguageHighlighterColors.INSTANCE_METHOD);
-  public static final @NotNull TextAttributesKey SEMANTIC = TextAttributesKey.createTextAttributesKey("AYA_SEMANTIC");
+  public static final @NotNull TextAttributesKey LSP = TextAttributesKey.createTextAttributesKey("AYA_SEMANTIC");
 
   @Override public @NotNull Lexer getHighlightingLexer() {
     var lexer = new AyaLexer(null);
@@ -89,7 +89,7 @@ public class SyntaxHighlight extends SyntaxHighlighterBase {
       case AyaLexer.COLON, AyaLexer.DEFINE_AS, AyaLexer.TO, AyaLexer.BAR,
         AyaLexer.IMPLIES, AyaLexer.LARROW, AyaLexer.SUCHTHAT -> pack(KEYWORD);
       case AyaLexer.ERROR_CHAR -> pack(HighlighterColors.BAD_CHARACTER);
-      default -> pack(SEMANTIC);
+      default -> pack(LSP);
     };
   }
 

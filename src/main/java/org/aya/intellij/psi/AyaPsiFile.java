@@ -6,8 +6,8 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import org.antlr.intellij.adaptor.psi.ScopeNode;
-import org.aya.intellij.language.AyaFileType;
-import org.aya.intellij.language.AyaLanguage;
+import org.aya.intellij.AyaFileType;
+import org.aya.intellij.AyaLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
