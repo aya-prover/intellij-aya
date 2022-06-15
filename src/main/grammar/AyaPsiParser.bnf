@@ -125,11 +125,11 @@ repl ::= stmt+ | REPL_COMMAND? expr
 
 // statements
 stmt ::= decl
-     | importCmd
-     | openCmd
-     | module
-     | remark
-     | generalize
+       | importCmd
+       | openCmd
+       | module
+       | remark
+       | generalize
 
 remark ::= DOC_COMMENT+
 
@@ -144,44 +144,45 @@ useIdsComma ::= (useId COMMA)* useId?
 useId ::= weakId useAs?
 useAs ::= KW_AS assoc? weakId bindBlock?
 
-generalize ::= KW_VARIABLE ids type
+generalize ::= KW_VARIABLE idsNonEmpty type
 
 // declarations
 
 sampleModifiers ::= KW_EXAMPLE | KW_COUNTEREXAMPLE
 
 decl ::= KW_PRIVATE?
-     ( fnDecl
-     | structDecl
-     | dataDecl
-     | primDecl
-     )
+       ( fnDecl
+       | structDecl
+       | dataDecl
+       | primDecl
+       )
 
 assoc ::= KW_INFIX | KW_INFIXL | KW_INFIXR
 
 declNameOrInfix ::= weakId | assoc weakId
 
 bindBlock ::= KW_BIND (KW_TIGHTER | KW_LOOSER) qIdsComma
-          | KW_BIND LBRACE (tighters | loosers)* RBRACE
+            | KW_BIND LBRACE (tighters | loosers)* RBRACE
 tighters ::= KW_TIGHTER qIdsComma
 loosers ::= KW_LOOSER qIdsComma
 
 fnDecl ::= sampleModifiers? KW_DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
 
 fnBody ::= IMPLIES expr
-       | (BAR clause)* 
+         | (BAR clause)*
 
 fnModifiers ::= KW_OPAQUE
-            | KW_INLINE
-            | KW_OVERLAP
-            | KW_PATTERN
+              | KW_INLINE
+              | KW_OVERLAP
+              | KW_PATTERN
 
 structDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)? (BAR field)* bindBlock?
 
 primDecl ::= KW_PRIM weakId tele* type?
 
-field ::= KW_COERCE? declNameOrInfix tele* type clauses? bindBlock?
-      | declNameOrInfix tele* type? IMPLIES expr    bindBlock?
+field ::=            declNameOrInfix tele* type? IMPLIES expr    bindBlock?
+        | KW_COERCE? declNameOrInfix tele* type  clauses?        bindBlock?
+
 
 dataDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
 
@@ -213,12 +214,12 @@ atomExpr ::= KW_ULIFT* literal
            | LPAREN exprList RPAREN
 newExpr ::= KW_NEW expr newBody?
 appExpr ::= expr argument+
-arrowExpr ::= expr TO expr
+arrowExpr ::= expr TO expr { rightAssociative = true }
 projExpr ::= expr projFix
 piExpr ::= KW_PI tele+ TO expr
 forallExpr ::= KW_FORALL tele+ TO expr
 sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
-lambdaExpr ::= KW_LAMBDA tele+ IMPLIES expr
+lambdaExpr ::= KW_LAMBDA tele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 idiomExpr ::= LIDIOM idiomBlock? RIDIOM
@@ -268,10 +269,10 @@ tele ::= literal
        | LBRACE teleMaybeTyped RBRACE
 
 // Explicit arguments may be anonymous
-teleBinder ::= expr
-             | teleMaybeTyped
+teleBinder ::= teleMaybeTyped
+             | expr
 
-teleMaybeTyped ::= KW_PATTERN? ids type?
+teleMaybeTyped ::= KW_PATTERN? idsNonEmpty type?
 
 // utilities
 exprList ::= (expr COMMA)* expr
@@ -279,6 +280,7 @@ barred ::= expr+ BAR
 idsComma ::= (weakId COMMA)* weakId?
 qIdsComma ::= (qualifiedId COMMA)* qualifiedId?
 ids ::= weakId*
+idsNonEmpty ::= weakId+
 type ::= COLON expr
 doBinding ::= weakId LARROW expr
 
