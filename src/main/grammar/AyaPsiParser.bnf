@@ -106,11 +106,20 @@
   ]
 
   extends("expr|.+Expr") = expr
-  extends("decl|.+Decl") = decl
+  extends(".+Decl") = decl
   extends("stmt|decl|importCmd|openCmd|module|remark|generalize") = stmt
 }
 
-program ::= stmt* EOF
+program ::= stmts
+private stmts ::= stmt_with_recover*
+private stmt_with_recover ::= !(<<eof>>) stmt {
+  pin = 1
+  recoverWhile = stmt_recover
+}
+private stmt_recover ::= !(stmt_first)
+private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
+                     | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
+                     | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
 
 repl ::= stmt+ | REPL_COMMAND? expr 
 
@@ -124,63 +133,62 @@ stmt ::= decl
 
 remark ::= DOC_COMMENT+
 
-importCmd ::= IMPORT qualifiedId (AS weakId)?
-openCmd ::= PUBLIC? OPEN IMPORT? qualifiedId useHide?
-module ::= MODULE_KW weakId LBRACE stmt* RBRACE
+importCmd ::= KW_IMPORT qualifiedId (KW_AS weakId)?
+openCmd ::= KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?
+module ::= KW_MODULE weakId LBRACE stmt* RBRACE
 
-useHide ::= USING useList+ | HIDING hideList+
+useHide ::= KW_USING useList+ | KW_HIDING hideList+
 hideList ::= LPAREN idsComma RPAREN
 useList ::= LPAREN useIdsComma RPAREN
 useIdsComma ::= (useId COMMA)* useId?
 useId ::= weakId useAs?
-useAs ::= AS assoc? weakId bindBlock?
+useAs ::= KW_AS assoc? weakId bindBlock?
 
-generalize ::= VARIABLE ids type
+generalize ::= KW_VARIABLE ids type
 
 // declarations
 
-sampleModifiers ::= EXAMPLE | COUNTEREXAMPLE
+sampleModifiers ::= KW_EXAMPLE | KW_COUNTEREXAMPLE
 
-decl ::= PRIVATE?
+decl ::= KW_PRIVATE?
      ( fnDecl
      | structDecl
      | dataDecl
      | primDecl
      )
 
-assoc ::= INFIX | INFIXL | INFIXR
+assoc ::= KW_INFIX | KW_INFIXL | KW_INFIXR
 
 declNameOrInfix ::= weakId | assoc weakId
 
-bindBlock ::= BIND_KW (TIGHTER | LOOSER) qIdsComma
-          | BIND_KW LBRACE (tighters | loosers)* RBRACE 
-tighters ::= TIGHTER qIdsComma
-loosers ::= LOOSER qIdsComma
+bindBlock ::= KW_BIND (KW_TIGHTER | KW_LOOSER) qIdsComma
+          | KW_BIND LBRACE (tighters | loosers)* RBRACE
+tighters ::= KW_TIGHTER qIdsComma
+loosers ::= KW_LOOSER qIdsComma
 
-fnDecl ::= sampleModifiers? DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
+fnDecl ::= sampleModifiers? KW_DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
 
 fnBody ::= IMPLIES expr
        | (BAR clause)* 
 
-fnModifiers ::= OPAQUE
-            | INLINE
-            | OVERLAP
-            | PATTERN_KW
-            
+fnModifiers ::= KW_OPAQUE
+            | KW_INLINE
+            | KW_OVERLAP
+            | KW_PATTERN
 
-structDecl ::= sampleModifiers? (PUBLIC? OPEN)? STRUCT declNameOrInfix tele* type? (EXTENDS idsComma)? (BAR field)* bindBlock?
+structDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)? (BAR field)* bindBlock?
 
-primDecl ::= PRIM weakId tele* type? 
+primDecl ::= KW_PRIM weakId tele* type?
 
-field ::= COERCE? declNameOrInfix tele* type clauses? bindBlock?
+field ::= KW_COERCE? declNameOrInfix tele* type clauses? bindBlock?
       | declNameOrInfix tele* type? IMPLIES expr    bindBlock?
 
-dataDecl ::= sampleModifiers? (PUBLIC? OPEN)? DATA declNameOrInfix tele* type? dataBody* bindBlock?
+dataDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
 
 dataBody ::= (BAR dataCtor)
            | dataCtorClause
 
-dataCtor ::= COERCE? declNameOrInfix tele* clauses? bindBlock?
+dataCtor ::= KW_COERCE? declNameOrInfix tele* clauses? bindBlock?
 
 dataCtorClause ::= BAR patterns IMPLIES dataCtor
 
