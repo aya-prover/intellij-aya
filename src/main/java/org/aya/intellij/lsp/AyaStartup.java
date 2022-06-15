@@ -18,7 +18,13 @@ import java.util.List;
 public class AyaStartup implements StartupActivity {
   private static final @NotNull Key<AyaLSP> AYA_LSP = Key.create("intellij.aya.lsp");
 
+  private static boolean useLSP() {
+    // TODO: use IDEA Settings page
+    return false;
+  }
+
   @Override public void runActivity(@NotNull Project project) {
+    if (!useLSP()) return;
     var ayaJson = findAyaJson(project);
     if (ayaJson != null) {
       if (!JB.fileSupported(ayaJson)) return;

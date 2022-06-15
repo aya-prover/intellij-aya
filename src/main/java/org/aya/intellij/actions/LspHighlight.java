@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.aya.intellij.lsp.AyaStartup;
 import org.aya.intellij.psi.AyaPsiFile;
+import org.aya.lsp.models.HighlightResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public class LspHighlight extends RainbowVisitor {
     if (lsp == null) return;
     var range = element.getTextRange();
     var kind = lsp.highlight(file, range);
-    render(element, SyntaxHighlight.choose(kind));
+    render(element, choose(kind));
   }
 
   @Override public @NotNull HighlightVisitor clone() {
@@ -44,5 +45,23 @@ public class LspHighlight extends RainbowVisitor {
       .textAttributes(color)
       .range(element)
       .create());
+  }
+
+  private static @Nullable TextAttributesKey choose(@Nullable HighlightResult.Kind kind) {
+    return switch (kind) {
+      case FnDef -> SyntaxHighlight.FN_DEF;
+      case DataDef -> SyntaxHighlight.DATA_DEF;
+      case StructDef -> SyntaxHighlight.STRUCT_DEF;
+      case ConDef -> SyntaxHighlight.CON_DEF;
+      case FieldDef -> SyntaxHighlight.FIELD_DEF;
+      case PrimDef -> SyntaxHighlight.PRIM_DEF;
+      case FnCall -> SyntaxHighlight.FN_CALL;
+      case DataCall -> SyntaxHighlight.DATA_CALL;
+      case StructCall -> SyntaxHighlight.STRUCT_CALL;
+      case ConCall -> SyntaxHighlight.CON_CALL;
+      case FieldCall -> SyntaxHighlight.FIELD_CALL;
+      case PrimCall -> SyntaxHighlight.PRIM_CALL;
+      case default, null -> null;
+    };
   }
 }
