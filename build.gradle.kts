@@ -9,7 +9,7 @@ plugins {
   // Java support
   java
   // Kotlin support
-  kotlin("jvm") version "1.6.21"
+  kotlin("jvm") version "1.7.10"
   // Gradle IntelliJ Plugin
   id("org.jetbrains.intellij") version "1.7.0-SNAPSHOT"
   // Gradle Changelog Plugin
@@ -85,8 +85,9 @@ tasks {
   }
 
   withType<KotlinCompile>().configureEach {
-    sourceCompatibility = javaVersion.toString()
-    targetCompatibility = javaVersion.toString()
+    kotlinOptions {
+      jvmTarget = javaVersion.toString()
+    }
   }
 
   patchPluginXml {
@@ -143,6 +144,9 @@ tasks {
 }
 
 dependencies {
-  implementation("org.aya-prover", "cli", properties("version.aya"))
-  implementation("org.aya-prover", "lsp", properties("version.aya"))
+  val ayaVersion = properties("version.aya")
+  implementation("org.aya-prover", "cli", ayaVersion)
+  implementation("org.aya-prover", "lsp", ayaVersion)
+  testImplementation(kotlin("test-junit"))
+  testImplementation("junit", "junit", properties("version.junit"))
 }
