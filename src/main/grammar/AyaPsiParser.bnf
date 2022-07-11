@@ -135,7 +135,7 @@ remark ::= DOC_COMMENT+
 
 importCmd ::= KW_IMPORT qualifiedId (KW_AS weakId)?
 openCmd ::= KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?
-module ::= KW_MODULE weakId LBRACE stmt* RBRACE
+module ::= KW_MODULE weakId LBRACE stmts RBRACE
 
 useHide ::= KW_USING useList+ | KW_HIDING hideList+
 hideList ::= LPAREN idsComma RPAREN
@@ -180,14 +180,14 @@ structDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_STRUCT declNameOrInfix 
 
 primDecl ::= KW_PRIM weakId tele* type?
 
-field ::=            declNameOrInfix tele* type? IMPLIES expr    bindBlock?
-        | KW_COERCE? declNameOrInfix tele* type  clauses?        bindBlock?
+field ::=            declNameOrInfix tele* type? IMPLIES expr bindBlock?
+        | KW_COERCE? declNameOrInfix tele* type  clauses?     bindBlock?
 
 
 dataDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
 
-dataBody ::= (BAR dataCtor)
-           | dataCtorClause
+dataBody ::= dataCtorClause
+           | (BAR dataCtor)
 
 dataCtor ::= KW_COERCE? declNameOrInfix tele* clauses? bindBlock?
 
@@ -195,11 +195,10 @@ dataCtorClause ::= BAR patterns IMPLIES dataCtor
 
 
 // expressions
-expr ::= atomExpr
-       | newExpr
-       | appExpr
+expr ::= appExpr
        | arrowExpr
        | projExpr
+       | newExpr
        | piExpr
        | forallExpr
        | sigmaExpr
@@ -208,6 +207,7 @@ expr ::= atomExpr
        | doExpr
        | idiomExpr
        | arrayExpr
+       | atomExpr
 
 // ulift is written here because we want `x ulift + y` to work
 atomExpr ::= KW_ULIFT* literal
@@ -269,10 +269,10 @@ tele ::= literal
        | LBRACE teleMaybeTyped RBRACE
 
 // Explicit arguments may be anonymous
-teleBinder ::= teleMaybeTyped
-             | expr
+teleBinder ::= expr
+             | teleMaybeTyped
 
-teleMaybeTyped ::= KW_PATTERN? idsNonEmpty type?
+teleMaybeTyped ::= KW_PATTERN? idsNonEmpty type
 
 // utilities
 exprList ::= (expr COMMA)* expr
@@ -281,7 +281,7 @@ idsComma ::= (weakId COMMA)* weakId?
 qIdsComma ::= (qualifiedId COMMA)* qualifiedId?
 ids ::= weakId*
 idsNonEmpty ::= weakId+
-type ::= COLON expr
+type ::= COLON expr { pin = 1 }
 doBinding ::= weakId LARROW expr
 
 qualifiedId ::= weakId (COLON2 weakId)*
