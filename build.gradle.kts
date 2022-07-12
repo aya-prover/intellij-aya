@@ -1,5 +1,7 @@
 import org.aya.gradle.StripPreview
 import org.jetbrains.changelog.markdownToHTML
+import org.jetbrains.grammarkit.tasks.GenerateLexerTask
+import org.jetbrains.grammarkit.tasks.GenerateParserTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
@@ -16,6 +18,8 @@ plugins {
   id("org.jetbrains.changelog") version "1.3.1"
   // Gradle Qodana Plugin
   id("org.jetbrains.qodana") version "0.1.13"
+  // GrammarKit Plugin
+  id("org.jetbrains.grammarkit") version "2021.2.2"
 }
 
 group = properties("pluginGroup")
@@ -65,6 +69,23 @@ sourceSets.main {
   java.srcDirs(genDir)
 }
 
+val genAyaPsiLexer = tasks.register<GenerateLexerTask>("genAyaLexer") {
+  group = "build setup"
+  source.set("src/main/grammar/AyaPsiLexer.flex")
+  targetDir.set("src/main/gen/org/aya/intellij/parser")
+  targetClass.set("_AyaPsiLexer")
+  purgeOldFiles.set(true)
+}
+
+val genAyaPsiParser = tasks.register<GenerateParserTask>("genAyaParser") {
+  group = "build setup"
+  source.set("src/main/grammar/AyaPsiParser.bnf")
+  targetRoot.set("src/main/gen")
+  pathToParser.set("org/aya/intellij/parser/AyaPsiParser.java")
+  pathToPsiRoot.set("org/aya/intellij/psi")
+  purgeOldFiles.set(true)
+}
+
 tasks {
   withType<JavaCompile>().configureEach {
     modularity.inferModulePath.set(true)
@@ -82,12 +103,14 @@ tasks {
       val root = project.buildDir.toPath().resolve("classes/java/main")
       tree.forEach { StripPreview.stripPreview(root, it.toPath(), false) }
     }
+    dependsOn(genAyaPsiLexer, genAyaPsiParser)
   }
 
   withType<KotlinCompile>().configureEach {
     kotlinOptions {
       jvmTarget = javaVersion.toString()
     }
+    dependsOn(genAyaPsiLexer, genAyaPsiParser)
   }
 
   withType<Test>().configureEach {
