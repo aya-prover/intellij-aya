@@ -76,11 +76,10 @@ ID = {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \- {AYA_LETTER} {AYA_LETTER_FOLLOW}*
 
 NUMBER = [0-9]+
 
-STRING = {INCOMPLETE_STRING} \"
-INCOMPLETE_STRING = \" (~[\"\\\r\n] | {ESCAPE_SEQ})*
-ESCAPE_SEQ = \\ [btnfr\"\'\\] | {OCT_ESCAPE} | {UNICODE_ESCAPE}
-OCT_ESCAPE = \\ {OCT_DIGIT} {OCT_DIGIT}? | \\ [0-3] {OCT_DIGIT} {OCT_DIGIT}
-UNICODE_ESCAPE = \\u + {HEX_DIGIT} {HEX_DIGIT} {HEX_DIGIT} {HEX_DIGIT}
+STRING = \"{STRING_CONTENT}*\"
+STRING_CONTENT = [^\"\\\r\n] | \\[btnfr\"\'\\] | {OCT_ESCAPE} | {UNICODE_ESCAPE}
+OCT_ESCAPE = \\{OCT_DIGIT}{OCT_DIGIT}? | \\[0-3]{OCT_DIGIT}{2}
+UNICODE_ESCAPE = \\u+{HEX_DIGIT}{4}
 HEX_DIGIT = [0-9a-fA-F]
 OCT_DIGIT = [0-8]
 
@@ -104,9 +103,8 @@ RIDIOM = \|\) | \u2988
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Comments, adapted from AyaLexer.g4
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-COMMENT_CONTENT     = [ ] ([^\|\r\n] .* | {EOL})?
-LINE_COMMENT        = "--"   {COMMENT_CONTENT}
-DOC_COMMENT         = "--|"  {COMMENT_CONTENT}
+LINE_COMMENT        = "--" (.* | {EOL})
+DOC_COMMENT         = "--|" (.* | {EOL})
 BLOCK_COMMENT_START = "{-"
 BLOCK_COMMENT_END   = "-}"
 

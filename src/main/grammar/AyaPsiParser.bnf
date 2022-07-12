@@ -105,9 +105,20 @@
     STRING = 'regexp:"[^"]*"'
   ]
 
-  extends("expr|.+Expr") = expr
-  extends(".+Decl") = decl
+  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr") = expr
+  extends("literal") = expr
+  extends("refExpr|holeExpr|litIntExpr|litStringExpr|univExpr|intervalExpr") = literal
+  extends("goalExpr|calmFaceExpr") = holeExpr
+
+  extends("atomUliftExpr|atomTupleExpr") = atomExpr
+  extends("arrayCompBlock|arrayElementsBlock") = arrayBlock
+  extends("atomExArgument|tupleImArgument|namedImArgument") = argument
+  extends("atomExPattern|atomImPattern|atomNumberPattern|atomAbsurdPattern|atomBindPattern|atomCalmFacePattern") = atomPattern
+
+  extends("fnDecl|structDecl|primDecl|dataDecl") = decl
   extends("stmt|decl|importCmd|openCmd|module|remark|generalize") = stmt
+  extends("teleLit|teleEx|teleIm") = tele
+  extends("teleBinderTyped|teleBinderAnonymous") = teleBinder
 }
 
 program ::= stmts
@@ -135,7 +146,7 @@ remark ::= DOC_COMMENT+
 
 importCmd ::= KW_IMPORT qualifiedId (KW_AS weakId)?
 openCmd ::= KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?
-module ::= KW_MODULE weakId LBRACE stmts RBRACE
+module ::= KW_MODULE weakId LBRACE stmt* RBRACE
 
 useHide ::= KW_USING useList+ | KW_HIDING hideList+
 hideList ::= LPAREN idsComma RPAREN
@@ -195,10 +206,7 @@ dataCtorClause ::= BAR patterns IMPLIES dataCtor
 
 
 // expressions
-expr ::= appExpr
-       | arrowExpr
-       | projExpr
-       | newExpr
+expr ::= newExpr
        | piExpr
        | forallExpr
        | sigmaExpr
@@ -208,10 +216,17 @@ expr ::= appExpr
        | idiomExpr
        | arrayExpr
        | atomExpr
+       | appExpr
+       | arrowExpr
+       | projExpr
 
 // ulift is written here because we want `x ulift + y` to work
-atomExpr ::= KW_ULIFT* literal
-           | LPAREN exprList RPAREN
+atomExpr ::= atomUliftExpr
+           | atomTupleExpr
+atomUliftExpr ::= uliftPrefix* literal
+atomTupleExpr ::= LPAREN exprList RPAREN
+uliftPrefix ::= KW_ULIFT
+
 newExpr ::= KW_NEW expr newBody?
 appExpr ::= expr argument+
 arrowExpr ::= expr TO expr { rightAssociative = true }
@@ -225,7 +240,9 @@ doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 idiomExpr ::= LIDIOM idiomBlock? RIDIOM
 arrayExpr ::= LARRAY arrayBlock? RARRAY
 
-arrayBlock ::= exprList | expr BAR listComp
+arrayBlock ::= arrayCompBlock | arrayElementsBlock
+arrayCompBlock ::= expr BAR listComp
+arrayElementsBlock ::= exprList
 idiomBlock ::= barred* expr+
 listComp ::= (doBinding COMMA)* doBinding
 
@@ -236,9 +253,12 @@ newArg ::= BAR weakId ids IMPLIES expr
 // New body new body but you!
 newBody ::= LBRACE newArg* RBRACE
 
-argument ::= atomExpr projFix*
-           | LBRACE exprList RBRACE
-           | LBRACE weakId DEFINE_AS expr? RBRACE
+argument ::= atomExArgument
+           | tupleImArgument
+           | namedImArgument
+atomExArgument ::= atomExpr projFix*
+tupleImArgument ::= LBRACE exprList RBRACE
+namedImArgument ::= LBRACE weakId DEFINE_AS expr? RBRACE
 
 projFix ::= DOT (NUMBER | qualifiedId)
 
@@ -249,30 +269,49 @@ patterns ::= pattern (COMMA pattern)*
 pattern ::= atomPatterns
 
 atomPatterns ::= atomPattern+
-atomPattern ::= LPAREN patterns RPAREN (KW_AS weakId)?
-              | LBRACE patterns RBRACE (KW_AS weakId)?
-              | NUMBER
-              | LPAREN RPAREN
-              | weakId
-              | CALM_FACE
+atomPattern ::= atomExPattern
+              | atomImPattern
+              | atomNumberPattern
+              | atomAbsurdPattern
+              | atomBindPattern
+              | atomCalmFacePattern
+atomExPattern ::= LPAREN patterns RPAREN (KW_AS weakId)?
+atomImPattern ::= LBRACE patterns RBRACE (KW_AS weakId)?
+atomNumberPattern ::= NUMBER
+atomAbsurdPattern ::= LPAREN RPAREN
+atomBindPattern ::= weakId
+atomCalmFacePattern ::= CALM_FACE
 
-literal ::= qualifiedId
-          | CALM_FACE
-          | LGOAL expr? RGOAL
-          | NUMBER
-          | STRING
-          | KW_TYPE
-          | KW_INTERVAL
+literal ::= refExpr
+          | holeExpr
+          | litIntExpr
+          | litStringExpr
+          | univExpr
+          | intervalExpr
+holeExpr ::= goalExpr | calmFaceExpr
+calmFaceExpr ::= CALM_FACE
 
-tele ::= literal
-       | LPAREN teleBinder RPAREN
-       | LBRACE teleMaybeTyped RBRACE
+goalExpr ::= LGOAL expr? RGOAL
+refExpr ::= qualifiedId
+litIntExpr ::= NUMBER
+litStringExpr ::= STRING
+univExpr ::= KW_TYPE
+intervalExpr ::= KW_INTERVAL
+
+tele ::= teleLit
+       | teleEx
+       | teleIm
+
+teleLit ::= literal
+teleEx ::= LPAREN teleBinder RPAREN
+teleIm ::= LBRACE teleBinder RBRACE
 
 // Explicit arguments may be anonymous
-teleBinder ::= expr
-             | teleMaybeTyped
+teleBinder ::= teleBinderTyped
+             | teleBinderAnonymous
 
-teleMaybeTyped ::= KW_PATTERN? idsNonEmpty type
+teleBinderTyped ::= KW_PATTERN? idsNonEmpty type
+teleBinderAnonymous ::= expr  // for lambda, the expr should be literal
 
 // utilities
 exprList ::= (expr COMMA)* expr
