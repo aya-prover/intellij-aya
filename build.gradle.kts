@@ -90,6 +90,20 @@ tasks {
     }
   }
 
+  withType<Test>().configureEach {
+    jvmArgs = listOf(
+      "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+      "--add-opens=java.base/java.io=ALL-UNNAMED",
+      "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+      "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+      "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
+      "--add-exports=jdk.unsupported/sun.misc=ALL-UNNAMED",
+    )
+    enableAssertions = true
+    reports.junitXml.mergeReruns.set(true)
+  }
+
   patchPluginXml {
     version.set(properties("pluginVersion"))
     sinceBuild.set(properties("pluginSinceBuild"))
@@ -148,5 +162,4 @@ dependencies {
   implementation("org.aya-prover", "cli", ayaVersion)
   implementation("org.aya-prover", "lsp", ayaVersion)
   testImplementation(kotlin("test-junit"))
-  testImplementation("junit", "junit", properties("version.junit"))
 }
