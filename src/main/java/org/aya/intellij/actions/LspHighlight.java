@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import org.aya.intellij.lsp.AyaStartup;
+import org.aya.intellij.lsp.AyaLsp;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.lsp.models.HighlightResult;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +18,8 @@ import org.jetbrains.annotations.Nullable;
 public class LspHighlight extends RainbowVisitor {
   private static final HighlightInfoType SEMANTIC_TYPE = new HighlightInfoType.HighlightInfoTypeImpl(
     HighlightSeverity.TEXT_ATTRIBUTES,
-    SyntaxHighlight.LSP);
+    SyntaxHighlight.LSP,
+    true);
 
   @Override public boolean suitableForFile(@NotNull PsiFile file) {
     return file instanceof AyaPsiFile;
@@ -28,7 +29,7 @@ public class LspHighlight extends RainbowVisitor {
     if (!(element instanceof LeafPsiElement psi)) return;
     var file = psi.getContainingFile();
     var project = file.getProject();
-    var lsp = AyaStartup.of(project);
+    var lsp = AyaLsp.of(project);
     if (lsp == null) return;
     var range = element.getTextRange();
     var kind = lsp.highlight(file, range);

@@ -5,6 +5,7 @@
   <vendor>Aya Prover</vendor>
 
   <depends>com.intellij.modules.platform</depends>
+  <depends>com.intellij.java</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity
@@ -33,6 +34,17 @@
     <additionalTextAttributes
       scheme="Darcula"
       file="colorSchemes/ayaSyntaxHighlight.xml"/>
+
+    <applicationConfigurable
+      parentId="language"
+      instance="org.aya.intellij.settings.AyaSettingsConfigurable"
+      id="org.aya.intellij.settings.AyaSettingsConfigurable"
+      displayName="Aya Prover"/>
+
+    <applicationService
+      serviceImplementation="org.aya.intellij.settings.AyaSettingsState"/>
+
+    <toolWindow factoryClass="org.aya.intellij.ui.AyaToolWindow" id="Aya Prover"/>
 
   </extensions>
 </idea-plugin>
