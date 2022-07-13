@@ -1,7 +1,12 @@
 package org.aya.intellij.lsp;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiFile;
@@ -13,6 +18,7 @@ import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaServer;
 import org.aya.lsp.server.AyaService;
+import org.aya.lsp.utils.Log;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
@@ -26,13 +32,32 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public record AyaLSP(
+public record AyaLsp(
   @NotNull AyaServer server,
   @NotNull MutableMap<Path, MutableMap<TextRange, HighlightResult.Kind>> highlightCache,
   @NotNull MutableSet<VirtualFile> libraryPathCache,
   @NotNull ExecutorService compilerPool
 ) implements AyaLanguageClient {
-  public AyaLSP() {
+  private static final @NotNull Key<AyaLsp> AYA_LSP = Key.create("intellij.aya.lsp");
+  private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
+
+  public static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
+    var lsp = new AyaLsp();
+    lsp.registerLibrary(ayaJson.getParent());
+    project.putUserData(AYA_LSP, lsp);
+    project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override public void after(@NotNull List<? extends VFileEvent> events) {
+        lsp.fireVfsEvent(events);
+      }
+    });
+    Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
+  }
+
+  public static @Nullable AyaLsp of(@NotNull Project project) {
+    return project.getUserData(AYA_LSP);
+  }
+
+  public AyaLsp() {
     this(new AyaServer(), MutableMap.create(), MutableSet.create(), Executors.newFixedThreadPool(1));
     server.connect(this);
   }
@@ -43,7 +68,7 @@ public record AyaLSP(
       .forEach(ev -> {
         var file = ev.getFile();
         if (isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX)) {
-          System.out.println("[intellij-aya] compiling, reason: aya source changed: " + file.getUrl());
+          Log.i("[intellij-aya] compiling, reason: aya source changed: %s", file.getUrl());
           compilerPool.execute(() -> service().loadFile(JB.canonicalize(file))
             .forEach(this::publishSyntaxHighlight));
         }
@@ -88,7 +113,13 @@ public record AyaLSP(
     // TODO: report problems in IDEA
   }
 
-  @Override public void logMessage(MessageParams message) {
+  @Override public void logMessage(@NotNull MessageParams message) {
+    switch (message.getType()) {
+      case Error -> LOG.error(message.getMessage());
+      case Warning -> LOG.warn(message.getMessage());
+      case Info -> LOG.info(message.getMessage());
+      case Log -> LOG.debug(message.getMessage());
+    }
   }
 
   @Override public void showMessage(MessageParams messageParams) {
