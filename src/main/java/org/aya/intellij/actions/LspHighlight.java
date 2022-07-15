@@ -18,8 +18,7 @@ import org.jetbrains.annotations.Nullable;
 public class LspHighlight extends RainbowVisitor {
   private static final HighlightInfoType SEMANTIC_TYPE = new HighlightInfoType.HighlightInfoTypeImpl(
     HighlightSeverity.TEXT_ATTRIBUTES,
-    SyntaxHighlight.LSP,
-    true);
+    SyntaxHighlight.LSP);
 
   @Override public boolean suitableForFile(@NotNull PsiFile file) {
     return file instanceof AyaPsiFile;
@@ -33,7 +32,8 @@ public class LspHighlight extends RainbowVisitor {
     if (lsp == null) return;
     var range = element.getTextRange();
     var kind = lsp.highlight(file, range);
-    render(element, choose(kind));
+    if (kind.isEmpty()) return;
+    render(element, choose(kind.get()));
   }
 
   @Override public @NotNull HighlightVisitor clone() {
@@ -48,7 +48,7 @@ public class LspHighlight extends RainbowVisitor {
       .create());
   }
 
-  private static @Nullable TextAttributesKey choose(@Nullable HighlightResult.Kind kind) {
+  private static @Nullable TextAttributesKey choose(@NotNull HighlightResult.Kind kind) {
     return switch (kind) {
       case FnDef -> SyntaxHighlight.FN_DEF;
       case DataDef -> SyntaxHighlight.DATA_DEF;
@@ -62,7 +62,7 @@ public class LspHighlight extends RainbowVisitor {
       case ConCall -> SyntaxHighlight.CON_CALL;
       case FieldCall -> SyntaxHighlight.FIELD_CALL;
       case PrimCall -> SyntaxHighlight.PRIM_CALL;
-      case default, null -> null;
+      case default -> null;
     };
   }
 }

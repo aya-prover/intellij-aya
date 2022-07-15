@@ -11,8 +11,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiFile;
 import kala.collection.Seq;
+import kala.collection.SeqLike;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
+import kala.control.Option;
 import org.aya.generic.Constants;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.server.AyaLanguageClient;
@@ -31,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 
 public record AyaLsp(
   @NotNull AyaServer server,
@@ -42,15 +45,16 @@ public record AyaLsp(
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
 
   public static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
+    Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
     var lsp = new AyaLsp();
     lsp.registerLibrary(ayaJson.getParent());
+    lsp.recompile();
     project.putUserData(AYA_LSP, lsp);
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override public void after(@NotNull List<? extends VFileEvent> events) {
         lsp.fireVfsEvent(events);
       }
     });
-    Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
   }
 
   public static @Nullable AyaLsp of(@NotNull Project project) {
@@ -65,14 +69,22 @@ public record AyaLsp(
   void fireVfsEvent(List<? extends VFileEvent> events) {
     Seq.wrapJava(events).view()
       .filterIsInstance(VFileContentChangeEvent.class)
-      .forEach(ev -> {
-        var file = ev.getFile();
-        if (isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX)) {
-          Log.i("[intellij-aya] compiling, reason: aya source changed: %s", file.getUrl());
-          compilerPool.execute(() -> service().loadFile(JB.canonicalize(file))
-            .forEach(this::publishSyntaxHighlight));
-        }
-      });
+      .forEach(ev -> recompile(ev.getFile()));
+  }
+
+  void recompile() {
+    recompile(() -> service().libraries().flatMap(service()::loadLibrary));
+  }
+
+  void recompile(@NotNull VirtualFile file) {
+    if (isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX)) {
+      Log.i("[intellij-aya] compiling, reason: aya source changed: %s", file.toNioPath());
+      recompile(() -> service().loadFile(JB.canonicalize(file)));
+    }
+  }
+
+  void recompile(@NotNull Supplier<SeqLike<HighlightResult>> compile) {
+    compilerPool.execute(() -> compile.get().forEach(this::publishSyntaxHighlight));
   }
 
   public @NotNull AyaService service() {
@@ -92,12 +104,12 @@ public record AyaLsp(
     return false;
   }
 
-  public @Nullable HighlightResult.Kind highlight(@NotNull PsiFile file, @NotNull TextRange range) {
+  public @NotNull Option<HighlightResult.Kind> highlight(@NotNull PsiFile file, @NotNull TextRange range) {
     var vf = file.getVirtualFile();
-    if (!JB.fileSupported(vf)) return null;
+    if (!JB.fileSupported(vf)) return Option.none();
     var path = vf.toNioPath();
     var fileCache = highlightCache.getOrNull(path);
-    return fileCache == null ? null : fileCache.getOrNull(range);
+    return fileCache == null ? Option.none() : fileCache.getOption(range);
   }
 
   @Override public void publishSyntaxHighlight(@NotNull HighlightResult highlight) {
