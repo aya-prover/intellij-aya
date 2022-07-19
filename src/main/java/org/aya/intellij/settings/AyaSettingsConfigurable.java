@@ -1,7 +1,6 @@
 package org.aya.intellij.settings;
 
 import com.intellij.openapi.options.Configurable;
-import org.aya.intellij.ui.AyaSettingsUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
