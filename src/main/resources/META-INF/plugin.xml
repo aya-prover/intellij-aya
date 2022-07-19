@@ -28,6 +28,9 @@
       language="Aya"
       implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
 
+    <configurationType implementation="org.aya.intellij.run.AyaTyckRunConfigType"/>
+    <runConfigurationProducer implementation="org.aya.intellij.run.AyaTyckRunConfigProducer"/>
+
     <runLineMarkerContributor
       language="Aya"
       implementationClass="org.aya.intellij.run.AyaRunLineMarkerContributor"/>
