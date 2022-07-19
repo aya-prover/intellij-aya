@@ -1,7 +1,7 @@
 {
   parserClass='org.aya.intellij.parser.AyaPsiParser'
   implements='org.aya.intellij.psi.AyaPsiElement'
-  extends='org.aya.intellij.psi.AyaPsiElementImpl'
+  extends='org.aya.intellij.psi.impl.AyaPsiElementImpl'
 
   elementTypeHolderClass='org.aya.intellij.psi.AyaPsiElementTypes'
   elementTypeClass='org.aya.intellij.psi.AyaPsiElementType'
@@ -11,6 +11,8 @@
   psiImplClassSuffix='Impl'
   psiPackage='org.aya.intellij.psi.concrete'
   psiImplPackage='org.aya.intellij.psi.concrete.impl'
+
+  psiImplUtilClass="org.aya.intellij.psi.impl.AyaPsiImplUtils"
 
   tokens = [
     // ---- AyaLexer begin: Keywords
@@ -166,7 +168,11 @@ decl ::= KW_PRIVATE?
        | structDecl
        | dataDecl
        | primDecl
-       )
+       ) {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedElement"
+  methods=[setName getNameIdentifier]
+}
 
 assoc ::= KW_INFIX | KW_INFIXL | KW_INFIXR
 
@@ -192,13 +198,20 @@ structDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_STRUCT declNameOrInfix 
 primDecl ::= KW_PRIM weakId tele* type?
 
 field ::=            declNameOrInfix tele* type? IMPLIES expr bindBlock?
-        | KW_COERCE? declNameOrInfix tele* type  clauses?     bindBlock?
-
+        | KW_COERCE? declNameOrInfix tele* type  clauses?     bindBlock? {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedElement"
+  methods=[setName getNameIdentifier]
+}
 
 dataDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
 
 dataBody ::= dataCtorClause
-           | (BAR dataCtor)
+           | (BAR dataCtor) {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedElement"
+  methods=[setName getNameIdentifier]
+}
 
 dataCtor ::= KW_COERCE? declNameOrInfix tele* clauses? bindBlock?
 
@@ -300,7 +313,11 @@ intervalExpr ::= KW_INTERVAL
 
 tele ::= teleLit
        | teleEx
-       | teleIm
+       | teleIm {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedElement"
+  methods=[setName getNameIdentifier isLambdaOrForallTele]
+}
 
 teleLit ::= literal
 teleEx ::= LPAREN teleBinder RPAREN
