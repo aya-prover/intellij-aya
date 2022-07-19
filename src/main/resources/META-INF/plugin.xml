@@ -28,6 +28,10 @@
       language="Aya"
       implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
 
+    <runLineMarkerContributor
+      language="Aya"
+      implementationClass="org.aya.intellij.run.AyaRunLineMarkerContributor"/>
+
     <colorSettingsPage
       implementation="org.aya.intellij.settings.AyaColorSettingsPage"/>
 
@@ -45,6 +49,5 @@
       serviceImplementation="org.aya.intellij.settings.AyaSettingsState"/>
 
     <toolWindow factoryClass="org.aya.intellij.ui.AyaToolWindow" id="Aya Prover"/>
-
   </extensions>
 </idea-plugin>
