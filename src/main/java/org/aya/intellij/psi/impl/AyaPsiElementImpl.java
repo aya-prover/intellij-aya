@@ -1,4 +1,4 @@
-package org.aya.intellij.psi;
+package org.aya.intellij.psi.impl;
 
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
