@@ -18,6 +18,7 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
+import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.Constants;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.lsp.actions.GotoDefinition;
@@ -26,6 +27,8 @@ import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaServer;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Log;
+import org.aya.lsp.utils.Resolver;
+import org.aya.ref.Var;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.MessageActionItem;
@@ -108,14 +111,24 @@ public final class AyaLsp implements AyaLanguageClient {
     return false;
   }
 
+  public @Nullable LibrarySource sourceFileOf(@NotNull AyaPsiElement element) {
+    return service.find(JB.canonicalize(element.getContainingFile().getVirtualFile()));
+  }
+
   public @NotNull SeqView<PsiElement> gotoDefinition(@NotNull AyaPsiElement element) {
     var proj = element.getProject();
-    var source = service.find(JB.canonicalize(element.getContainingFile().getVirtualFile()));
+    var source = sourceFileOf(element);
     return source == null
       ? SeqView.empty()
       : GotoDefinition.findDefs(source, JB.toXyPosition(element), service.libraries())
       .map(WithPos::data)
       .mapNotNull(pos -> elementAt(proj, pos));
+  }
+
+  public @NotNull SeqView<WithPos<Var>> resolveVar(@NotNull AyaPsiElement element) {
+    var source = sourceFileOf(element);
+    if (source == null) return SeqView.empty();
+    return Resolver.resolveVar(source, JB.toXyPosition(element));
   }
 
   private @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
