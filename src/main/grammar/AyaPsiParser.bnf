@@ -262,7 +262,13 @@ listComp ::= (doBinding COMMA)* doBinding
 doBlock ::= (doBlockContent COMMA)* doBlockContent
 doBlockContent ::= doBinding | expr
 
-newArg ::= BAR weakId ids IMPLIES expr
+newArgField ::= weakId
+newArgTele ::= weakId {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedElement"
+  methods=[setName getNameIdentifier]
+}
+newArg ::= BAR newArgField newArgTele* IMPLIES expr
 // New body new body but you!
 newBody ::= LBRACE newArg* RBRACE
 

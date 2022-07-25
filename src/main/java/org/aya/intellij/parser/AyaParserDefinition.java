@@ -25,13 +25,17 @@ import org.jetbrains.annotations.Nullable;
 public class AyaParserDefinition extends SyntaxHighlighterFactory implements ParserDefinition {
   private final @NotNull IFileElementType FILE = new IFileElementType(AyaLanguage.INSTANCE);
 
+  public static @NotNull Lexer createLexer() {
+    return new FlexAdapter(new _AyaPsiLexer(null));
+  }
+
   @Override
   public @NotNull SyntaxHighlighter getSyntaxHighlighter(@Nullable Project project, @Nullable VirtualFile virtualFile) {
     return new SyntaxHighlight();
   }
 
   @Override public @NotNull Lexer createLexer(Project project) {
-    return new FlexAdapter(new _AyaPsiLexer());
+    return createLexer();
   }
 
   @Override public @NotNull PsiParser createParser(Project project) {

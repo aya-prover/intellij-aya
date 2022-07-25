@@ -19,19 +19,36 @@ public class AyaPsiImplUtils {
     return child.getPsi();
   }
 
-  public static @NotNull PsiElement setName(@NotNull AyaPsiNamedElement element, @NotNull String newName) throws IncorrectOperationException {
-    var nameId = getNameIdentifier(element);
+  private static @NotNull AyaPsiElement setNameIdToWeakIdChild(@NotNull AyaPsiElement element, @NotNull String newName, @Nullable PsiElement nameId) {
     if (nameId == null) throw new IncorrectOperationException("No name identifier found for " + element.getText());
     var newElement = AyaPsiFactory.createLeafFromText(element.getProject(), newName);
     nameId.replace(newElement);
     return element;
   }
 
-  public static @Nullable PsiElement getNameIdentifier(@NotNull AyaPsiNamedElement element) {
-    var declNameOrInfix = PsiTreeUtil.findChildOfType(element, AyaPsiDeclNameOrInfix.class);
-    var weakId = PsiTreeUtil.findChildOfType(declNameOrInfix, AyaPsiWeakId.class);
+  private static @Nullable PsiElement getNameIdFromWeakIdChild(@Nullable AyaPsiElement element) {
+    var weakId = PsiTreeUtil.findChildOfType(element, AyaPsiWeakId.class);
     var id = findChild(weakId, AyaPsiElementTypes.ID);
     return id != null ? id : findChild(weakId, AyaPsiElementTypes.REPL_COMMAND);
+  }
+
+  public static @NotNull PsiElement setName(@NotNull AyaPsiNamedElement element, @NotNull String newName) throws IncorrectOperationException {
+    var nameId = getNameIdentifier(element);
+    return setNameIdToWeakIdChild(element, newName, nameId);
+  }
+
+  public static @Nullable PsiElement getNameIdentifier(@NotNull AyaPsiNamedElement element) {
+    var declNameOrInfix = PsiTreeUtil.findChildOfType(element, AyaPsiDeclNameOrInfix.class);
+    return getNameIdFromWeakIdChild(declNameOrInfix);
+  }
+
+  public static @NotNull PsiElement setName(@NotNull AyaPsiNewArgTele tele, @NotNull String newName) {
+    var nameId = getNameIdentifier(tele);
+    return setNameIdToWeakIdChild(tele, newName, nameId);
+  }
+
+  public static @Nullable PsiElement getNameIdentifier(@NotNull AyaPsiNewArgTele tele) {
+    return getNameIdFromWeakIdChild(tele);
   }
 
   public static boolean isLambdaOrForallTele(@NotNull AyaPsiTele tele) {
