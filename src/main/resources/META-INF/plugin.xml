@@ -28,14 +28,23 @@
       language="Aya"
       implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
 
-    <configurationType implementation="org.aya.intellij.run.AyaTyckRunConfigType"/>
-    <runConfigurationProducer implementation="org.aya.intellij.run.AyaTyckRunConfigProducer"/>
+    <configurationType
+      implementation="org.aya.intellij.run.AyaTyckRunConfigType"/>
+    <runConfigurationProducer
+      implementation="org.aya.intellij.run.AyaTyckRunConfigProducer"/>
 
     <runLineMarkerContributor
       language="Aya"
       implementationClass="org.aya.intellij.run.AyaRunLineMarkerContributor"/>
 
-    <psi.referenceContributor implementation="org.aya.intellij.actions.ReferenceContributor"/>
+    <psi.referenceContributor
+      implementation="org.aya.intellij.actions.ReferenceContributor"/>
+    <lang.findUsagesProvider
+      language="Aya"
+      implementationClass="org.aya.intellij.actions.FindUsages"/>
+    <lang.refactoringSupport
+      language="Aya"
+      implementationClass="org.aya.intellij.actions.RefactoringSupport"/>
 
     <colorSettingsPage
       implementation="org.aya.intellij.settings.AyaColorSettingsPage"/>
@@ -53,6 +62,8 @@
     <applicationService
       serviceImplementation="org.aya.intellij.settings.AyaSettingsState"/>
 
-    <toolWindow factoryClass="org.aya.intellij.ui.AyaToolWindow" id="Aya Prover"/>
+    <toolWindow
+      factoryClass="org.aya.intellij.ui.AyaToolWindow"
+      id="Aya Prover"/>
   </extensions>
 </idea-plugin>
