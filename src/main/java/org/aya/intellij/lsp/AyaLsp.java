@@ -9,18 +9,25 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
+import kala.collection.SeqView;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
 import org.aya.generic.Constants;
+import org.aya.intellij.psi.AyaPsiElement;
+import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaServer;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Log;
+import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
@@ -35,14 +42,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
-public record AyaLsp(
-  @NotNull AyaServer server,
-  @NotNull MutableMap<Path, MutableMap<TextRange, HighlightResult.Kind>> highlightCache,
-  @NotNull MutableSet<VirtualFile> libraryPathCache,
-  @NotNull ExecutorService compilerPool
-) implements AyaLanguageClient {
+public final class AyaLsp implements AyaLanguageClient {
   private static final @NotNull Key<AyaLsp> AYA_LSP = Key.create("intellij.aya.lsp");
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
+  private final @NotNull AyaServer server;
+  private final @NotNull AyaService service;
+  private final @NotNull MutableMap<Path, MutableMap<TextRange, HighlightResult.Kind>> highlightCache = MutableMap.create();
+  private final @NotNull MutableSet<VirtualFile> libraryPathCache = MutableSet.create();
+  private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
   public static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
@@ -62,7 +69,8 @@ public record AyaLsp(
   }
 
   public AyaLsp() {
-    this(new AyaServer(), MutableMap.create(), MutableSet.create(), Executors.newFixedThreadPool(1));
+    this.server = new AyaServer();
+    this.service = server.getTextDocumentService();
     server.connect(this);
   }
 
@@ -73,13 +81,13 @@ public record AyaLsp(
   }
 
   void recompile() {
-    recompile(() -> service().libraries().flatMap(service()::loadLibrary));
+    recompile(() -> service.libraries().flatMap(service::loadLibrary));
   }
 
   void recompile(@NotNull VirtualFile file) {
     if (isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX)) {
       Log.i("[intellij-aya] compiling, reason: aya source changed: %s", file.toNioPath());
-      recompile(() -> service().loadFile(JB.canonicalize(file)));
+      recompile(() -> service.loadFile(JB.canonicalize(file)));
     }
   }
 
@@ -87,13 +95,9 @@ public record AyaLsp(
     compilerPool.execute(() -> compile.get().forEach(this::publishSyntaxHighlight));
   }
 
-  public @NotNull AyaService service() {
-    return server.getTextDocumentService();
-  }
-
   public void registerLibrary(@NotNull VirtualFile library) {
     libraryPathCache.add(library);
-    service().registerLibrary(JB.canonicalize(library));
+    service.registerLibrary(JB.canonicalize(library));
   }
 
   public boolean isInLibrary(@Nullable VirtualFile file) {
@@ -102,6 +106,24 @@ public record AyaLsp(
       file = file.getParent();
     }
     return false;
+  }
+
+  public @NotNull SeqView<PsiElement> gotoDefinition(@NotNull AyaPsiElement element) {
+    var proj = element.getProject();
+    var source = service.find(JB.canonicalize(element.getContainingFile().getVirtualFile()));
+    return source == null
+      ? SeqView.empty()
+      : GotoDefinition.findDefs(source, JB.toXyPosition(element), service.libraries())
+      .map(WithPos::data)
+      .mapNotNull(pos -> elementAt(proj, pos));
+  }
+
+  private @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
+    return pos.file().underlying()
+      .mapNotNull(path -> VirtualFileManager.getInstance().findFileByNioPath(path))
+      .mapNotNull(virtualFile -> PsiManager.getInstance(project).findFile(virtualFile))
+      .mapNotNull(psiFile -> psiFile.findElementAt(JB.toRange(pos).getStartOffset()))
+      .getOrNull();
   }
 
   public @NotNull Option<HighlightResult.Kind> highlight(@NotNull PsiFile file, @NotNull TextRange range) {

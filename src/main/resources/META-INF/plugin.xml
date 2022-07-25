@@ -35,6 +35,8 @@
       language="Aya"
       implementationClass="org.aya.intellij.run.AyaRunLineMarkerContributor"/>
 
+    <psi.referenceContributor implementation="org.aya.intellij.actions.ReferenceContributor"/>
+
     <colorSettingsPage
       implementation="org.aya.intellij.settings.AyaColorSettingsPage"/>
 
