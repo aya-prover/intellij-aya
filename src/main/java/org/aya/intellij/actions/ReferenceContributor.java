@@ -1,10 +1,11 @@
 package org.aya.intellij.actions;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.concrete.AyaPsiAtomBindPattern;
 import org.aya.intellij.psi.concrete.AyaPsiNewArgField;
@@ -13,8 +14,6 @@ import org.aya.intellij.psi.concrete.AyaPsiRefExpr;
 import org.aya.intellij.psi.ref.AyaPsiReference;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 /**
  * Traverse referring terms and collect references to {@link org.aya.ref.Var}s.
  *
@@ -22,38 +21,25 @@ import java.util.Arrays;
  * @see AyaPsiReference#resolve()
  */
 public class ReferenceContributor extends PsiReferenceContributor {
-  private static final @NotNull ImmutableSeq<Class<? extends AyaPsiElement>> REFERRING_TERMS = ImmutableSeq.of(
-    AyaPsiProjFixId.class,
-    AyaPsiNewArgField.class,
-    AyaPsiRefExpr.class,
-    AyaPsiAtomBindPattern.class
+  /** @implSpec Keep sync with {@link org.aya.lsp.utils.Resolver.ReferringResolver} */
+  public static final ElementPattern<AyaPsiElement> REFERRING_TERMS = StandardPatterns.or(
+    PlatformPatterns.psiElement(AyaPsiProjFixId.class),
+    PlatformPatterns.psiElement(AyaPsiNewArgField.class),
+    PlatformPatterns.psiElement(AyaPsiRefExpr.class),
+    PlatformPatterns.psiElement(AyaPsiAtomBindPattern.class)
   );
 
-  private final @NotNull Provider provider = new Provider();
-
   @Override public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
-    REFERRING_TERMS.forEach(pat -> registrar.registerReferenceProvider(
-      PlatformPatterns.psiElement(pat),
-      provider
-    ));
+    registrar.registerReferenceProvider(REFERRING_TERMS, new PsiReferenceProvider() {
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
+        if (!(element instanceof AyaPsiElement psi)) return PsiReference.EMPTY_ARRAY;
+        return pack(psi);
+      }
+    });
   }
 
-  private static final class Provider extends PsiReferenceProvider {
-    @Override
-    public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-      return switch (element) {
-        case AyaPsiProjFixId fix -> pack(fix);
-        case AyaPsiNewArgField field -> pack(field);
-        case AyaPsiRefExpr ref -> pack(ref);
-        case AyaPsiAtomBindPattern pat -> pack(pat);
-        default -> PsiReference.EMPTY_ARRAY;
-      };
-    }
-
-    private static PsiReference @NotNull [] pack(@NotNull AyaPsiElement... element) {
-      return Arrays.stream(element)
-        .map(e -> new AyaPsiReference(e, new TextRange(0, e.getTextLength())))
-        .toArray(PsiReference[]::new);
-    }
+  @NotNull private static PsiReference[] pack(AyaPsiElement psi) {
+    return new PsiReference[]{new AyaPsiReference(psi, new TextRange(0, psi.getTextLength()))};
   }
 }

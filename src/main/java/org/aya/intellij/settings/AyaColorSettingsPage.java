@@ -36,6 +36,7 @@ public class AyaColorSettingsPage implements ColorSettingsPage, RainbowColorSett
     new AttributesDescriptor("Struct call", SyntaxHighlight.STRUCT_CALL),
     new AttributesDescriptor("Field definition", SyntaxHighlight.FIELD_DEF),
     new AttributesDescriptor("Field call", SyntaxHighlight.FIELD_CALL),
+    new AttributesDescriptor("Generalized variable", SyntaxHighlight.GENERALIZE),
   };
 
   @Override public @Nullable Icon getIcon() {
@@ -69,7 +70,7 @@ public class AyaColorSettingsPage implements ColorSettingsPage, RainbowColorSett
   }
 
   @Override public boolean isRainbowType(TextAttributesKey type) {
-    return SyntaxHighlight.LSP.equals(type);
+    return SyntaxHighlight.SEMANTICS.equals(type);
   }
 
   @Override public @Nullable Language getLanguage() {

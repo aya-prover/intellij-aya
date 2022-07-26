@@ -3,7 +3,6 @@ package org.aya.intellij.lsp;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -14,9 +13,7 @@ import com.intellij.psi.PsiManager;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
-import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import kala.control.Option;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
@@ -24,6 +21,7 @@ import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.Constants;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiNamedElement;
+import org.aya.intellij.psi.ref.AyaPsiReference;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.server.AyaLanguageClient;
@@ -41,19 +39,25 @@ import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
+/**
+ * Bridges between the Aya LSP and the IntelliJ platform.
+ * To decouple as much as possible, only the most important features (i.e. {@link AyaPsiReference})
+ * are implemented by directly calling the LSP.
+ * Other features are implemented by using Intellij platform APIs. See {@link org.aya.intellij.actions.SemanticHighlight}
+ * for example, which makes use of {@link AyaPsiReference#resolve()}
+ * instead of {@link #publishSyntaxHighlight(HighlightResult)} in this class.
+ */
 public final class AyaLsp implements AyaLanguageClient {
   private static final @NotNull Key<AyaLsp> AYA_LSP = Key.create("intellij.aya.lsp");
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
   private final @NotNull AyaServer server;
   private final @NotNull AyaService service;
-  private final @NotNull MutableMap<Path, MutableMap<TextRange, HighlightResult.Kind>> highlightCache = MutableMap.create();
   private final @NotNull MutableSet<VirtualFile> libraryPathCache = MutableSet.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
@@ -120,7 +124,10 @@ public final class AyaLsp implements AyaLanguageClient {
   }
 
   void recompile(@NotNull Supplier<SeqLike<HighlightResult>> compile) {
-    compilerPool.execute(() -> compile.get().forEach(this::publishSyntaxHighlight));
+    compilerPool.execute(() -> {
+      Log.i("[intellij-aya] Compilation started.");
+      compile.get().forEach(this::publishSyntaxHighlight);
+    });
   }
 
   public void registerLibrary(@NotNull VirtualFile library) {
@@ -170,23 +177,7 @@ public final class AyaLsp implements AyaLanguageClient {
       .getOrNull();
   }
 
-  /** Compute highlight for the psi element */
-  public @NotNull Option<HighlightResult.Kind> highlight(@NotNull PsiElement element) {
-    var range = element.getTextRange();
-    var vf = element.getContainingFile().getVirtualFile();
-    if (!JB.fileSupported(vf)) return Option.none();
-    var path = vf.toNioPath();
-    var fileCache = highlightCache.getOrNull(path);
-    return fileCache == null ? Option.none() : fileCache.getOption(range);
-  }
-
   @Override public void publishSyntaxHighlight(@NotNull HighlightResult highlight) {
-    var path = JB.canonicalize(highlight.uri());
-    highlight.symbols().forEach(sym -> {
-      var range = JB.toRange(sym.sourcePos().value);
-      var kind = sym.kind();
-      highlightCache.getOrPut(path, MutableMap::create).put(range, kind);
-    });
   }
 
   @Override public void publishDiagnostics(@NotNull PublishDiagnosticsParams diagnostics) {
