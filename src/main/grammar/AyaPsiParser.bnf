@@ -351,7 +351,10 @@ qIdsComma ::= (qualifiedId COMMA)* qualifiedId?
 ids ::= weakId*
 idsNonEmpty ::= weakId+
 type ::= COLON expr { pin = 1 }
-doBinding ::= weakId LARROW expr
+doBinding ::= weakId LARROW expr {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
+}
 
 qualifiedId ::= weakId (COLON2 weakId)*
 weakId ::= ID | REPL_COMMAND
