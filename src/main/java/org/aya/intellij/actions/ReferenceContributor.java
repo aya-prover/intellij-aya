@@ -6,7 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.intellij.psi.AyaPsiElement;
-import org.aya.intellij.psi.concrete.AyaPsiAtomPattern;
+import org.aya.intellij.psi.concrete.AyaPsiAtomBindPattern;
 import org.aya.intellij.psi.concrete.AyaPsiNewArgField;
 import org.aya.intellij.psi.concrete.AyaPsiProjFixId;
 import org.aya.intellij.psi.concrete.AyaPsiRefExpr;
@@ -26,7 +26,7 @@ public class ReferenceContributor extends PsiReferenceContributor {
     AyaPsiProjFixId.class,
     AyaPsiNewArgField.class,
     AyaPsiRefExpr.class,
-    AyaPsiAtomPattern.class
+    AyaPsiAtomBindPattern.class
   );
 
   private final @NotNull Provider provider = new Provider();
@@ -45,7 +45,7 @@ public class ReferenceContributor extends PsiReferenceContributor {
         case AyaPsiProjFixId fix -> pack(fix);
         case AyaPsiNewArgField field -> pack(field);
         case AyaPsiRefExpr ref -> pack(ref);
-        case AyaPsiAtomPattern pat -> pack(pat);
+        case AyaPsiAtomBindPattern pat -> pack(pat);
         default -> PsiReference.EMPTY_ARRAY;
       };
     }

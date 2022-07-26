@@ -288,7 +288,10 @@ atomExPattern ::= LPAREN patterns RPAREN (KW_AS weakId)?
 atomImPattern ::= LBRACE patterns RBRACE (KW_AS weakId)?
 atomNumberPattern ::= NUMBER
 atomAbsurdPattern ::= LPAREN RPAREN
-atomBindPattern ::= weakId
+atomBindPattern ::= weakId {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
+}
 atomCalmFacePattern ::= CALM_FACE
 
 literal ::= refExpr
