@@ -12,7 +12,7 @@
   psiPackage='org.aya.intellij.psi.concrete'
   psiImplPackage='org.aya.intellij.psi.concrete.impl'
 
-  psiImplUtilClass="org.aya.intellij.psi.utils.AyaPsiImplUtils"
+  psiImplUtilClass="org.aya.intellij.psi.utils.AyaPsiUtils"
 
   tokens = [
     // ---- AyaLexer begin: Keywords
@@ -119,8 +119,6 @@
 
   extends("fnDecl|structDecl|primDecl|dataDecl") = decl
   extends("stmt|decl|importCmd|openCmd|module|remark|generalize") = stmt
-  extends("teleLit|teleEx|teleIm") = tele
-  extends("teleBinderTyped|teleBinderAnonymous") = teleBinder
 }
 
 program ::= stmts
@@ -169,9 +167,8 @@ decl ::= KW_PRIVATE?
        | dataDecl
        | primDecl
        ) {
-  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
-  implements="org.aya.intellij.psi.AyaPsiNamedElement"
-  methods=[setName getNameIdentifier]
+  mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
+  implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
 assoc ::= KW_INFIX | KW_INFIXL | KW_INFIXR
@@ -199,18 +196,16 @@ primDecl ::= KW_PRIM weakId tele* type?
 
 field ::=            declNameOrInfix tele* type? IMPLIES expr bindBlock?
         | KW_COERCE? declNameOrInfix tele* type  clauses?     bindBlock? {
-  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
-  implements="org.aya.intellij.psi.AyaPsiNamedElement"
-  methods=[setName getNameIdentifier]
+  mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
+  implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
 dataDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
 
 dataBody ::= dataCtorClause
            | (BAR dataCtor) {
-  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
-  implements="org.aya.intellij.psi.AyaPsiNamedElement"
-  methods=[setName getNameIdentifier]
+  mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
+  implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
 dataCtor ::= KW_COERCE? declNameOrInfix tele* clauses? bindBlock?
@@ -245,9 +240,9 @@ appExpr ::= expr argument+
 arrowExpr ::= expr TO expr { rightAssociative = true }
 projExpr ::= expr projFix
 piExpr ::= KW_PI tele+ TO expr
-forallExpr ::= KW_FORALL tele+ TO expr
+forallExpr ::= KW_FORALL lambdaTele+ TO expr
 sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
-lambdaExpr ::= KW_LAMBDA tele+ (IMPLIES expr)?
+lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 idiomExpr ::= LIDIOM idiomBlock? RIDIOM
@@ -263,12 +258,7 @@ doBlock ::= (doBlockContent COMMA)* doBlockContent
 doBlockContent ::= doBinding | expr
 
 newArgField ::= weakId
-newArgTele ::= weakId {
-  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
-  implements="org.aya.intellij.psi.AyaPsiNamedElement"
-  methods=[setName getNameIdentifier]
-}
-newArg ::= BAR newArgField newArgTele* IMPLIES expr
+newArg ::= BAR newArgField teleParamName* IMPLIES expr
 // New body new body but you!
 newBody ::= LBRACE newArg* RBRACE
 
@@ -318,13 +308,10 @@ litStringExpr ::= STRING
 univExpr ::= KW_TYPE
 intervalExpr ::= KW_INTERVAL
 
+// tele is always typed
 tele ::= teleLit
        | teleEx
-       | teleIm {
-  mixin="org.aya.intellij.psi.impl.AyaPsiNamedElementImpl"
-  implements="org.aya.intellij.psi.AyaPsiNamedElement"
-  methods=[setName getNameIdentifier isLambdaOrForallTele]
-}
+       | teleIm
 
 teleLit ::= literal
 teleEx ::= LPAREN teleBinder RPAREN
@@ -333,9 +320,26 @@ teleIm ::= LBRACE teleBinder RBRACE
 // Explicit arguments may be anonymous
 teleBinder ::= teleBinderTyped
              | teleBinderAnonymous
+teleBinderTyped ::= KW_PATTERN? teleParamName+ type
+teleBinderAnonymous ::= expr
 
-teleBinderTyped ::= KW_PATTERN? idsNonEmpty type
-teleBinderAnonymous ::= expr  // for lambda, the expr should be literal
+teleParamName ::= weakId {
+  mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
+  implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
+}
+
+// lambda tele is always named
+lambdaTele ::= lambdaTeleLit
+             | lambdaTeleEx
+             | lambdaTeleIm
+
+lambdaTeleLit ::= teleParamName
+lambdaTeleEx ::= LPAREN lambdaTeleBinder RPAREN
+lambdaTeleIm ::= LBRACE lambdaTeleBinder RBRACE
+
+lambdaTeleBinder ::= teleBinderTyped
+                   | lambdaTeleBinderAnonymous
+lambdaTeleBinderAnonymous ::= teleParamName
 
 // utilities
 exprList ::= (expr COMMA)* expr
