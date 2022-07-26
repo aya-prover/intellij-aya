@@ -5,6 +5,7 @@ import com.intellij.execution.actions.LazyRunConfigurationProducer;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.concrete.AyaPsiDecl;
 import org.jetbrains.annotations.NotNull;
@@ -15,15 +16,15 @@ public class AyaTyckRunConfigProducer extends LazyRunConfigurationProducer<AyaTy
     var psi = sourceElement.get();
     if (!AyaTyckRunConfig.isTyckUnit(psi)) return false;
     switch (psi) {
-      // TODO: implement some psi helpers
       case AyaPsiDecl decl -> {
-        config.setName("TypeCheck <this-definition>");
-        config.moduleName("TODO Module");
-        config.definitionName("TODO Definition");
+        var defName = decl.nameOrEmpty();
+        config.setName("TypeCheck " + defName);
+        config.moduleName(QualifiedID.join(decl.getContainingModuleName()));
+        config.definitionName(defName);
       }
       case AyaPsiFile file -> {
         config.setName("TypeCheck " + file.getName());
-        config.moduleName("TODO Module");
+        config.moduleName(QualifiedID.join(file.getContainingModuleName()));
       }
       default -> {}
     }

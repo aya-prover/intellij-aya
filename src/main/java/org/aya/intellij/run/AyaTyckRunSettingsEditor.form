@@ -27,7 +27,7 @@
         </constraints>
         <properties>
           <labelLocation value="West"/>
-          <text value="Definition name (leak blank to type-check the whole module)"/>
+          <text value="Definition name (leave blank for file)"/>
         </properties>
       </component>
       <vspacer id="93bd6">
