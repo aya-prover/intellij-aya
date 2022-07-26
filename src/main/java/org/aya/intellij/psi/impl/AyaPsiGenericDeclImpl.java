@@ -18,7 +18,10 @@ public class AyaPsiGenericDeclImpl extends AyaPsiNamedElementImpl implements Aya
 
   @Override public @Nullable PsiElement getNameIdentifier() {
     var declNameOrInfix = PsiTreeUtil.findChildOfType(this, AyaPsiDeclNameOrInfix.class);
-    return AyaPsiUtils.getNameIdFromWeakIdChild(declNameOrInfix);
+    return declNameOrInfix != null
+      ? AyaPsiUtils.getNameIdFromWeakIdChild(declNameOrInfix)
+      // primitive decls directly use weakId, instead of declNameOrInfix.
+      : AyaPsiUtils.getNameIdFromWeakIdChild(this);
   }
 
   @Override public PsiElement setName(@NlsSafe @NotNull String name) throws IncorrectOperationException {
