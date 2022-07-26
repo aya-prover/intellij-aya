@@ -1,5 +1,6 @@
 package org.aya.intellij.actions
 
+import com.intellij.ide.highlighter.JavaHighlightingColors
 import com.intellij.lexer.FlexAdapter
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
@@ -33,7 +34,7 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
     AyaPsiElementTypes.LGOAL, AyaPsiElementTypes.RGOAL -> pack(GOAL)
 
     TokenType.BAD_CHARACTER -> pack(HighlighterColors.BAD_CHARACTER)
-    else -> pack(LSP)
+    else -> pack(SEMANTICS)
   }
 
   companion object {
@@ -88,6 +89,8 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
     @JvmField
     val CON_CALL = TextAttributesKey.createTextAttributesKey("AYA_CON_CALL", DefaultLanguageHighlighterColors.INSTANCE_METHOD)
     @JvmField
-    val LSP = TextAttributesKey.createTextAttributesKey("AYA_SEMANTIC")
+    val GENERALIZE = TextAttributesKey.createTextAttributesKey("AYA_GENERALIZE", JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES)
+    @JvmField
+    val SEMANTICS = TextAttributesKey.createTextAttributesKey("AYA_SEMANTIC")
   }
 }

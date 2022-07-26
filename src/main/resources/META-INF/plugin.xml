@@ -22,7 +22,7 @@
       implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
 
     <highlightVisitor
-      implementation="org.aya.intellij.actions.LspHighlight"/>
+      implementation="org.aya.intellij.actions.SemanticHighlight"/>
 
     <lang.syntaxHighlighterFactory
       language="Aya"

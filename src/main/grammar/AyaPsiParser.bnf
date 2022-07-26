@@ -189,11 +189,14 @@ fnModifiers ::= KW_OPAQUE
               | KW_OVERLAP
               | KW_PATTERN
 
-structDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)? (BAR field)* bindBlock?
+structDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)? (BAR structField)* bindBlock?
 
-primDecl ::= KW_PRIM weakId tele* type?
+// primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
+// This rule is used for convenience in semantic highlight.
+primName ::= weakId
+primDecl ::= KW_PRIM primName tele* type?
 
-field ::=            declNameOrInfix tele* type? IMPLIES expr bindBlock?
+structField ::=      declNameOrInfix tele* type? IMPLIES expr bindBlock?
         | KW_COERCE? declNameOrInfix tele* type  clauses?     bindBlock? {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
