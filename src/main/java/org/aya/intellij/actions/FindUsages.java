@@ -43,6 +43,7 @@ public class FindUsages implements FindUsagesProvider {
       // which calls the Aya compiler who knows the truth. So constructor patterns will be described
       // by former cases like `AyaPsiFnDecl`, `AyaPsiDataDecl`, etc.
       case AyaPsiAtomBindPattern $ -> "Pattern Binding";
+      case AyaPsiDoBinding $ -> "do-notation Binding";
       default -> "";
     };
   }
