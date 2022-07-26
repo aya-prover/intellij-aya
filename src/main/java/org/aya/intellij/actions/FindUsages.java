@@ -35,8 +35,7 @@ public class FindUsages implements FindUsagesProvider {
       case AyaPsiPrimDecl $ -> "Primitive";
       case AyaPsiDataBody $ -> "Data Constructor";
       case AyaPsiField $ -> "Struct Field";
-      case AyaPsiTele $ -> "Telescopic Binding";
-      case AyaPsiNewArgTele $ -> "Telescopic Binding";
+      case AyaPsiTeleParamName $ -> "Telescopic Param";
       default -> "";
     };
   }
