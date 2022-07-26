@@ -1,4 +1,4 @@
-package org.aya.intellij.psi.impl;
+package org.aya.intellij.psi.utils;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
