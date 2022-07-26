@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import kala.collection.Seq;
 import kala.collection.SeqLike;
@@ -18,9 +17,13 @@ import kala.collection.SeqView;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.control.Option;
+import kala.function.CheckedConsumer;
+import kala.function.CheckedFunction;
+import kala.function.CheckedSupplier;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.Constants;
 import org.aya.intellij.psi.AyaPsiElement;
+import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.server.AyaLanguageClient;
@@ -67,8 +70,30 @@ public final class AyaLsp implements AyaLanguageClient {
     });
   }
 
-  public static @Nullable AyaLsp of(@NotNull Project project) {
+  /**
+   * A fallback behavior when LSP is not available is required.
+   * Use {@link #use(Project, CheckedConsumer)} or {@link #use(Project, CheckedFunction, CheckedSupplier)} instead.
+   */
+  private static @Nullable AyaLsp of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
+  }
+
+  public static <E extends Throwable> void use(
+    @NotNull Project project,
+    @NotNull CheckedConsumer<AyaLsp, E> block
+  ) throws E {
+    var lsp = of(project);
+    if (lsp != null) block.acceptChecked(lsp);
+  }
+
+  public static <R, E extends Throwable> R use(
+    @NotNull Project project,
+    @NotNull CheckedFunction<AyaLsp, R, E> block,
+    @NotNull CheckedSupplier<R, E> orElse
+  ) throws E {
+    var lsp = of(project);
+    if (lsp == null) return orElse.getChecked();
+    return block.applyChecked(lsp);
   }
 
   public AyaLsp() {
@@ -115,6 +140,11 @@ public final class AyaLsp implements AyaLanguageClient {
     return service.find(JB.canonicalize(element.getContainingFile().getVirtualFile()));
   }
 
+  /**
+   * Jump to the defining {@link Var} from the psi element position.
+   *
+   * @return The psi element that defined the var.
+   */
   public @NotNull SeqView<PsiElement> gotoDefinition(@NotNull AyaPsiElement element) {
     var proj = element.getProject();
     var source = sourceFileOf(element);
@@ -125,7 +155,8 @@ public final class AyaLsp implements AyaLanguageClient {
       .mapNotNull(pos -> elementAt(proj, pos));
   }
 
-  public @NotNull SeqView<WithPos<Var>> resolveVar(@NotNull AyaPsiElement element) {
+  /** Get the {@link Var} defined by the psi element. */
+  public @NotNull SeqView<WithPos<Var>> resolveVarDefinedBy(@NotNull AyaPsiNamedElement element) {
     var source = sourceFileOf(element);
     if (source == null) return SeqView.empty();
     return Resolver.resolveVar(source, JB.toXyPosition(element));
@@ -139,8 +170,10 @@ public final class AyaLsp implements AyaLanguageClient {
       .getOrNull();
   }
 
-  public @NotNull Option<HighlightResult.Kind> highlight(@NotNull PsiFile file, @NotNull TextRange range) {
-    var vf = file.getVirtualFile();
+  /** Compute highlight for the psi element */
+  public @NotNull Option<HighlightResult.Kind> highlight(@NotNull PsiElement element) {
+    var range = element.getTextRange();
+    var vf = element.getContainingFile().getVirtualFile();
     if (!JB.fileSupported(vf)) return Option.none();
     var path = vf.toNioPath();
     var fileCache = highlightCache.getOrNull(path);

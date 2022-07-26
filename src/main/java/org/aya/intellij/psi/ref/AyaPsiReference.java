@@ -16,9 +16,9 @@ public class AyaPsiReference extends PsiReferenceBase<AyaPsiElement> {
   }
 
   @Override public @Nullable PsiElement resolve() {
-    var lsp = AyaLsp.of(myElement.getProject());
-    if (lsp == null) return null;
-    var def = lsp.gotoDefinition(myElement).firstOrNull();
-    return PsiTreeUtil.getParentOfType(def, AyaPsiNamedElement.class);
+    return AyaLsp.use(myElement.getProject(), lsp -> {
+      var def = lsp.gotoDefinition(myElement).firstOrNull();
+      return PsiTreeUtil.getParentOfType(def, AyaPsiNamedElement.class);
+    }, () -> null);
   }
 }
