@@ -12,8 +12,6 @@
   psiPackage='org.aya.intellij.psi.concrete'
   psiImplPackage='org.aya.intellij.psi.concrete.impl'
 
-  psiImplUtilClass="org.aya.intellij.psi.utils.AyaPsiUtils"
-
   tokens = [
     // ---- AyaLexer begin: Keywords
     // add `KW_` prefix to avoid conflict with a AyaPsiTokenType name.
