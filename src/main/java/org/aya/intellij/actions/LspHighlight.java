@@ -26,14 +26,11 @@ public class LspHighlight extends RainbowVisitor {
 
   @Override public void visit(@NotNull PsiElement element) {
     if (!(element instanceof LeafPsiElement psi)) return;
-    var file = psi.getContainingFile();
-    var project = file.getProject();
-    var lsp = AyaLsp.of(project);
-    if (lsp == null) return;
-    var range = element.getTextRange();
-    var kind = lsp.highlight(file, range);
-    if (kind.isEmpty()) return;
-    render(element, choose(kind.get()));
+    AyaLsp.use(psi.getProject(), lsp -> {
+      var kind = lsp.highlight(psi);
+      if (kind.isEmpty()) return;
+      render(psi, choose(kind.get()));
+    });
   }
 
   @Override public @NotNull HighlightVisitor clone() {
