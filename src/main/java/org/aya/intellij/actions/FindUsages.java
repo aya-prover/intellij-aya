@@ -37,6 +37,12 @@ public class FindUsages implements FindUsagesProvider {
       case AyaPsiDataBody $ -> "Data Constructor";
       case AyaPsiField $ -> "Struct Field";
       case AyaPsiTeleParamName $ -> "Telescopic Param";
+      // The PSI parser does not distinguish between a bind pattern and a constructor pattern.
+      // But the following match case does not cause constructor patterns to be described as "Pattern Binding"
+      // because this method is always called with the resolved results returned by `AyaPsiReference#resolve()`
+      // which calls the Aya compiler who knows the truth. So constructor patterns will be described
+      // by former cases like `AyaPsiFnDecl`, `AyaPsiDataDecl`, etc.
+      case AyaPsiAtomBindPattern $ -> "Pattern Binding";
       default -> "";
     };
   }
