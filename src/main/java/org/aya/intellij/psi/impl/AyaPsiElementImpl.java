@@ -4,9 +4,10 @@ import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import org.aya.intellij.psi.AyaPsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class AyaPsiElementImpl extends ASTWrapperPsiElement {
+public abstract class AyaPsiElementImpl extends ASTWrapperPsiElement implements AyaPsiElement {
   public AyaPsiElementImpl(@NotNull ASTNode node) {
     super(node);
   }

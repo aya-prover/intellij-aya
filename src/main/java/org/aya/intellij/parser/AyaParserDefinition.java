@@ -26,7 +26,7 @@ public class AyaParserDefinition extends SyntaxHighlighterFactory implements Par
   private final @NotNull IFileElementType FILE = new IFileElementType(AyaLanguage.INSTANCE);
 
   public static @NotNull Lexer createLexer() {
-    return new FlexAdapter(new _AyaPsiLexer(null));
+    return new FlexAdapter(new _AyaPsiLexer());
   }
 
   @Override
