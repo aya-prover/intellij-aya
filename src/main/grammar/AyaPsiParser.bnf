@@ -3,16 +3,16 @@
   implements='org.aya.intellij.psi.AyaPsiElement'
   extends='org.aya.intellij.psi.impl.AyaPsiElementImpl'
 
-  elementTypeHolderClass='org.aya.intellij.psi.AyaPsiElementTypes'
-  elementTypeClass='org.aya.intellij.psi.AyaPsiElementType'
-  tokenTypeClass='org.aya.intellij.psi.AyaPsiTokenType'
+  elementTypeHolderClass='org.aya.intellij.psi.types.AyaPsiElementTypes'
+  elementTypeClass='org.aya.intellij.psi.types.AyaPsiElementType'
+  tokenTypeClass='org.aya.intellij.psi.types.AyaPsiTokenType'
 
   psiClassPrefix='AyaPsi'
   psiImplClassSuffix='Impl'
   psiPackage='org.aya.intellij.psi.concrete'
   psiImplPackage='org.aya.intellij.psi.concrete.impl'
 
-  psiImplUtilClass="org.aya.intellij.psi.impl.AyaPsiImplUtils"
+  psiImplUtilClass="org.aya.intellij.psi.utils.AyaPsiImplUtils"
 
   tokens = [
     // ---- AyaLexer begin: Keywords

@@ -1,13 +1,13 @@
-package org.aya.intellij.psi.impl;
+package org.aya.intellij.psi.utils;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.aya.intellij.psi.AyaPsiElement;
-import org.aya.intellij.psi.AyaPsiElementTypes;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.concrete.*;
+import org.aya.intellij.psi.types.AyaPsiElementTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

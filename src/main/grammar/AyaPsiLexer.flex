@@ -5,7 +5,7 @@ import com.intellij.psi.tree.IElementType;
 
 import static com.intellij.psi.TokenType.BAD_CHARACTER;
 import static com.intellij.psi.TokenType.WHITE_SPACE;
-import static org.aya.intellij.psi.AyaPsiElementTypes.*;
+import static org.aya.intellij.psi.types.AyaPsiElementTypes.*;
 import static org.aya.intellij.parser.AyaParserDefinition.*;
 
 %%

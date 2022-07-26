@@ -6,11 +6,11 @@ import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.intellij.psi.AyaPsiElement;
-import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.psi.concrete.AyaPsiAtomPattern;
 import org.aya.intellij.psi.concrete.AyaPsiNewArgField;
 import org.aya.intellij.psi.concrete.AyaPsiProjFixId;
 import org.aya.intellij.psi.concrete.AyaPsiRefExpr;
+import org.aya.intellij.psi.ref.AyaPsiReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

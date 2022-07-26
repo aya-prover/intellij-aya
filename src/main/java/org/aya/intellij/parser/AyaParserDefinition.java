@@ -16,9 +16,9 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.aya.intellij.AyaLanguage;
 import org.aya.intellij.actions.SyntaxHighlight;
-import org.aya.intellij.psi.AyaPsiElementTypes;
 import org.aya.intellij.psi.AyaPsiFile;
-import org.aya.intellij.psi.AyaPsiTokenType;
+import org.aya.intellij.psi.types.AyaPsiElementTypes;
+import org.aya.intellij.psi.types.AyaPsiTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
