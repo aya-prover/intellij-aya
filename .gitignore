@@ -27,3 +27,4 @@ lombok.config
 imgui.ini
 /diagram.uml
 /src/main/gen/
+/.run/
