@@ -1,12 +1,18 @@
-import org.aya.gradle.StripPreview
+import org.aya.gradle.BuildUtil
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.grammarkit.tasks.GenerateLexerTask
 import org.jetbrains.grammarkit.tasks.GenerateParserTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.*
 
 fun properties(key: String) = project.findProperty(key).toString()
+var deps: Properties by rootProject.ext
+
+deps = Properties()
+file("gradle/deps.properties").reader().use(deps::load)
+
 val javaVersion = properties("javaVersion").toInt()
-val ayaVersion = properties("version.aya")
+val ayaVersion = deps.getProperty("version.aya").toString()
 
 plugins {
   // Java support
@@ -24,7 +30,7 @@ plugins {
 }
 
 group = properties("pluginGroup")
-version = properties("pluginVersion")
+version = deps.getProperty("version.project")
 
 // Configure project's dependencies
 repositories {
@@ -104,7 +110,7 @@ tasks {
       tree.include("**/*.class")
       tree.exclude("module-info.class")
       val root = project.buildDir.toPath().resolve("classes/java/main")
-      tree.forEach { StripPreview.stripPreview(root, it.toPath(), false) }
+      tree.forEach { BuildUtil.stripPreview(root, it.toPath()) }
     }
     dependsOn(genAyaPsiLexer, genAyaPsiParser)
   }
