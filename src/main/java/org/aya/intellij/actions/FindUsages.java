@@ -2,14 +2,8 @@ package org.aya.intellij.actions;
 
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
-import org.aya.concrete.stmt.QualifiedID;
-import org.aya.intellij.lsp.AyaLsp;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.concrete.*;
-import org.aya.lsp.utils.ModuleVar;
-import org.aya.ref.DefVar;
-import org.aya.ref.LocalVar;
-import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,15 +45,7 @@ public class FindUsages implements FindUsagesProvider {
   @Override
   public @Nls @NotNull String getDescriptiveName(@NotNull PsiElement element) {
     if (!(element instanceof AyaPsiNamedElement named)) return "";
-    return AyaLsp.use(named.getProject(), lsp -> {
-      var resolvedVar = lsp.resolveVarDefinedBy(named).firstOption();
-      return switch (resolvedVar.map(WithPos::data).getOrNull()) {
-        case DefVar<?, ?> defVar && defVar.module != null -> QualifiedID.join(defVar.module.appended(defVar.name()));
-        case LocalVar localVar -> localVar.name();
-        case ModuleVar moduleVar -> moduleVar.name();
-        case default, null -> named.nameOrEmpty();
-      };
-    }, named::nameOrEmpty);
+    return named.canonicalName();
   }
 
   @Override
