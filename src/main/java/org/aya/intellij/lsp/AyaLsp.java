@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import kala.collection.Seq;
-import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableSet;
 import kala.function.CheckedConsumer;
@@ -107,23 +106,22 @@ public final class AyaLsp implements AyaLanguageClient {
   }
 
   void fireVfsEvent(List<? extends VFileEvent> events) {
-    Seq.wrapJava(events).view()
+    var any = Seq.wrapJava(events).view()
       .filterIsInstance(VFileContentChangeEvent.class)
-      .forEach(ev -> recompile(ev.getFile()));
+      .map(VFileContentChangeEvent::getFile)
+      .anyMatch(this::isSourceChanged);
+    if (any) recompile();
+  }
+
+  boolean isSourceChanged(@NotNull VirtualFile file) {
+    return isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX);
   }
 
   void recompile() {
     recompile(() -> service.libraries().flatMap(service::loadLibrary));
   }
 
-  void recompile(@NotNull VirtualFile file) {
-    if (isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX)) {
-      Log.i("[intellij-aya] compiling, reason: aya source changed: %s", file.toNioPath());
-      recompile(() -> service.loadFile(JB.canonicalize(file)));
-    }
-  }
-
-  void recompile(@NotNull Supplier<SeqLike<HighlightResult>> compile) {
+  void recompile(@NotNull Supplier<SeqView<HighlightResult>> compile) {
     compilerPool.execute(() -> {
       Log.i("[intellij-aya] Compilation started.");
       compile.get().forEach(this::publishSyntaxHighlight);
