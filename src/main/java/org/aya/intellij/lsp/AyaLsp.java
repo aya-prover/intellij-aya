@@ -131,12 +131,14 @@ public final class AyaLsp implements AyaLanguageClient {
   }
 
   public void registerLibrary(@NotNull VirtualFile library) {
-    libraryPathCache.add(library);
-    service.registerLibrary(JB.canonicalize(library));
+    if (JB.fileSupported(library)) {
+      libraryPathCache.add(library);
+      service.registerLibrary(JB.canonicalize(library));
+    }
   }
 
   public boolean isInLibrary(@Nullable VirtualFile file) {
-    while (file != null && file.isValid()) {
+    while (file != null && file.isValid() && JB.fileSupported(file)) {
       if (libraryPathCache.contains(file)) return true;
       file = file.getParent();
     }
@@ -144,7 +146,8 @@ public final class AyaLsp implements AyaLanguageClient {
   }
 
   public @Nullable LibrarySource sourceFileOf(@NotNull AyaPsiElement element) {
-    return service.find(JB.canonicalize(element.getContainingFile().getVirtualFile()));
+    var vf = element.getContainingFile().getVirtualFile();
+    return JB.fileSupported(vf) ? service.find(JB.canonicalize(vf)) : null;
   }
 
   /**
