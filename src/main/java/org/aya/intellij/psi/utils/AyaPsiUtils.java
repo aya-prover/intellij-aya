@@ -20,7 +20,7 @@ public class AyaPsiUtils {
 
   public static @NotNull AyaPsiElement setNameIdToWeakIdChild(@NotNull AyaPsiElement element, @NotNull String newName, @Nullable PsiElement nameId) {
     if (nameId == null) throw new IncorrectOperationException("No name identifier found for " + element.getText());
-    var newElement = AyaPsiFactory.createLeafFromText(element.getProject(), newName);
+    var newElement = AyaPsiFactory.leaf(element.getProject(), newName);
     nameId.replace(newElement);
     return element;
   }
