@@ -21,8 +21,9 @@
       language="Aya"
       implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
 
-    <highlightVisitor
-      implementation="org.aya.intellij.actions.SemanticHighlight"/>
+    <annotator
+      language="Aya"
+      implementationClass="org.aya.intellij.actions.SemanticHighlight"/>
 
     <lang.syntaxHighlighterFactory
       language="Aya"
