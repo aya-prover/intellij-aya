@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 fun properties(key: String) = project.findProperty(key).toString()
 val javaVersion = properties("javaVersion").toInt()
+val ayaVersion = properties("version.aya")
 
 plugins {
   // Java support
@@ -27,8 +28,10 @@ version = properties("pluginVersion")
 
 // Configure project's dependencies
 repositories {
-  mavenLocal()
   mavenCentral()
+  if (ayaVersion.endsWith("SNAPSHOT")) {
+    maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
+  }
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
@@ -181,7 +184,6 @@ tasks {
 }
 
 dependencies {
-  val ayaVersion = properties("version.aya")
   implementation("org.aya-prover", "cli", ayaVersion)
   implementation("org.aya-prover", "lsp", ayaVersion)
   testImplementation(kotlin("test-junit"))
