@@ -1,7 +1,9 @@
 package org.aya.intellij.lsp;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -11,12 +13,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import kala.collection.Seq;
-import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableSet;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
+import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.Constants;
 import org.aya.intellij.psi.AyaPsiElement;
@@ -39,6 +41,7 @@ import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -53,7 +56,7 @@ import java.util.function.Supplier;
  * for example, which makes use of {@link AyaPsiReference#resolve()}
  * instead of {@link #publishSyntaxHighlight(HighlightResult)} in this class.
  */
-public final class AyaLsp implements AyaLanguageClient {
+public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguageClient {
   private static final @NotNull Key<AyaLsp> AYA_LSP = Key.create("intellij.aya.lsp");
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
   private final @NotNull AyaServer server;
@@ -65,7 +68,7 @@ public final class AyaLsp implements AyaLanguageClient {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
     var lsp = new AyaLsp();
     lsp.registerLibrary(ayaJson.getParent());
-    lsp.recompile();
+    lsp.recompile(null);
     project.putUserData(AYA_LSP, lsp);
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override public void after(@NotNull List<? extends VFileEvent> events) {
@@ -80,6 +83,10 @@ public final class AyaLsp implements AyaLanguageClient {
    */
   private static @Nullable AyaLsp of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
+  }
+
+  private static boolean isAvailable(@NotNull Project project) {
+    return of(project) != null;
   }
 
   public static <E extends Throwable> void use(
@@ -101,42 +108,49 @@ public final class AyaLsp implements AyaLanguageClient {
   }
 
   public AyaLsp() {
-    this.server = new AyaServer();
+    this.server = new AyaServer(this);
     this.service = server.getTextDocumentService();
     server.connect(this);
   }
 
   void fireVfsEvent(List<? extends VFileEvent> events) {
-    Seq.wrapJava(events).view()
+    var any = Seq.wrapJava(events).view()
       .filterIsInstance(VFileContentChangeEvent.class)
-      .forEach(ev -> recompile(ev.getFile()));
+      .map(VFileContentChangeEvent::getFile)
+      .anyMatch(this::isSourceChanged);
+    if (any) recompile(() -> {
+      Arrays.stream(ProjectManager.getInstance().getOpenProjects())
+        .filter(AyaLsp::isAvailable)
+        .forEach(p -> DaemonCodeAnalyzer.getInstance(p).restart());
+      Log.i("[intellij-aya] Restarted DaemonCodeAnalyzer");
+    });
   }
 
-  void recompile() {
-    recompile(() -> service.libraries().flatMap(service::loadLibrary));
+  boolean isSourceChanged(@NotNull VirtualFile file) {
+    return isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX);
   }
 
-  void recompile(@NotNull VirtualFile file) {
-    if (isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX)) {
-      Log.i("[intellij-aya] compiling, reason: aya source changed: %s", file.toNioPath());
-      recompile(() -> service.loadFile(JB.canonicalize(file)));
-    }
+  void recompile(@Nullable Runnable callback) {
+    recompile(() -> service.libraries().flatMap(service::loadLibrary), callback);
   }
 
-  void recompile(@NotNull Supplier<SeqLike<HighlightResult>> compile) {
+  void recompile(@NotNull Supplier<SeqView<HighlightResult>> compile, @Nullable Runnable callback) {
     compilerPool.execute(() -> {
       Log.i("[intellij-aya] Compilation started.");
       compile.get().forEach(this::publishSyntaxHighlight);
+      if (callback != null) callback.run();
     });
   }
 
   public void registerLibrary(@NotNull VirtualFile library) {
-    libraryPathCache.add(library);
-    service.registerLibrary(JB.canonicalize(library));
+    if (JB.fileSupported(library)) {
+      libraryPathCache.add(library);
+      service.registerLibrary(JB.canonicalize(library));
+    }
   }
 
   public boolean isInLibrary(@Nullable VirtualFile file) {
-    while (file != null && file.isValid()) {
+    while (file != null && file.isValid() && JB.fileSupported(file)) {
       if (libraryPathCache.contains(file)) return true;
       file = file.getParent();
     }
@@ -144,7 +158,8 @@ public final class AyaLsp implements AyaLanguageClient {
   }
 
   public @Nullable LibrarySource sourceFileOf(@NotNull AyaPsiElement element) {
-    return service.find(JB.canonicalize(element.getContainingFile().getVirtualFile()));
+    var vf = element.getContainingFile().getVirtualFile();
+    return JB.fileSupported(vf) ? service.find(JB.canonicalize(vf)) : null;
   }
 
   /**
