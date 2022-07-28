@@ -25,6 +25,10 @@
       language="Aya"
       implementationClass="org.aya.intellij.actions.SemanticHighlight"/>
 
+    <annotator
+      language="Aya"
+      implementationClass="org.aya.intellij.actions.ProblemAnnotator"/>
+
     <lang.syntaxHighlighterFactory
       language="Aya"
       implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>

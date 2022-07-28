@@ -14,6 +14,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import kala.collection.Seq;
 import kala.collection.SeqView;
+import kala.collection.immutable.ImmutableMap;
+import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
@@ -22,18 +25,20 @@ import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.Constants;
 import org.aya.intellij.psi.AyaPsiElement;
+import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.ref.AyaPsiReference;
 import org.aya.lsp.actions.GotoDefinition;
-import org.aya.lsp.models.HighlightResult;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaServer;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.Resolver;
 import org.aya.ref.Var;
+import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
+import org.aya.util.reporter.Problem;
 import org.eclipse.lsp4j.MessageActionItem;
 import org.eclipse.lsp4j.MessageParams;
 import org.eclipse.lsp4j.PublishDiagnosticsParams;
@@ -41,12 +46,12 @@ import org.eclipse.lsp4j.ShowMessageRequestParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Supplier;
 
 /**
  * Bridges between the Aya LSP and the IntelliJ platform.
@@ -54,7 +59,7 @@ import java.util.function.Supplier;
  * are implemented by directly calling the LSP.
  * Other features are implemented by using Intellij platform APIs. See {@link org.aya.intellij.actions.SemanticHighlight}
  * for example, which makes use of {@link AyaPsiReference#resolve()}
- * instead of {@link #publishSyntaxHighlight(HighlightResult)} in this class.
+ * instead of querying the LSP for highlight results.
  */
 public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguageClient {
   private static final @NotNull Key<AyaLsp> AYA_LSP = Key.create("intellij.aya.lsp");
@@ -62,6 +67,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private final @NotNull AyaServer server;
   private final @NotNull AyaService service;
   private final @NotNull MutableSet<VirtualFile> libraryPathCache = MutableSet.create();
+  private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
   public static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
@@ -131,13 +137,13 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   void recompile(@Nullable Runnable callback) {
-    recompile(() -> service.libraries().flatMap(service::loadLibrary), callback);
+    recompile(() -> service.libraries().forEach(service::loadLibrary), callback);
   }
 
-  void recompile(@NotNull Supplier<SeqView<HighlightResult>> compile, @Nullable Runnable callback) {
+  void recompile(@NotNull Runnable compile, @Nullable Runnable callback) {
     compilerPool.execute(() -> {
       Log.i("[intellij-aya] Compilation started.");
-      compile.get().forEach(this::publishSyntaxHighlight);
+      compile.run();
       if (callback != null) callback.run();
     });
   }
@@ -184,6 +190,14 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return Resolver.resolveVar(source, JB.toXyPosition(element));
   }
 
+  public @NotNull ImmutableSeq<Problem> problemsFor(@NotNull AyaPsiFile element) {
+    if (problemCache.isEmpty()) return ImmutableSeq.empty();
+    var vf = element.getContainingFile().getVirtualFile();
+    if (vf == null || !JB.fileSupported(vf)) return ImmutableSeq.empty();
+    var path = vf.toNioPath();
+    return problemCache.getOrDefault(path, ImmutableSeq.empty());
+  }
+
   private @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
     return pos.file().underlying()
       .mapNotNull(path -> VirtualFileManager.getInstance().findFileByNioPath(path))
@@ -192,11 +206,15 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       .getOrNull();
   }
 
-  @Override public void publishSyntaxHighlight(@NotNull HighlightResult highlight) {
+  @Override public void publishAyaProblems(
+    @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
+    @NotNull DistillerOptions options
+  ) {
+    problemCache.putAll(problems);
   }
 
-  @Override public void publishDiagnostics(@NotNull PublishDiagnosticsParams diagnostics) {
-    // TODO: report problems in IDEA
+  @Override public void clearAyaProblems(@NotNull ImmutableSeq<Path> files) {
+    files.forEach(problemCache::remove);
   }
 
   @Override public void logMessage(@NotNull MessageParams message) {
@@ -209,13 +227,18 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   @Override public void showMessage(MessageParams messageParams) {
+    throw new IllegalStateException("unreachable");
   }
 
   @Override public CompletableFuture<MessageActionItem> showMessageRequest(ShowMessageRequestParams requestParams) {
-    throw new UnsupportedOperationException();
+    throw new IllegalStateException("unreachable");
   }
 
   @Override public void telemetryEvent(Object object) {
-    throw new UnsupportedOperationException();
+    throw new IllegalStateException("unreachable");
+  }
+
+  @Override public void publishDiagnostics(@NotNull PublishDiagnosticsParams diagnostics) {
+    throw new IllegalStateException("unreachable");
   }
 }
