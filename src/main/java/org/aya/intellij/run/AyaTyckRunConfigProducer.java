@@ -14,19 +14,16 @@ public class AyaTyckRunConfigProducer extends LazyRunConfigurationProducer<AyaTy
   @Override
   protected boolean setupConfigurationFromContext(@NotNull AyaTyckRunConfig config, @NotNull ConfigurationContext context, @NotNull Ref<PsiElement> sourceElement) {
     var psi = sourceElement.get();
-    if (!AyaTyckRunConfig.isTyckUnit(psi)) return false;
-    switch (psi) {
-      case AyaPsiDecl decl -> {
-        var defName = decl.nameOrEmpty();
-        config.setName("TypeCheck " + defName);
-        config.moduleName(QualifiedID.join(decl.getContainingModuleName()));
-        config.definitionName(defName);
-      }
-      case AyaPsiFile file -> {
-        config.setName("TypeCheck " + file.getName());
-        config.moduleName(QualifiedID.join(file.getContainingModuleName()));
-      }
-      default -> {}
+    if (!AyaRunLineMarkerContributor.TOP_LEVEL_DECL_ID.accepts(psi)) return false;
+    if (psi instanceof AyaPsiFile file) {
+      config.setName("TypeCheck " + file.getName());
+      config.moduleName(QualifiedID.join(file.containingFileModule()));
+    } else {
+      var decl = (AyaPsiDecl) psi.getParent().getParent().getParent();
+      var defName = decl.nameOrEmpty();
+      config.setName("TypeCheck " + defName);
+      config.moduleName(QualifiedID.join(decl.containingFileModule()));
+      config.definitionName(QualifiedID.join(decl.containingSubModule().appended(defName)));
     }
     return true;
   }
