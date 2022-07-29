@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import kala.collection.Seq;
 import kala.collection.SeqView;
@@ -25,7 +26,6 @@ import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.Constants;
 import org.aya.intellij.psi.AyaPsiElement;
-import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.ref.AyaPsiReference;
 import org.aya.lsp.actions.GotoDefinition;
@@ -190,12 +190,23 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return Resolver.resolveVar(source, JB.toXyPosition(element));
   }
 
-  public @NotNull ImmutableSeq<Problem> problemsFor(@NotNull AyaPsiFile element) {
+  private @NotNull ImmutableSeq<Problem> problemsFor(@NotNull PsiFile element) {
     if (problemCache.isEmpty()) return ImmutableSeq.empty();
-    var vf = element.getContainingFile().getVirtualFile();
+    var vf = element.getVirtualFile();
     if (vf == null || !JB.fileSupported(vf)) return ImmutableSeq.empty();
     var path = vf.toNioPath();
     return problemCache.getOrDefault(path, ImmutableSeq.empty());
+  }
+
+  public @NotNull ImmutableSeq<Problem> errorsInFile(@NotNull PsiFile file) {
+    return problemsFor(file).filter(Problem::isError);
+  }
+
+  public @NotNull <T extends Problem> SeqView<T> warningsAt(@NotNull AyaPsiElement element, @NotNull Class<T> type) {
+    return problemsFor(element.getContainingFile()).view()
+      .filter(p -> p.level() == Problem.Severity.WARN)
+      .filterIsInstance(type)
+      .filter(p -> JB.toRange(p.sourcePos()).containsOffset(element.getTextOffset()));
   }
 
   private @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {

@@ -182,7 +182,7 @@ loosers ::= KW_LOOSER qIdsComma
 fnDecl ::= sampleModifiers? KW_DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
 
 fnBody ::= IMPLIES expr
-         | (BAR clause)*
+         | barredClause*
 
 fnModifiers ::= KW_OPAQUE
               | KW_INLINE
@@ -274,7 +274,11 @@ namedImArgument ::= LBRACE weakId DEFINE_AS expr? RBRACE
 projFix ::= DOT (NUMBER | projFixId)
 projFixId ::= qualifiedId
 
-clauses ::= LBRACE clause? (BAR clause)* RBRACE
+clauses ::= LBRACE bareClause? barredClause* RBRACE
+
+// barredClause and bareClause made inspection quick fix easier
+barredClause ::= BAR clause
+bareClause ::= clause
 clause ::= patterns (IMPLIES expr)?
 
 patterns ::= pattern (COMMA pattern)*

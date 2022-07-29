@@ -16,10 +16,10 @@ import org.aya.util.distill.DistillerOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
-public class ProblemAnnotator implements Annotator {
+public class ErrorAnnotator implements Annotator {
   @Override public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (!(element instanceof AyaPsiFile file)) return;
-    AyaLsp.use(element.getProject(), lsp -> lsp.problemsFor(file).forEach(problem -> {
+    AyaLsp.use(element.getProject(), lsp -> lsp.errorsInFile(file).forEach(problem -> {
       var options = DistillerOptions.informative();
       var message = problem.describe(options).debugRender();
       var tooltip = problem.brief(options).debugRender();
