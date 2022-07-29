@@ -24,7 +24,7 @@ abstract class AyaInspection : LocalInspectionTool() {
   class Provider : InspectionToolProvider {
     override fun getInspectionClasses(): Array<Class<out AyaInspection>> = arrayOf(
       DominationInspection::class.java,
-      ShadowingInspection::class.java,
+      NamingInspection::class.java,
       BadModifierInspection::class.java,
       BadCounterexampleInspection::class.java,
     )

@@ -13,7 +13,7 @@ import org.aya.resolve.error.ModShadowingWarn
 import org.aya.resolve.error.ShadowingWarn
 import org.aya.util.reporter.Problem
 
-class ShadowingInspection : AyaInspection() {
+class NamingInspection : AyaInspection() {
   override fun getDisplayName() = AyaBundle.message("aya.insp.shadow")
   override fun buildVisitor(lsp: AyaLsp, holder: ProblemsHolder, isOnTheFly: Boolean) = object : AyaPsiVisitor() {
     override fun visitElement(element: AyaPsiElement) {
