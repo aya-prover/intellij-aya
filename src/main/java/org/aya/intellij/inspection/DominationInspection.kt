@@ -23,10 +23,10 @@ class DominationInspection : AyaInspection() {
       holder.registerProblem(
         holder.manager.createProblemDescriptor(
           whole, whole,
-          CommonQuickFixBundle.message("fix.remove.redundant", whole.text),
+          AyaBundle.message("aya.insp.dom"),
           ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly,
           object : LocalQuickFix {
-            override fun getFamilyName() = CommonQuickFixBundle.message("fix.simplify")
+            override fun getFamilyName() = CommonQuickFixBundle.message("fix.remove.redundant", whole.text)
             override fun applyFix(project: Project, descriptor: ProblemDescriptor) = descriptor.psiElement.delete()
           },
         ),

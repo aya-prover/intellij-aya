@@ -189,10 +189,15 @@ fnModifiers ::= KW_OPAQUE
               | KW_OVERLAP
               | KW_PATTERN
 
-structDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)? (BAR structField)* bindBlock?
+// turn the keyword into a psi node, so quick fix can easily delete it
+// see: BadCounterexampleInspection
+openKw::= KW_OPEN
+
+structDecl ::= sampleModifiers? (KW_PUBLIC? openKw)? KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)? (BAR structField)* bindBlock?
 
 // primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
 // This rule is used for convenience in semantic highlight.
+// see: SemanticHighlight, AyaGenericDeclImpl, AyaRunLineMarkerContributor
 primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type?
 
@@ -202,7 +207,7 @@ structField ::=      declNameOrInfix tele* type? IMPLIES expr bindBlock?
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
-dataDecl ::= sampleModifiers? (KW_PUBLIC? KW_OPEN)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
+dataDecl ::= sampleModifiers? (KW_PUBLIC? openKw)? KW_DATA declNameOrInfix tele* type? dataBody* bindBlock?
 
 dataBody ::= dataCtorClause
            | (BAR dataCtor) {
@@ -277,6 +282,7 @@ projFixId ::= qualifiedId
 clauses ::= LBRACE bareClause? barredClause* RBRACE
 
 // barredClause and bareClause made inspection quick fix easier
+// see: DominationInspection
 barredClause ::= BAR clause
 bareClause ::= clause
 clause ::= patterns (IMPLIES expr)?
