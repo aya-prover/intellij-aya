@@ -29,6 +29,9 @@
       implementationClass="org.aya.intellij.actions.ErrorAnnotator"/>
     <inspectionToolProvider
       implementation="org.aya.intellij.inspection.AyaInspection$Provider"/>
+    <lang.namesValidator
+      language="Aya"
+      implementationClass="org.aya.intellij.parser.AyaNamesValidator"/>
 
     <lang.syntaxHighlighterFactory
       language="Aya"
