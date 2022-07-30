@@ -1,9 +1,10 @@
-package org.aya.intellij.inspection
+package org.aya.intellij.inspection.warning
 
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.aya.intellij.AyaBundle
+import org.aya.intellij.inspection.AyaInspection
 import org.aya.intellij.lsp.AyaLsp
 import org.aya.intellij.psi.AyaPsiElement
 import org.aya.intellij.psi.AyaPsiNamedElement

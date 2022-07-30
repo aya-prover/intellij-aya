@@ -24,9 +24,6 @@
     <annotator
       language="Aya"
       implementationClass="org.aya.intellij.actions.SemanticHighlight"/>
-    <annotator
-      language="Aya"
-      implementationClass="org.aya.intellij.actions.ErrorAnnotator"/>
     <inspectionToolProvider
       implementation="org.aya.intellij.inspection.AyaInspection$Provider"/>
     <lang.namesValidator
