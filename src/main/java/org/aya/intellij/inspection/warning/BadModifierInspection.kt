@@ -4,12 +4,17 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import org.aya.concrete.error.BadModifierWarn
 import org.aya.intellij.AyaBundle
-import org.aya.intellij.inspection.AyaInspection
 import org.aya.intellij.lsp.AyaLsp
 import org.aya.intellij.psi.concrete.AyaPsiFnModifiers
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
 
-class BadModifierInspection : AyaInspection() {
+class BadModifierInspection : WarningInspection() {
+  companion object {
+    init {
+      JOBS.passMe(BadModifierWarn::class.java)
+    }
+  }
+
   override fun getDisplayName() = AyaBundle.message("aya.insp.bad.modifier")
 
   override fun buildVisitor(lsp: AyaLsp, holder: ProblemsHolder, isOnTheFly: Boolean) = object : AyaPsiVisitor() {

@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.aya.intellij.AyaBundle
-import org.aya.intellij.inspection.AyaInspection
 import org.aya.intellij.lsp.AyaLsp
 import org.aya.intellij.psi.AyaPsiElement
 import org.aya.intellij.psi.AyaPsiNamedElement
@@ -14,7 +13,15 @@ import org.aya.resolve.error.ModShadowingWarn
 import org.aya.resolve.error.ShadowingWarn
 import org.aya.util.reporter.Problem
 
-class NamingInspection : AyaInspection() {
+class NamingInspection : WarningInspection() {
+  companion object {
+    init {
+      JOBS.passMe(ShadowingWarn::class.java)
+      JOBS.passMe(ModShadowingWarn::class.java)
+      JOBS.passMe(AmbiguousNameWarn::class.java)
+    }
+  }
+
   override fun getDisplayName() = AyaBundle.message("aya.insp.shadow")
   override fun buildVisitor(lsp: AyaLsp, holder: ProblemsHolder, isOnTheFly: Boolean) = object : AyaPsiVisitor() {
     override fun visitElement(element: AyaPsiElement) {
@@ -32,6 +39,7 @@ class NamingInspection : AyaInspection() {
               RenameElementFix(element, nameId.text + "'"),
             ),
           )
+
           else -> {}
         }
       }

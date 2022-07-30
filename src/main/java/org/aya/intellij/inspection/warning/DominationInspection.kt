@@ -3,7 +3,6 @@ package org.aya.intellij.inspection.warning
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import org.aya.intellij.AyaBundle
-import org.aya.intellij.inspection.AyaInspection
 import org.aya.intellij.lsp.AyaLsp
 import org.aya.intellij.psi.AyaPsiElement
 import org.aya.intellij.psi.concrete.AyaPsiBareClause
@@ -11,8 +10,17 @@ import org.aya.intellij.psi.concrete.AyaPsiBarredClause
 import org.aya.intellij.psi.concrete.AyaPsiClause
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
 import org.aya.tyck.pat.ClausesProblem
+import org.aya.tyck.pat.ClausesProblem.Domination
+import org.aya.tyck.pat.ClausesProblem.FMDomination
 
-class DominationInspection : AyaInspection() {
+class DominationInspection : WarningInspection() {
+  companion object {
+    init {
+      JOBS.passMe(FMDomination::class.java)
+      JOBS.passMe(Domination::class.java)
+    }
+  }
+
   override fun getDisplayName() = AyaBundle.message("aya.insp.dom")
 
   override fun buildVisitor(lsp: AyaLsp, holder: ProblemsHolder, isOnTheFly: Boolean) = object : AyaPsiVisitor() {

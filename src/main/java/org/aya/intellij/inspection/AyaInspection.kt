@@ -9,10 +9,7 @@ import org.aya.intellij.AyaBundle.message
 import org.aya.intellij.inspection.error.ErrorInspection
 import org.aya.intellij.inspection.goal.GoalInspection
 import org.aya.intellij.inspection.info.InfoInspection
-import org.aya.intellij.inspection.warning.BadCounterexampleInspection
-import org.aya.intellij.inspection.warning.BadModifierInspection
-import org.aya.intellij.inspection.warning.DominationInspection
-import org.aya.intellij.inspection.warning.NamingInspection
+import org.aya.intellij.inspection.warning.*
 import org.aya.intellij.lsp.AyaLsp
 import org.aya.util.distill.DistillerOptions
 
@@ -39,6 +36,7 @@ abstract class AyaInspection : LocalInspectionTool() {
       NamingInspection::class.java,
       BadModifierInspection::class.java,
       BadCounterexampleInspection::class.java,
+      WarningInspection::class.java,
       // errors
       ErrorInspection::class.java,
       // goals

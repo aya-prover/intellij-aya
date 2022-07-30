@@ -4,12 +4,17 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import org.aya.concrete.error.BadCounterexampleWarn
 import org.aya.intellij.AyaBundle
-import org.aya.intellij.inspection.AyaInspection
 import org.aya.intellij.lsp.AyaLsp
 import org.aya.intellij.psi.concrete.AyaPsiOpenKw
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
 
-class BadCounterexampleInspection : AyaInspection() {
+class BadCounterexampleInspection : WarningInspection() {
+  companion object {
+    init {
+      JOBS.passMe(BadCounterexampleWarn::class.java)
+    }
+  }
+
   override fun getDisplayName() = AyaBundle.message("aya.insp.bad.counter")
 
   override fun buildVisitor(lsp: AyaLsp, holder: ProblemsHolder, isOnTheFly: Boolean) = object : AyaPsiVisitor() {

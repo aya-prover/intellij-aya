@@ -191,23 +191,29 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return Resolver.resolveVar(source, JB.toXyPosition(element));
   }
 
-  private @NotNull SeqView<Problem> problemsFor(@NotNull PsiFile element) {
+  private @NotNull SeqView<Problem> problemsFor(@NotNull PsiFile file) {
     if (problemCache.isEmpty()) return SeqView.empty();
-    var vf = element.getVirtualFile();
+    var vf = file.getVirtualFile();
     if (vf == null || !JB.fileSupported(vf)) return SeqView.empty();
     var path = vf.toNioPath();
     var problems = problemCache.getOrNull(path);
-    return problems != null ? problems.view() : SeqView.empty();
+    var maxOffset = file.getTextLength();
+    return problems != null
+      ? problems.view().filter(p -> JB.endOffset(p.sourcePos()) <= maxOffset)
+      : SeqView.empty();
   }
 
   public @NotNull SeqView<Problem> errorsInFile(@NotNull PsiFile file) {
     return problemsFor(file).filter(Problem::isError);
   }
 
-  public @NotNull <T extends Problem> SeqView<T> warningsInFile(@NotNull PsiFile file, @NotNull Class<T> type) {
+  public @NotNull SeqView<Problem> warningsInFile(@NotNull PsiFile file) {
     return problemsFor(file)
-      .filter(p -> p.level() == Problem.Severity.WARN)
-      .filterIsInstance(type);
+      .filter(p -> p.level() == Problem.Severity.WARN);
+  }
+
+  public @NotNull <T extends Problem> SeqView<T> warningsInFile(@NotNull PsiFile file, @NotNull Class<T> type) {
+    return warningsInFile(file).filterIsInstance(type);
   }
 
   public @NotNull SeqView<Goal> goalsInFile(@NotNull PsiFile file) {
