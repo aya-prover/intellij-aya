@@ -35,6 +35,7 @@ import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.Resolver;
 import org.aya.ref.Var;
+import org.aya.tyck.error.Goal;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
@@ -209,8 +210,25 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       .filterIsInstance(type);
   }
 
+  public @NotNull SeqView<Goal> goalsInFile(@NotNull PsiFile file) {
+    // note: aya only has one goal problem type.
+    return problemsFor(file)
+      .filter(p -> p.level() == Problem.Severity.GOAL)
+      .filterIsInstance(Goal.class);
+  }
+
+  public @NotNull SeqView<Problem> infosInFile(@NotNull PsiFile file) {
+    return problemsFor(file)
+      .filter(p -> p.level() == Problem.Severity.INFO);
+  }
+
   public @NotNull <T extends Problem> SeqView<T> warningsAt(@NotNull PsiElement element, @NotNull Class<T> type) {
     return warningsInFile(element.getContainingFile(), type)
+      .filter(p -> JB.toRange(p.sourcePos()).containsOffset(element.getTextOffset()));
+  }
+
+  public @NotNull SeqView<Goal> goalsAt(@NotNull PsiElement element) {
+    return goalsInFile(element.getContainingFile())
       .filter(p -> JB.toRange(p.sourcePos()).containsOffset(element.getTextOffset()));
   }
 

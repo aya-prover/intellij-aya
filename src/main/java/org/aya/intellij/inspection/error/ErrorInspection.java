@@ -11,7 +11,6 @@ import org.aya.intellij.inspection.AyaInspection;
 import org.aya.intellij.lsp.AyaLsp;
 import org.aya.intellij.lsp.JB;
 import org.aya.intellij.psi.concrete.AyaPsiVisitor;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +40,7 @@ public class ErrorInspection extends AyaInspection {
     return new AyaPsiVisitor() {
       @Override public void visitFile(@NotNull PsiFile file) {
         findMyJob(lsp, file).forEach(problem -> holder.registerProblem(
-          // TODO: allow user-defined distiller options
-          file, problem.brief(DistillerOptions.pretty()).debugRender(),
+          file, problem.brief(distillerOptions()).debugRender(),
           ProblemHighlightType.ERROR, JB.toRange(problem.sourcePos())
         ));
       }
