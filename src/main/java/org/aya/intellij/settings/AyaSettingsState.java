@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 )
 public class AyaSettingsState implements PersistentStateComponent<AyaSettingsState> {
   public boolean useAyaLsp = true;
+  public boolean autoScrollToSource = true;
+  public boolean autoScrollFromSource = true;
 
   public static @NotNull AyaSettingsState getInstance() {
     return ApplicationManager.getApplication().getService(AyaSettingsState.class);

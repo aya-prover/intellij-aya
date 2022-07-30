@@ -70,6 +70,10 @@
 
     <toolWindow
       factoryClass="org.aya.intellij.ui.AyaToolWindow"
-      id="Aya Prover"/>
+      id="Aya Prover"
+      anchor="bottom"/>
+
+    <projectService
+      serviceImplementation="org.aya.intellij.lsp.ProblemService"/>
   </extensions>
 </idea-plugin>

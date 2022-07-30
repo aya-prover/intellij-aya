@@ -3,7 +3,6 @@ package org.aya.intellij.lsp;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -19,7 +18,6 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
@@ -48,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -67,13 +64,14 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
   private final @NotNull AyaServer server;
   private final @NotNull AyaService service;
+  private final @NotNull Project project;
   private final @NotNull MutableSet<VirtualFile> libraryPathCache = MutableSet.create();
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
   public static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
-    var lsp = new AyaLsp();
+    var lsp = new AyaLsp(project);
     lsp.registerLibrary(ayaJson.getParent());
     lsp.recompile(null);
     project.putUserData(AYA_LSP, lsp);
@@ -86,22 +84,10 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   /**
    * A fallback behavior when LSP is not available is required.
-   * Use {@link #use(Project, CheckedConsumer)} or {@link #use(Project, CheckedFunction, CheckedSupplier)} instead.
+   * Use {@link #use(Project, CheckedFunction, CheckedSupplier)} instead.
    */
   private static @Nullable AyaLsp of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
-  }
-
-  private static boolean isAvailable(@NotNull Project project) {
-    return of(project) != null;
-  }
-
-  public static <E extends Throwable> void use(
-    @NotNull Project project,
-    @NotNull CheckedConsumer<AyaLsp, E> block
-  ) throws E {
-    var lsp = of(project);
-    if (lsp != null) block.acceptChecked(lsp);
   }
 
   public static <R, E extends Throwable> R use(
@@ -114,7 +100,8 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return block.applyChecked(lsp);
   }
 
-  public AyaLsp() {
+  public AyaLsp(@NotNull Project project) {
+    this.project = project;
     this.server = new AyaServer(this);
     this.service = server.getTextDocumentService();
     server.connect(this);
@@ -126,9 +113,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       .map(VFileContentChangeEvent::getFile)
       .anyMatch(this::isSourceChanged);
     if (any) recompile(() -> {
-      Arrays.stream(ProjectManager.getInstance().getOpenProjects())
-        .filter(AyaLsp::isAvailable)
-        .forEach(p -> DaemonCodeAnalyzer.getInstance(p).restart());
+      DaemonCodeAnalyzer.getInstance(project).restart();
       Log.i("[intellij-aya] Restarted DaemonCodeAnalyzer");
     });
   }
@@ -252,10 +237,16 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     @NotNull DistillerOptions options
   ) {
     problemCache.putAll(problems);
+    refreshGoals();
   }
 
   @Override public void clearAyaProblems(@NotNull ImmutableSeq<Path> files) {
     files.forEach(problemCache::remove);
+    refreshGoals();
+  }
+
+  private void refreshGoals() {
+    project.getService(ProblemService.class).allProblems.set(problemCache.toImmutableMap());
   }
 
   @Override public void logMessage(@NotNull MessageParams message) {
