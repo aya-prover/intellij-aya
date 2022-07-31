@@ -218,8 +218,11 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   public @NotNull SeqView<Goal> goalsAt(@NotNull PsiElement element) {
-    var goals = goalsInFile(element.getContainingFile());
-    var textOffset = element.getTextOffset();
+    return goalsAt(element.getContainingFile(), element.getTextOffset());
+  }
+
+  public @NotNull SeqView<Goal> goalsAt(@NotNull PsiFile file, int textOffset) {
+    var goals = goalsInFile(file);
     return goals.filter(p -> JB.toRange(p.sourcePos()).containsOffset(textOffset));
   }
 

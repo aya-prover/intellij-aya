@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
@@ -20,6 +21,9 @@ import com.intellij.ui.render.LabelBasedRenderer;
 import com.intellij.ui.treeStructure.Tree;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
+import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.utils.AyaPsiUtils;
 import org.aya.intellij.settings.AyaSettingsState;
 import org.aya.util.TreeBuilder;
@@ -29,8 +33,13 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 /** A super-friendly tree view */
 public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
@@ -40,7 +49,8 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
   public interface NodeAdapter<T extends Node<T>> {
     @Nullable String renderTitle(@NotNull T node);
     @Nullable Icon renderIcon(@NotNull T node);
-    @Nullable PsiElement findSource(@NotNull T node);
+    @Nullable PsiElement findElement(@NotNull T node);
+    @Nullable Tuple2<T, TreePath> findNode(@NotNull AyaPsiFile file, int offset);
   }
 
   public static final class NodeBuilder<T extends Node<T>> extends TreeBuilder<T> {
@@ -88,7 +98,7 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     actionGroup.add(actionManager.createExpandAllAction(treeExpander, this));
     actionGroup.add(actionManager.createCollapseAllAction(treeExpander, this));
     actionGroup.addSeparator();
-    actionGroup.add(new ScrollTo(project, this).createToggleAction());
+    actionGroup.add(new ScrollTo(this).createToggleAction());
     actionGroup.add(new ScrollFrom(project, this).createToggleAction());
 
     var toolbar = ActionManager.getInstance().createActionToolbar(
@@ -98,12 +108,54 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     rootPanel.setContent(ScrollPaneFactory.createScrollPane(this, true));
   }
 
-  public void scrollFromEditor(@NotNull Editor editor) {}
+  public void scrollFromEditor(@NotNull Editor editor) {
+    if (adapter == null) return;
+    var project = editor.getProject();
+    if (project == null) return;
+    var file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(editor.getDocument());
+    if (!(file instanceof AyaPsiFile ayaFile)) return;
+    var node = adapter.findNode(ayaFile, editor.getCaretModel().getOffset());
+    if (node != null) select(node._2);
+  }
 
   public void scrollToEditor(boolean focus) {
     if (adapter == null) return;
-   nodeOf(getLastSelectedPathComponent(), adapter::findSource)
-     .forEach(e -> AyaPsiUtils.navigate(e, focus));
+    nodeOf(getLastSelectedPathComponent(), adapter::findElement)
+      .forEach(e -> AyaPsiUtils.navigate(e, focus));
+  }
+
+  public @Nullable Tuple2<T, TreePath> find(@NotNull Predicate<T> predicate) {
+    var it = rootNode.depthFirstEnumeration().asIterator();
+    while (it.hasNext()) {
+      var n = it.next();
+      if (!(n instanceof DefaultMutableTreeNode treeNode)) continue;
+      var is = nodeOf(n, (T t) -> t).getOrNull();
+      if (is != null && predicate.test(is)) {
+        return Tuple.of(is, new TreePath(treeNode.getPath()));
+      }
+    }
+    return null;
+  }
+
+  private void select(@NotNull TreePath path) {
+    getSelectionModel().setSelectionPath(path);
+    scrollToPath(path);
+  }
+
+  private void scrollToPath(@NotNull TreePath path) {
+    makeVisible(path);
+    var bounds = getPathBounds(path);
+    if (bounds == null) return;
+    var parent = getParent();
+    if (parent instanceof JViewport) {
+      var width = parent.getParent() instanceof JScrollPane pane ? pane.getVerticalScrollBar().getWidth() : 0;
+      bounds.width = min(bounds.width, max(parent.getWidth() - bounds.x - width, 0));
+    } else {
+      bounds.x = 0;
+    }
+    scrollRectToVisible(bounds);
+    if (getAccessibleContext() instanceof AccessibleJTree tree)
+      tree.fireVisibleDataPropertyChange();
   }
 
   private void updateNode(@NotNull ImmutableSeq<T> nodes) {
@@ -175,7 +227,7 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
   }
 
   private class ScrollTo extends AutoScrollToSourceHandler {
-    public ScrollTo(@NotNull Project project, @NotNull AyaTreeView<T> treeView) {
+    public ScrollTo(@NotNull AyaTreeView<T> treeView) {
       install(treeView);
     }
 

@@ -5,15 +5,19 @@ import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
+import kala.control.Option;
+import kala.tuple.Tuple2;
 import kotlin.Unit;
 import org.aya.core.term.ErrorTerm;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.AyaIcons;
 import org.aya.intellij.lsp.AyaLsp;
 import org.aya.intellij.lsp.ProblemService;
+import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.concrete.AyaPsiHoleExpr;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.Goal;
@@ -24,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreePath;
 import java.nio.file.Path;
 
 public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
@@ -92,12 +97,24 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
     };
   }
 
-  @Override public @Nullable PsiElement findSource(@NotNull GoalNode node) {
+  @Override public @Nullable PsiElement findElement(@NotNull GoalNode node) {
     return switch (node) {
       case FileG $ -> null;
       case GoalG g -> AyaLsp.elementAt(project, g.goal.sourcePos(), AyaPsiHoleExpr.class);
       case GoalContextG c -> AyaLsp.elementAt(project, c.goal.sourcePos(), AyaPsiHoleExpr.class);
     };
+  }
+
+  @Override public @Nullable Tuple2<GoalNode, TreePath> findNode(@NotNull AyaPsiFile file, int offset) {
+    var goals = AyaLsp.use(project, lsp -> lsp.goalsAt(file, offset), SeqView::<Goal>empty);
+    var selected = goals.firstOption(this::solved).getOrElse(goals::firstOrNull);
+    return Option.ofNullable(selected)
+      .mapNotNull(g -> treeView.find(n -> switch (n) {
+        case FileG $ -> false;
+        case GoalContextG ctx -> g == ctx.goal; // always select context if available
+        case GoalG goal -> g == goal.goal;
+      }))
+      .getOrNull();
   }
 
   public boolean solved(@NotNull Goal goal) {
