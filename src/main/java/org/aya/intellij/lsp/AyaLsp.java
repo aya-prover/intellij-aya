@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
@@ -159,14 +160,12 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
    *
    * @return The psi element that defined the var.
    */
-  public @NotNull SeqView<PsiElement> gotoDefinition(@NotNull AyaPsiElement element) {
+  public @NotNull SeqView<AyaPsiNamedElement> gotoDefinition(@NotNull AyaPsiElement element) {
     var proj = element.getProject();
     var source = sourceFileOf(element);
-    return source == null
-      ? SeqView.empty()
-      : GotoDefinition.findDefs(source, JB.toXyPosition(element), service.libraries())
+    return source == null ? SeqView.empty() : GotoDefinition.findDefs(source, JB.toXyPosition(element), service.libraries())
       .map(WithPos::data)
-      .mapNotNull(pos -> elementAt(proj, pos));
+      .mapNotNull(pos -> elementAt(proj, pos, AyaPsiNamedElement.class));
   }
 
   /** Get the {@link Var} defined by the psi element. */
@@ -224,12 +223,16 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return goals.filter(p -> JB.toRange(p.sourcePos()).containsOffset(textOffset));
   }
 
-  private @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
+  public static @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
     return pos.file().underlying()
       .mapNotNull(path -> VirtualFileManager.getInstance().findFileByNioPath(path))
       .mapNotNull(virtualFile -> PsiManager.getInstance(project).findFile(virtualFile))
       .mapNotNull(psiFile -> psiFile.findElementAt(JB.toRange(pos).getStartOffset()))
       .getOrNull();
+  }
+
+  public static <T extends PsiElement> @Nullable T elementAt(@NotNull Project project, @NotNull SourcePos pos, @NotNull Class<T> type) {
+    return PsiTreeUtil.getParentOfType(elementAt(project, pos), type);
   }
 
   @Override public void publishAyaProblems(

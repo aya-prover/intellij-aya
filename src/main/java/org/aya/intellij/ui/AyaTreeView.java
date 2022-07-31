@@ -4,9 +4,15 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.AutoScrollFromSourceHandler;
 import com.intellij.ui.AutoScrollToSourceHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -14,6 +20,7 @@ import com.intellij.ui.render.LabelBasedRenderer;
 import com.intellij.ui.treeStructure.Tree;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
+import org.aya.intellij.psi.utils.AyaPsiUtils;
 import org.aya.intellij.settings.AyaSettingsState;
 import org.aya.util.TreeBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +40,7 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
   public interface NodeAdapter<T extends Node<T>> {
     @Nullable String renderTitle(@NotNull T node);
     @Nullable Icon renderIcon(@NotNull T node);
+    @Nullable PsiElement findSource(@NotNull T node);
   }
 
   public static final class NodeBuilder<T extends Node<T>> extends TreeBuilder<T> {
@@ -80,14 +88,22 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     actionGroup.add(actionManager.createExpandAllAction(treeExpander, this));
     actionGroup.add(actionManager.createCollapseAllAction(treeExpander, this));
     actionGroup.addSeparator();
-    actionGroup.add(new ScrollTo<>(project, this).createToggleAction());
-    actionGroup.add(new ScrollFrom<>(project, this).createToggleAction());
+    actionGroup.add(new ScrollTo(project, this).createToggleAction());
+    actionGroup.add(new ScrollFrom(project, this).createToggleAction());
 
     var toolbar = ActionManager.getInstance().createActionToolbar(
       AyaToolWindow.TOOLBAR_PLACE, actionGroup, false);
     toolbar.setTargetComponent(rootPanel);
     rootPanel.setToolbar(toolbar.getComponent());
     rootPanel.setContent(ScrollPaneFactory.createScrollPane(this, true));
+  }
+
+  public void scrollFromEditor(@NotNull Editor editor) {}
+
+  public void scrollToEditor(boolean focus) {
+    if (adapter == null) return;
+   nodeOf(getLastSelectedPathComponent(), adapter::findSource)
+     .forEach(e -> AyaPsiUtils.navigate(e, focus));
   }
 
   private void updateNode(@NotNull ImmutableSeq<T> nodes) {
@@ -117,9 +133,25 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
       -> super.convertValueToText(value, selected, expanded, leaf, row, hasFocus));
   }
 
-  private static class ScrollFrom<T extends Node<T>> extends AutoScrollFromSourceHandler {
+  private class ScrollFrom extends AutoScrollFromSourceHandler {
     public ScrollFrom(@NotNull Project project, @NotNull AyaTreeView<T> treeView) {
       super(project, treeView, project);
+      install();
+    }
+
+    @Override public void install() {
+      EditorFactory.getInstance().getEventMulticaster().addCaretListener(new CaretListener() {
+        @Override public void caretPositionChanged(@NotNull CaretEvent event) {
+          selectInAlarm(event.getEditor());
+        }
+      }, myProject);
+    }
+
+    private void selectInAlarm(@Nullable Editor editor) {
+      if (editor != null && AyaTreeView.this.isShowing() && isAutoScrollEnabled()) {
+        myAlarm.cancelAllRequests();
+        myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
+      }
     }
 
     @Override protected boolean isAutoScrollEnabled() {
@@ -131,10 +163,18 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     }
 
     @Override protected void selectElementFromEditor(@NotNull FileEditor editor) {
+      if (editor instanceof TextEditor textEditor) {
+        selectElementFromEditor(textEditor.getEditor());
+      }
+    }
+
+    private void selectElementFromEditor(@NotNull Editor editor) {
+      if (editor.getProject() != myProject) return;
+      AyaTreeView.this.scrollFromEditor(editor);
     }
   }
 
-  private static class ScrollTo<T extends Node<T>> extends AutoScrollToSourceHandler {
+  private class ScrollTo extends AutoScrollToSourceHandler {
     public ScrollTo(@NotNull Project project, @NotNull AyaTreeView<T> treeView) {
       install(treeView);
     }
@@ -145,6 +185,10 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
 
     @Override protected void setAutoScrollMode(boolean state) {
       AyaSettingsState.getInstance().autoScrollToSource = state;
+    }
+
+    @Override protected void scrollToSource(Component tree) {
+      AyaTreeView.this.scrollToEditor(false);
     }
   }
 

@@ -3,6 +3,7 @@ package org.aya.intellij.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -11,7 +12,9 @@ import kotlin.Unit;
 import org.aya.core.term.ErrorTerm;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.AyaIcons;
+import org.aya.intellij.lsp.AyaLsp;
 import org.aya.intellij.lsp.ProblemService;
+import org.aya.intellij.psi.concrete.AyaPsiHoleExpr;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.Goal;
 import org.aya.util.distill.DistillerOptions;
@@ -27,8 +30,10 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
   private final @NotNull AyaTreeView<GoalNode> treeView;
   // TODO: user-defined distiller options
   private final @NotNull DistillerOptions options = DistillerOptions.informative();
+  private final @NotNull Project project;
 
   public GoalsView(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+    this.project = project;
     var rootPanel = new SimpleToolWindowPanel(false);
     treeView = AyaTreeView.create("All Goals", false);
     treeView.setAdapter(this);
@@ -71,7 +76,7 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
     builder.reduce();
   }
 
-  @Override public @NotNull String renderTitle(@NotNull GoalsView.GoalNode node) {
+  @Override public @NotNull String renderTitle(@NotNull GoalNode node) {
     return switch (node) {
       case FileG f -> f.sourceFile.display();
       case GoalG g -> g.describe(options);
@@ -79,11 +84,19 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
     };
   }
 
-  @Override public @Nullable Icon renderIcon(@NotNull GoalsView.GoalNode node) {
+  @Override public @Nullable Icon renderIcon(@NotNull GoalNode node) {
     return switch (node) {
       case FileG $ -> AyaIcons.AYA_FILE;
       case GoalG g -> solved(g.goal) ? AyaIcons.GOAL_SOLVED : AyaIcons.GOAL;
       case GoalContextG c -> c.inScope ? AyaIcons.GOAL_CONTEXT : AyaIcons.GOAL_CONTEXT_NOT_IN_SCOPE;
+    };
+  }
+
+  @Override public @Nullable PsiElement findSource(@NotNull GoalNode node) {
+    return switch (node) {
+      case FileG $ -> null;
+      case GoalG g -> AyaLsp.elementAt(project, g.goal.sourcePos(), AyaPsiHoleExpr.class);
+      case GoalContextG c -> AyaLsp.elementAt(project, c.goal.sourcePos(), AyaPsiHoleExpr.class);
     };
   }
 
@@ -132,18 +145,19 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
         var inScope = scope.contains(param.ref());
         var doc = inScope ? paramDoc : Doc.sep(paramDoc, Doc.parened(
           Doc.english(AyaBundle.INSTANCE.message("aya.ui.goals.not.in.scope"))));
-        return new GoalContextG(doc.debugRender(), inScope);
+        return new GoalContextG(goal, doc.debugRender(), inScope);
       }).toImmutableSeq();
     }
   }
 
   record GoalContextG(
+    @NotNull Goal goal,
     @NotNull String label,
     boolean inScope,
     @NotNull MutableList<GoalNode> children
   ) implements GoalNode {
-    public GoalContextG(@NotNull String label, boolean inScope) {
-      this(label, inScope, MutableList.create());
+    public GoalContextG(@NotNull Goal goal, @NotNull String label, boolean inScope) {
+      this(goal, label, inScope, MutableList.create());
     }
   }
 }
