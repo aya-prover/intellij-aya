@@ -71,7 +71,7 @@
     <toolWindow
       factoryClass="org.aya.intellij.ui.AyaToolWindow"
       id="Aya Prover"
-      anchor="bottom"/>
+      anchor="right"/>
 
     <projectService
       serviceImplementation="org.aya.intellij.lsp.ProblemService"/>

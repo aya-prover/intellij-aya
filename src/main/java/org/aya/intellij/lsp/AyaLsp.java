@@ -11,8 +11,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
@@ -36,7 +34,6 @@ import org.aya.lsp.utils.Resolver;
 import org.aya.ref.Var;
 import org.aya.tyck.error.Goal;
 import org.aya.util.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
 import org.eclipse.lsp4j.MessageActionItem;
@@ -70,7 +67,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
-  public static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
+  static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
     var lsp = new AyaLsp(project);
     lsp.registerLibrary(ayaJson.getParent());
@@ -124,14 +121,18 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   void recompile(@Nullable Runnable callback) {
-    recompile(() -> service.libraries().forEach(service::loadLibrary), callback);
+    recompile(service::reload, callback);
   }
 
   void recompile(@NotNull Runnable compile, @Nullable Runnable callback) {
     compilerPool.execute(() -> {
       Log.i("[intellij-aya] Compilation started.");
+      var service = project.getService(ProblemService.class);
       compile.run();
+      service.allProblems.set(problemCache.toImmutableMap());
+      Log.i("[intellij-aya] Compilation finished.");
       if (callback != null) callback.run();
+      Log.i("[intellij-aya] Compilation finishing notified.");
     });
   }
 
@@ -165,7 +166,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     var source = sourceFileOf(element);
     return source == null ? SeqView.empty() : GotoDefinition.findDefs(source, JB.toXyPosition(element), service.libraries())
       .map(WithPos::data)
-      .mapNotNull(pos -> elementAt(proj, pos, AyaPsiNamedElement.class));
+      .mapNotNull(pos -> JB.elementAt(proj, pos, AyaPsiNamedElement.class));
   }
 
   /** Get the {@link Var} defined by the psi element. */
@@ -226,33 +227,15 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return goals.filter(p -> JB.toRange(p.sourcePos()).containsOffset(textOffset));
   }
 
-  public static @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
-    return pos.file().underlying()
-      .mapNotNull(path -> VirtualFileManager.getInstance().findFileByNioPath(path))
-      .mapNotNull(virtualFile -> PsiManager.getInstance(project).findFile(virtualFile))
-      .mapNotNull(psiFile -> psiFile.findElementAt(JB.toRange(pos).getStartOffset()))
-      .getOrNull();
-  }
-
-  public static <T extends PsiElement> @Nullable T elementAt(@NotNull Project project, @NotNull SourcePos pos, @NotNull Class<T> type) {
-    return PsiTreeUtil.getParentOfType(elementAt(project, pos), type);
-  }
-
   @Override public void publishAyaProblems(
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
     @NotNull DistillerOptions options
   ) {
     problemCache.putAll(problems);
-    refreshGoals();
   }
 
   @Override public void clearAyaProblems(@NotNull ImmutableSeq<Path> files) {
     files.forEach(problemCache::remove);
-    refreshGoals();
-  }
-
-  private void refreshGoals() {
-    project.getService(ProblemService.class).allProblems.set(problemCache.toImmutableMap());
   }
 
   @Override public void logMessage(@NotNull MessageParams message) {

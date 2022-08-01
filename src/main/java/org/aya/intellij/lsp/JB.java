@@ -1,15 +1,19 @@
 package org.aya.intellij.lsp;
 
 import com.intellij.diff.util.LineCol;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourcePos;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
 import java.nio.file.Path;
 
 /**
@@ -43,7 +47,15 @@ public interface JB {
     return FileUtil.canonicalize(file.toNioPath());
   }
 
-  static @NotNull Path canonicalize(@NotNull String uri) {
-    return FileUtil.canonicalize(Path.of(URI.create(uri)));
+  static @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
+    return pos.file().underlying()
+      .mapNotNull(path -> VirtualFileManager.getInstance().findFileByNioPath(path))
+      .mapNotNull(virtualFile -> PsiManager.getInstance(project).findFile(virtualFile))
+      .mapNotNull(psiFile -> psiFile.findElementAt(toRange(pos).getStartOffset()))
+      .getOrNull();
+  }
+
+  static <T extends PsiElement> @Nullable T elementAt(@NotNull Project project, @NotNull SourcePos pos, @NotNull Class<T> type) {
+    return PsiTreeUtil.getParentOfType(elementAt(project, pos), type);
   }
 }

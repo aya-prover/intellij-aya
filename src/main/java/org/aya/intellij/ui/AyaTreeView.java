@@ -66,17 +66,19 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     }
   }
 
-  public static <T extends Node<T>> @NotNull AyaTreeView<T> create(@NotNull String rootText, boolean showRoot) {
+  public static <T extends Node<T>> @NotNull AyaTreeView<T> create(@NotNull Project project, @NotNull String rootText, boolean showRoot) {
     var rootNode = new DefaultMutableTreeNode(rootText);
     var rootNodeModel = new DefaultTreeModel(rootNode);
-    return new AyaTreeView<>(rootNode, rootNodeModel, showRoot);
+    return new AyaTreeView<>(project, rootNode, rootNodeModel, showRoot);
   }
 
   private final @NotNull DefaultMutableTreeNode rootNode;
   private final @NotNull DefaultTreeModel rootNodeModel;
   private @Nullable NodeAdapter<T> adapter;
+  private final @NotNull Project project;
 
   private AyaTreeView(
+    @NotNull Project project,
     @NotNull DefaultMutableTreeNode rootNode,
     @NotNull DefaultTreeModel rootNodeModel,
     boolean showRoot
@@ -85,13 +87,14 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     setRootVisible(showRoot);
     this.rootNode = rootNode;
     this.rootNodeModel = rootNodeModel;
+    this.project = project;
   }
 
   public @NotNull NodeBuilder<T> edit() {
     return new NodeBuilder<>(this);
   }
 
-  public void attach(@NotNull Project project, @NotNull SimpleToolWindowPanel rootPanel) {
+  public void attach(@NotNull SimpleToolWindowPanel rootPanel) {
     var actionGroup = new DefaultActionGroup();
     var actionManager = CommonActionsManager.getInstance();
     var treeExpander = new DefaultTreeExpander(this);
@@ -109,7 +112,14 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     rootPanel.setContent(ScrollPaneFactory.createScrollPane(this, true));
   }
 
+  public void scrollFromEditor(@NotNull FileEditor editor) {
+    if (editor instanceof TextEditor textEditor) {
+      scrollFromEditor(textEditor.getEditor());
+    }
+  }
+
   public void scrollFromEditor(@NotNull Editor editor) {
+    if (editor.getProject() != project) return;
     if (adapter == null) return;
     var project = editor.getProject();
     if (project == null) return;
@@ -142,8 +152,8 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     return null;
   }
 
-  private void select(@NotNull TreePath path) {
-    getSelectionModel().setSelectionPath(path);
+  public void select(@NotNull TreePath path) {
+    setSelectionPath(path);
     scrollToPath(path);
   }
 
@@ -207,7 +217,7 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     private void selectInAlarm(@Nullable Editor editor) {
       if (editor != null && AyaTreeView.this.isShowing() && isAutoScrollEnabled()) {
         myAlarm.cancelAllRequests();
-        myAlarm.addRequest(() -> selectElementFromEditor(editor), getAlarmDelay(), getModalityState());
+        myAlarm.addRequest(() -> AyaTreeView.this.scrollFromEditor(editor), getAlarmDelay(), getModalityState());
       }
     }
 
@@ -220,13 +230,6 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     }
 
     @Override protected void selectElementFromEditor(@NotNull FileEditor editor) {
-      if (editor instanceof TextEditor textEditor) {
-        selectElementFromEditor(textEditor.getEditor());
-      }
-    }
-
-    private void selectElementFromEditor(@NotNull Editor editor) {
-      if (editor.getProject() != myProject) return;
       AyaTreeView.this.scrollFromEditor(editor);
     }
   }
