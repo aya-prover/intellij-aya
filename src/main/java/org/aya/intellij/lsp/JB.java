@@ -26,7 +26,11 @@ public interface JB {
   }
 
   static @NotNull TextRange toRange(@NotNull SourcePos sourcePos) {
-    return new TextRange(sourcePos.tokenStartIndex(), sourcePos.tokenEndIndex() + 1);
+    return new TextRange(sourcePos.tokenStartIndex(), endOffset(sourcePos));
+  }
+
+  static int endOffset(@NotNull SourcePos sourcePos) {
+    return sourcePos.tokenEndIndex() + 1;
   }
 
   static boolean fileSupported(@NotNull VirtualFile file) {

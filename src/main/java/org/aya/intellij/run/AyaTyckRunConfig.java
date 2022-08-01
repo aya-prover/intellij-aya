@@ -8,8 +8,6 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import org.aya.intellij.psi.AyaPsiFile;
-import org.aya.intellij.psi.concrete.AyaPsiDecl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,9 +56,5 @@ public class AyaTyckRunConfig extends LocatableConfigurationBase<AyaTyckRunConfi
   public @NotNull String definitionName() {
     var opt = getOptions();
     return opt.definitionName.getValue(opt);
-  }
-
-  public static boolean isTyckUnit(@NotNull PsiElement element) {
-    return element instanceof AyaPsiDecl || element instanceof AyaPsiFile;
   }
 }

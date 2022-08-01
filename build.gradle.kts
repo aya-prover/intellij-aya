@@ -34,6 +34,9 @@ version = deps.getProperty("version.project")
 
 // Configure project's dependencies
 repositories {
+  if (System.getProperty("user.name").contains("kiva", ignoreCase = true)) {
+    mavenLocal()
+  }
   mavenCentral()
   if (ayaVersion.endsWith("SNAPSHOT")) {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
