@@ -23,6 +23,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
+import kala.tuple.Tuple3;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.utils.AyaPsiUtils;
 import org.aya.intellij.settings.AyaSettingsState;
@@ -50,7 +51,7 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     @Nullable String renderTitle(@NotNull T node);
     @Nullable Icon renderIcon(@NotNull T node);
     @Nullable PsiElement findElement(@NotNull T node);
-    @Nullable Tuple2<T, TreePath> findNode(@NotNull AyaPsiFile file, int offset);
+    @Nullable Tuple3<T, TreePath, Boolean> findNode(@NotNull AyaPsiFile file, int offset);
   }
 
   public static final class NodeBuilder<T extends Node<T>> extends TreeBuilder<T> {
@@ -115,7 +116,11 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     var file = PsiDocumentManager.getInstance(editor.getProject()).getPsiFile(editor.getDocument());
     if (!(file instanceof AyaPsiFile ayaFile)) return;
     var node = adapter.findNode(ayaFile, editor.getCaretModel().getOffset());
-    if (node != null) select(node._2);
+    if (node != null) {
+      select(node._2);
+      if (node._3 && node._2.getParentPath() != null)
+        select(node._2.getParentPath());
+    }
   }
 
   public void scrollToEditor(boolean focus) {

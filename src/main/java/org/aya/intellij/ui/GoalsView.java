@@ -10,7 +10,8 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.control.Option;
-import kala.tuple.Tuple2;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple3;
 import kotlin.Unit;
 import org.aya.core.term.ErrorTerm;
 import org.aya.intellij.AyaBundle;
@@ -105,15 +106,16 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
     };
   }
 
-  @Override public @Nullable Tuple2<GoalNode, TreePath> findNode(@NotNull AyaPsiFile file, int offset) {
+  @Override public @Nullable Tuple3<GoalNode, TreePath, Boolean> findNode(@NotNull AyaPsiFile file, int offset) {
     var goals = AyaLsp.use(project, lsp -> lsp.goalsAt(file, offset), SeqView::<Goal>empty);
     var selected = goals.firstOption(this::solved).getOrElse(goals::firstOrNull);
     return Option.ofNullable(selected)
       .mapNotNull(g -> treeView.find(n -> switch (n) {
         case FileG $ -> false;
-        case GoalContextG ctx -> g == ctx.goal; // always select context if available
+        case GoalContextG ctx -> g == ctx.goal;
         case GoalG goal -> g == goal.goal;
       }))
+      .map(found -> Tuple.of(found._1, found._2, found._1 instanceof GoalContextG))
       .getOrNull();
   }
 
