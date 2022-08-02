@@ -1,4 +1,4 @@
-package org.aya.intellij.lsp;
+package org.aya.intellij.service;
 
 import com.intellij.openapi.observable.properties.AtomicLazyProperty;
 import com.intellij.openapi.project.Project;

@@ -1,5 +1,6 @@
 package org.aya.intellij.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -20,9 +21,9 @@ import org.aya.intellij.AyaBundle;
 import org.aya.intellij.AyaIcons;
 import org.aya.intellij.lsp.AyaLsp;
 import org.aya.intellij.lsp.JB;
-import org.aya.intellij.lsp.ProblemService;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.concrete.AyaPsiHoleExpr;
+import org.aya.intellij.service.ProblemService;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.Goal;
 import org.aya.util.distill.DistillerOptions;
@@ -62,8 +63,10 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
 
   public void updateView(@NotNull ImmutableMap<Path, ImmutableSeq<Problem>> goals) {
     updateView(treeView.edit(), goals);
-    var editor = FileEditorManager.getInstance(project).getSelectedEditor();
-    if (editor != null) treeView.scrollFromEditor(editor);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      var editor = FileEditorManager.getInstance(project).getSelectedEditor();
+      if (editor != null) treeView.scrollFromEditor(editor);
+    });
   }
 
   private void updateView(

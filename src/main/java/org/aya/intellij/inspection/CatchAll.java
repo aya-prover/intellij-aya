@@ -8,6 +8,7 @@ import kala.collection.SeqView;
 import org.aya.intellij.lsp.AyaLsp;
 import org.aya.intellij.lsp.JB;
 import org.aya.intellij.psi.concrete.AyaPsiVisitor;
+import org.aya.intellij.service.DistillerOptionsService;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ public abstract class CatchAll extends AyaInspection {
       @Override
       public void visitFile(@NotNull PsiFile file) {
         catchAll(lsp, file).forEach(problem -> holder.registerProblem(
-          file, problem.brief(distillerOptions()).debugRender(),
+          file, problem.brief(DistillerOptionsService.showingError()).renderToHtml(false),
           highlightType, JB.toRange(problem.sourcePos())
         ));
       }

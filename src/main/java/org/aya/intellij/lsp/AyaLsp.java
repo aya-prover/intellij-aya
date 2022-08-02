@@ -17,6 +17,7 @@ import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
+import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
@@ -25,6 +26,7 @@ import org.aya.generic.Constants;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.ref.AyaPsiReference;
+import org.aya.intellij.service.ProblemService;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaServer;
@@ -96,6 +98,14 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     var lsp = of(project);
     if (lsp == null) return orElse.getChecked();
     return block.applyChecked(lsp);
+  }
+
+  public static <E extends Throwable> void use(
+    @NotNull Project project,
+    @NotNull CheckedConsumer<AyaLsp, E> block
+  ) throws E {
+    var lsp = of(project);
+    if (lsp != null) block.acceptChecked(lsp);
   }
 
   public AyaLsp(@NotNull Project project) {

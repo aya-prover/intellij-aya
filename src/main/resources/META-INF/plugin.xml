@@ -24,6 +24,9 @@
     <annotator
       language="Aya"
       implementationClass="org.aya.intellij.actions.SemanticHighlight"/>
+    <annotator
+      language="Aya"
+      implementationClass="org.aya.intellij.inspection.error.ErrorInspection$ErrorAnnotator"/>
     <inspectionToolProvider
       implementation="org.aya.intellij.inspection.AyaInspection$Provider"/>
     <lang.namesValidator
@@ -74,6 +77,6 @@
       anchor="right"/>
 
     <projectService
-      serviceImplementation="org.aya.intellij.lsp.ProblemService"/>
+      serviceImplementation="org.aya.intellij.service.ProblemService"/>
   </extensions>
 </idea-plugin>
