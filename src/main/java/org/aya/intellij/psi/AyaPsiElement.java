@@ -2,7 +2,7 @@ package org.aya.intellij.psi;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface AyaPsiElement extends PsiElement {
+public interface AyaPsiElement extends NavigatablePsiElement {
   default @Override Icon getIcon(int flags) {
     return ayaIcon();
   }
@@ -33,13 +33,16 @@ public interface AyaPsiElement extends PsiElement {
   }
 
   default @NotNull ItemPresentation ayaPresentation(boolean verbose) {
-    var text = switch (this) {
+    var location = verbose ? QualifiedID.join(containingModule()) : null;
+    return new PresentationData(presentableName(), location, ayaIcon(), null);
+  }
+
+  default @NotNull String presentableName() {
+    return switch (this) {
       case AyaPsiNamedElement named -> named.nameOrEmpty();
       case AyaPsiFile file -> QualifiedID.join(file.containingFileModule());
       default -> "";
     };
-    var location = verbose ? QualifiedID.join(containingModule()) : null;
-    return new PresentationData(text, location, ayaIcon(), null);
   }
 
   default @NotNull ImmutableSeq<String> containingFileModule() {

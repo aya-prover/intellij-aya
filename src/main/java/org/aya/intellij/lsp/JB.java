@@ -6,6 +6,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.aya.util.FileUtil;
@@ -51,8 +52,16 @@ public interface JB {
     return pos.file().underlying()
       .mapNotNull(path -> VirtualFileManager.getInstance().findFileByNioPath(path))
       .mapNotNull(virtualFile -> PsiManager.getInstance(project).findFile(virtualFile))
-      .mapNotNull(psiFile -> psiFile.findElementAt(toRange(pos).getStartOffset()))
+      .mapNotNull(psiFile -> elementAt(psiFile, pos))
       .getOrNull();
+  }
+
+  static @Nullable PsiElement elementAt(@NotNull PsiFile file, @NotNull SourcePos pos) {
+    return file.findElementAt(toRange(pos).getStartOffset());
+  }
+
+  static <T extends PsiElement> @Nullable T elementAt(@NotNull PsiFile file, @NotNull SourcePos pos, @NotNull Class<T> type) {
+    return PsiTreeUtil.getParentOfType(elementAt(file, pos), type);
   }
 
   static <T extends PsiElement> @Nullable T elementAt(@NotNull Project project, @NotNull SourcePos pos, @NotNull Class<T> type) {

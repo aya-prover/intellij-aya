@@ -12,9 +12,11 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import kala.collection.Seq;
+import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.function.CheckedConsumer;
@@ -22,8 +24,12 @@ import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.Constants;
 import org.aya.intellij.psi.AyaPsiElement;
+import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.ref.AyaPsiReference;
 import org.aya.intellij.service.ProblemService;
@@ -33,6 +39,7 @@ import org.aya.lsp.server.AyaServer;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.Resolver;
+import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.aya.tyck.error.Goal;
 import org.aya.util.distill.DistillerOptions;
@@ -237,6 +244,20 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return goals.filter(p -> JB.toRange(p.sourcePos()).containsOffset(textOffset));
   }
 
+  public @NotNull ImmutableSeq<DefVar<?, ?>> symbolsInFile(@NotNull AyaPsiFile file) {
+    var source = sourceFileOf(file);
+    if (source == null) return ImmutableSeq.empty();
+    // TODO: consider the following code
+    // return source.resolveInfo().get().thisModule().definitions()
+    //   .valuesView()
+    //   .flatMap(MapLike::valuesView)
+    //   .filterIsInstance(DefVar.class)
+    //   .toImmutableSeq();
+    var collector = new DeclCollector(MutableList.create());
+    collector.visit(source.program().get());
+    return collector.decls.view().flatMap(Resolver::withChildren).toImmutableSeq();
+  }
+
   @Override public void publishAyaProblems(
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
     @NotNull DistillerOptions options
@@ -271,5 +292,20 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   @Override public void publishDiagnostics(@NotNull PublishDiagnosticsParams diagnostics) {
     throw new IllegalStateException("unreachable");
+  }
+
+  private record DeclCollector(@NotNull MutableList<Decl> decls) {
+    public void visit(@Nullable SeqLike<Stmt> stmts) {
+      if (stmts == null) return;
+      stmts.forEach(this::visit);
+    }
+
+    public void visit(@NotNull Stmt stmt) {
+      switch (stmt) {
+        case Command.Module mod -> visit(mod.contents());
+        case Decl decl -> decls.append(decl);
+        default -> {}
+      }
+    }
   }
 }

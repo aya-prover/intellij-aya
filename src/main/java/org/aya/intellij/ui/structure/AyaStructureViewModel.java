@@ -5,7 +5,6 @@ import com.intellij.ide.structureView.StructureViewModelBase;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.util.PsiTreeUtil;
 import kala.collection.Seq;
 import org.aya.intellij.psi.AyaPsiElement;
@@ -47,15 +46,15 @@ public class AyaStructureViewModel extends StructureViewModelBase implements Str
     }
 
     @Override public void navigate(boolean requestFocus) {
-      if (element instanceof Navigatable e) e.navigate(requestFocus);
+      element.navigate(requestFocus);
     }
 
     @Override public boolean canNavigate() {
-      return element instanceof Navigatable e && e.canNavigate();
+      return element.canNavigate();
     }
 
     @Override public boolean canNavigateToSource() {
-      return element instanceof Navigatable e && e.canNavigateToSource();
+      return element.canNavigateToSource();
     }
   }
 }

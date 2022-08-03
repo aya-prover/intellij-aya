@@ -53,6 +53,7 @@
     <psi.referenceContributor
       implementation="org.aya.intellij.actions.ReferenceContributor"/>
     <navbar implementation="org.aya.intellij.ui.structure.AyaNavBar"/>
+    <gotoSymbolContributor implementation="org.aya.intellij.actions.SearchEverywhere$Symbol"/>
 
     <!-- run configuration -->
     <configurationType
