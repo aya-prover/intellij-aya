@@ -11,7 +11,7 @@ import org.aya.intellij.lsp.AyaLsp
 import org.aya.intellij.psi.concrete.AyaPsiHoleExpr
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
 import org.aya.intellij.psi.utils.AyaPsiFactory
-import org.aya.intellij.service.DistillerOptionsService
+import org.aya.intellij.service.DistillerService
 import org.aya.tyck.error.Goal
 
 class GoalInspection : AyaInspection() {
@@ -41,6 +41,6 @@ class GoalInspection : AyaInspection() {
   private fun candidate(goal: Goal): String? {
     val metas = goal.state().metas()
     val meta = goal.hole().ref()
-    return if (metas.containsKey(meta)) metas[meta].toDoc(DistillerOptionsService.goalSolution()).debugRender() else null
+    return if (metas.containsKey(meta)) DistillerService.solution(metas[meta]) else null
   }
 }

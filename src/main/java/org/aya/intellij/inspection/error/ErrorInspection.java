@@ -13,7 +13,7 @@ import org.aya.intellij.inspection.Jobs;
 import org.aya.intellij.lsp.AyaLsp;
 import org.aya.intellij.lsp.JB;
 import org.aya.intellij.psi.AyaPsiFile;
-import org.aya.intellij.service.DistillerOptionsService;
+import org.aya.intellij.service.DistillerService;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,10 +34,10 @@ public class ErrorInspection extends CatchAll {
       if (!(element instanceof AyaPsiFile file)) return;
       AyaLsp.use(file.getProject(), lsp -> JOBS.findMyJob(lsp.errorsInFile(file)).forEach(p -> {
         var range = JB.toRange(p.sourcePos());
-        var msg = p.describe(DistillerOptionsService.showingError()).debugRender();
-        var tooltip = p.brief(DistillerOptionsService.showingError()).debugRender();
+        var msg = DistillerService.escapedDescribe(p);
+        var tooltip = DistillerService.escapedBrief(p);
         holder.newAnnotation(HighlightSeverity.ERROR, msg)
-          .tooltip(tooltip.replace("\n", "<br>").replace(" ", "&nbsp;"))
+          .tooltip(tooltip)
           .range(range).create();
       }));
     }
