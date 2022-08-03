@@ -31,6 +31,7 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
     AyaPsiElementTypes.LPAREN, AyaPsiElementTypes.RPAREN -> pack(PARENTHESES)
     AyaPsiElementTypes.LBRACE, AyaPsiElementTypes.RBRACE -> pack(BRACES)
     AyaPsiElementTypes.LARRAY, AyaPsiElementTypes.RARRAY -> pack(BRACKETS)
+    AyaPsiElementTypes.LIDIOM, AyaPsiElementTypes.RIDIOM -> pack(BRACKETS)
     AyaPsiElementTypes.LGOAL, AyaPsiElementTypes.RGOAL -> pack(GOAL)
 
     TokenType.BAD_CHARACTER -> pack(HighlighterColors.BAD_CHARACTER)

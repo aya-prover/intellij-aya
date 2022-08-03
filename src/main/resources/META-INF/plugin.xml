@@ -33,6 +33,9 @@
     <lang.syntaxHighlighterFactory
       language="Aya"
       implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
+    <lang.braceMatcher
+      language="Aya"
+      implementationClass="org.aya.intellij.actions.BraceMatcher"/>
     <annotator
       language="Aya"
       implementationClass="org.aya.intellij.actions.SemanticHighlight"/>
