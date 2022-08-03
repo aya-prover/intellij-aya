@@ -21,7 +21,7 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
 
     AyaParserDefinition.BLOCK_COMMENT -> pack(BLOCK_COMMENT)
     AyaParserDefinition.LINE_COMMENT -> pack(LINE_COMMENT)
-    AyaPsiElementTypes.DOC_COMMENT -> pack(DOC_COMMENT)
+    AyaParserDefinition.DOC_COMMENT -> pack(DOC_COMMENT)
 
     AyaPsiElementTypes.ID -> pack(ID)
     AyaPsiElementTypes.NUMBER -> pack(NUMBER)

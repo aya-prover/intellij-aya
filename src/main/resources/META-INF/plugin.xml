@@ -36,6 +36,9 @@
     <lang.braceMatcher
       language="Aya"
       implementationClass="org.aya.intellij.actions.BraceMatcher"/>
+    <lang.commenter
+      language="Aya"
+      implementationClass="org.aya.intellij.actions.Commenter"/>
     <annotator
       language="Aya"
       implementationClass="org.aya.intellij.actions.SemanticHighlight"/>
