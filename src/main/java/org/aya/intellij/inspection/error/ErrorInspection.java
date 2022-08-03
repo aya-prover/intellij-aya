@@ -34,7 +34,7 @@ public class ErrorInspection extends CatchAll {
       if (!(element instanceof AyaPsiFile file)) return;
       AyaLsp.use(file.getProject(), lsp -> JOBS.findMyJob(lsp.errorsInFile(file)).forEach(p -> {
         var range = JB.toRange(p.sourcePos());
-        var msg = DistillerService.escapedDescribe(p);
+        var msg = DistillerService.plainDescribe(p);
         var tooltip = DistillerService.escapedBrief(p);
         holder.newAnnotation(HighlightSeverity.ERROR, msg)
           .tooltip(tooltip)

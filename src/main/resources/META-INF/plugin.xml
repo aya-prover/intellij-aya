@@ -39,6 +39,9 @@
     <lang.commenter
       language="Aya"
       implementationClass="org.aya.intellij.actions.Commenter"/>
+    <lang.psiStructureViewFactory
+      language="Aya"
+      implementationClass="org.aya.intellij.ui.structure.StructureViewFactory"/>
     <annotator
       language="Aya"
       implementationClass="org.aya.intellij.actions.SemanticHighlight"/>
