@@ -9,7 +9,8 @@ import org.aya.ref.LocalVar;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
-public interface AyaPsiNamedElement extends AyaPsiElement, PsiNameIdentifierOwner {
+/** elements that introduce a referable name */
+public interface AyaPsiNamedElement extends AyaPsiStructureElement, PsiNameIdentifierOwner {
   default @NotNull String nameOrEmpty() {
     var name = getName();
     return name != null ? name : "";
