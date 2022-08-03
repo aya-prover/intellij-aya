@@ -52,6 +52,7 @@
       implementation="org.aya.intellij.inspection.AyaInspection$Provider"/>
     <psi.referenceContributor
       implementation="org.aya.intellij.actions.ReferenceContributor"/>
+    <navbar implementation="org.aya.intellij.ui.structure.AyaNavBar"/>
 
     <!-- run configuration -->
     <configurationType
