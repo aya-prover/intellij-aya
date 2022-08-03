@@ -1,6 +1,7 @@
-package org.aya.intellij.settings;
+package org.aya.intellij.ui.settings;
 
 import com.intellij.openapi.options.Configurable;
+import org.aya.intellij.service.AyaSettingService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,19 +23,19 @@ public class AyaSettingsConfigurable implements Configurable {
 
   @Override public boolean isModified() {
     if (ui == null) return false;
-    var state = AyaSettingsState.getInstance();
+    var state = AyaSettingService.getInstance();
     return state.useAyaLsp != ui.useAyaLsp.isSelected();
   }
 
   @Override public void apply() {
     if (ui == null) return;
-    var state = AyaSettingsState.getInstance();
+    var state = AyaSettingService.getInstance();
     state.useAyaLsp = ui.useAyaLsp.isSelected();
   }
 
   @Override public void reset() {
     if (ui == null) return;
-    var state = AyaSettingsState.getInstance();
+    var state = AyaSettingService.getInstance();
     ui.useAyaLsp.setSelected(state.useAyaLsp);
   }
 

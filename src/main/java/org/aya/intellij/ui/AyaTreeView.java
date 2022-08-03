@@ -26,7 +26,8 @@ import kala.tuple.Tuple2;
 import kala.tuple.Tuple3;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.utils.AyaPsiUtils;
-import org.aya.intellij.settings.AyaSettingsState;
+import org.aya.intellij.service.AyaSettingService;
+import org.aya.intellij.ui.toolwindow.AyaToolWindow;
 import org.aya.util.TreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -222,11 +223,11 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     }
 
     @Override protected boolean isAutoScrollEnabled() {
-      return AyaSettingsState.getInstance().autoScrollFromSource;
+      return AyaSettingService.getInstance().autoScrollFromSource;
     }
 
     @Override protected void setAutoScrollEnabled(boolean enabled) {
-      AyaSettingsState.getInstance().autoScrollFromSource = enabled;
+      AyaSettingService.getInstance().autoScrollFromSource = enabled;
     }
 
     @Override protected void selectElementFromEditor(@NotNull FileEditor editor) {
@@ -240,11 +241,11 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     }
 
     @Override protected boolean isAutoScrollMode() {
-      return AyaSettingsState.getInstance().autoScrollToSource;
+      return AyaSettingService.getInstance().autoScrollToSource;
     }
 
     @Override protected void setAutoScrollMode(boolean state) {
-      AyaSettingsState.getInstance().autoScrollToSource = state;
+      AyaSettingService.getInstance().autoScrollToSource = state;
     }
 
     @Override protected void scrollToSource(Component tree) {

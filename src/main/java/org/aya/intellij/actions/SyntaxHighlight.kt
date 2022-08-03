@@ -34,7 +34,7 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
     AyaPsiElementTypes.LGOAL, AyaPsiElementTypes.RGOAL -> pack(GOAL)
 
     TokenType.BAD_CHARACTER -> pack(HighlighterColors.BAD_CHARACTER)
-    else -> pack(SEMANTICS)
+    else -> TextAttributesKey.EMPTY_ARRAY
   }
 
   companion object {
@@ -90,7 +90,5 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
     val CON_CALL = TextAttributesKey.createTextAttributesKey("AYA_CON_CALL", DefaultLanguageHighlighterColors.INSTANCE_METHOD)
     @JvmField
     val GENERALIZE = TextAttributesKey.createTextAttributesKey("AYA_GENERALIZE", JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES)
-    @JvmField
-    val SEMANTICS = TextAttributesKey.createTextAttributesKey("AYA_SEMANTIC")
   }
 }

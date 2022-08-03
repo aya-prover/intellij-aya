@@ -1,4 +1,4 @@
-package org.aya.intellij.ui;
+package org.aya.intellij.ui.toolwindow;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -24,6 +24,7 @@ import org.aya.intellij.lsp.JB;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.concrete.AyaPsiHoleExpr;
 import org.aya.intellij.service.ProblemService;
+import org.aya.intellij.ui.AyaTreeView;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.Goal;
 import org.aya.util.distill.DistillerOptions;

@@ -2,7 +2,7 @@
 <idea-plugin>
   <id>org.aya.intellij</id>
   <name>Aya Prover</name>
-  <vendor>Aya Prover</vendor>
+  <vendor url="https://www.aya-prover.org/">Aya Prover</vendor>
 
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.java</depends>
@@ -17,10 +17,22 @@
       language="Aya"
       extensions="aya"/>
 
+    <!-- language features -->
     <lang.parserDefinition
       language="Aya"
       implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
-
+    <lang.findUsagesProvider
+      language="Aya"
+      implementationClass="org.aya.intellij.actions.FindUsages"/>
+    <lang.refactoringSupport
+      language="Aya"
+      implementationClass="org.aya.intellij.actions.RefactoringSupport"/>
+    <lang.namesValidator
+      language="Aya"
+      implementationClass="org.aya.intellij.parser.AyaNamesValidator"/>
+    <lang.syntaxHighlighterFactory
+      language="Aya"
+      implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
     <annotator
       language="Aya"
       implementationClass="org.aya.intellij.actions.SemanticHighlight"/>
@@ -29,54 +41,40 @@
       implementationClass="org.aya.intellij.inspection.error.ErrorInspection$ErrorAnnotator"/>
     <inspectionToolProvider
       implementation="org.aya.intellij.inspection.AyaInspection$Provider"/>
-    <lang.namesValidator
-      language="Aya"
-      implementationClass="org.aya.intellij.parser.AyaNamesValidator"/>
+    <psi.referenceContributor
+      implementation="org.aya.intellij.actions.ReferenceContributor"/>
 
-    <lang.syntaxHighlighterFactory
-      language="Aya"
-      implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
-
+    <!-- run configuration -->
     <configurationType
-      implementation="org.aya.intellij.run.AyaTyckRunConfigType"/>
+      implementation="org.aya.intellij.run.TyckRunConfig$Type"/>
     <runConfigurationProducer
-      implementation="org.aya.intellij.run.AyaTyckRunConfigProducer"/>
-
+      implementation="org.aya.intellij.run.TyckRunConfig$Producer"/>
     <runLineMarkerContributor
       language="Aya"
       implementationClass="org.aya.intellij.run.AyaRunLineMarkerContributor"/>
 
-    <psi.referenceContributor
-      implementation="org.aya.intellij.actions.ReferenceContributor"/>
-    <lang.findUsagesProvider
-      language="Aya"
-      implementationClass="org.aya.intellij.actions.FindUsages"/>
-    <lang.refactoringSupport
-      language="Aya"
-      implementationClass="org.aya.intellij.actions.RefactoringSupport"/>
-
+    <!-- settings -->
+    <applicationConfigurable
+      parentId="language"
+      instance="org.aya.intellij.ui.settings.AyaSettingsConfigurable"
+      id="org.aya.intellij.ui.settings.AyaSettingsConfigurable"
+      displayName="Aya Prover"/>
     <colorSettingsPage
-      implementation="org.aya.intellij.settings.AyaColorSettingsPage"/>
-
+      implementation="org.aya.intellij.ui.settings.AyaColorSettingsPage"/>
     <additionalTextAttributes
       scheme="Darcula"
       file="colorSchemes/ayaSyntaxHighlight.xml"/>
 
-    <applicationConfigurable
-      parentId="language"
-      instance="org.aya.intellij.settings.AyaSettingsConfigurable"
-      id="org.aya.intellij.settings.AyaSettingsConfigurable"
-      displayName="Aya Prover"/>
-
+    <!-- services -->
     <applicationService
-      serviceImplementation="org.aya.intellij.settings.AyaSettingsState"/>
-
-    <toolWindow
-      factoryClass="org.aya.intellij.ui.AyaToolWindow"
-      id="Aya Prover"
-      anchor="right"/>
-
+      serviceImplementation="org.aya.intellij.service.AyaSettingService"/>
     <projectService
       serviceImplementation="org.aya.intellij.service.ProblemService"/>
+
+    <!-- UI components -->
+    <toolWindow
+      factoryClass="org.aya.intellij.ui.toolwindow.AyaToolWindow"
+      id="Aya Prover"
+      anchor="right"/>
   </extensions>
 </idea-plugin>

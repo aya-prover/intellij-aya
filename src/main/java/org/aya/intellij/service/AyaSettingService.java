@@ -1,4 +1,4 @@
-package org.aya.intellij.settings;
+package org.aya.intellij.service;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -12,20 +12,20 @@ import org.jetbrains.annotations.Nullable;
   name = "org.aya.intellij.settings",
   storages = @Storage("IntellijAya.xml")
 )
-public class AyaSettingsState implements PersistentStateComponent<AyaSettingsState> {
+public class AyaSettingService implements PersistentStateComponent<AyaSettingService> {
   public boolean useAyaLsp = true;
   public boolean autoScrollToSource = true;
   public boolean autoScrollFromSource = true;
 
-  public static @NotNull AyaSettingsState getInstance() {
-    return ApplicationManager.getApplication().getService(AyaSettingsState.class);
+  public static @NotNull AyaSettingService getInstance() {
+    return ApplicationManager.getApplication().getService(AyaSettingService.class);
   }
 
-  @Nullable @Override public AyaSettingsState getState() {
+  @Override public @Nullable AyaSettingService getState() {
     return this;
   }
 
-  @Override public void loadState(@NotNull AyaSettingsState state) {
+  @Override public void loadState(@NotNull AyaSettingService state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }
