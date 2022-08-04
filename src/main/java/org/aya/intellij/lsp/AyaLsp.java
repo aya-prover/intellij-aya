@@ -3,7 +3,6 @@ package org.aya.intellij.lsp;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -12,11 +11,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import kala.collection.Seq;
+import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
 import kala.function.CheckedConsumer;
@@ -24,20 +24,25 @@ import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.concrete.stmt.Command;
+import org.aya.concrete.stmt.Decl;
+import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.Constants;
 import org.aya.intellij.psi.AyaPsiElement;
+import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.ref.AyaPsiReference;
+import org.aya.intellij.service.ProblemService;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaServer;
 import org.aya.lsp.server.AyaService;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.Resolver;
+import org.aya.ref.DefVar;
 import org.aya.ref.Var;
 import org.aya.tyck.error.Goal;
 import org.aya.util.distill.DistillerOptions;
-import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
 import org.eclipse.lsp4j.MessageActionItem;
@@ -48,7 +53,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -67,13 +71,14 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
   private final @NotNull AyaServer server;
   private final @NotNull AyaService service;
+  private final @NotNull Project project;
   private final @NotNull MutableSet<VirtualFile> libraryPathCache = MutableSet.create();
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
-  public static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
+  static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
-    var lsp = new AyaLsp();
+    var lsp = new AyaLsp(project);
     lsp.registerLibrary(ayaJson.getParent());
     lsp.recompile(null);
     project.putUserData(AYA_LSP, lsp);
@@ -86,14 +91,20 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   /**
    * A fallback behavior when LSP is not available is required.
-   * Use {@link #use(Project, CheckedConsumer)} or {@link #use(Project, CheckedFunction, CheckedSupplier)} instead.
+   * Use {@link #use(Project, CheckedSupplier, CheckedFunction)} instead.
    */
   private static @Nullable AyaLsp of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
   }
 
-  private static boolean isAvailable(@NotNull Project project) {
-    return of(project) != null;
+  public static <R, E extends Throwable> R use(
+    @NotNull Project project,
+    @NotNull CheckedSupplier<R, E> orElse,
+    @NotNull CheckedFunction<AyaLsp, R, E> block
+  ) throws E {
+    var lsp = of(project);
+    if (lsp == null) return orElse.getChecked();
+    return block.applyChecked(lsp);
   }
 
   public static <E extends Throwable> void use(
@@ -104,17 +115,8 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     if (lsp != null) block.acceptChecked(lsp);
   }
 
-  public static <R, E extends Throwable> R use(
-    @NotNull Project project,
-    @NotNull CheckedFunction<AyaLsp, R, E> block,
-    @NotNull CheckedSupplier<R, E> orElse
-  ) throws E {
-    var lsp = of(project);
-    if (lsp == null) return orElse.getChecked();
-    return block.applyChecked(lsp);
-  }
-
-  public AyaLsp() {
+  public AyaLsp(@NotNull Project project) {
+    this.project = project;
     this.server = new AyaServer(this);
     this.service = server.getTextDocumentService();
     server.connect(this);
@@ -126,9 +128,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       .map(VFileContentChangeEvent::getFile)
       .anyMatch(this::isSourceChanged);
     if (any) recompile(() -> {
-      Arrays.stream(ProjectManager.getInstance().getOpenProjects())
-        .filter(AyaLsp::isAvailable)
-        .forEach(p -> DaemonCodeAnalyzer.getInstance(p).restart());
+      DaemonCodeAnalyzer.getInstance(project).restart();
       Log.i("[intellij-aya] Restarted DaemonCodeAnalyzer");
     });
   }
@@ -138,14 +138,18 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   void recompile(@Nullable Runnable callback) {
-    recompile(() -> service.libraries().forEach(service::loadLibrary), callback);
+    recompile(service::reload, callback);
   }
 
   void recompile(@NotNull Runnable compile, @Nullable Runnable callback) {
     compilerPool.execute(() -> {
       Log.i("[intellij-aya] Compilation started.");
+      var service = project.getService(ProblemService.class);
       compile.run();
+      service.allProblems.set(problemCache.toImmutableMap());
+      Log.i("[intellij-aya] Compilation finished.");
       if (callback != null) callback.run();
+      Log.i("[intellij-aya] Compilation finishing notified.");
     });
   }
 
@@ -174,14 +178,12 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
    *
    * @return The psi element that defined the var.
    */
-  public @NotNull SeqView<PsiElement> gotoDefinition(@NotNull AyaPsiElement element) {
+  public @NotNull SeqView<AyaPsiNamedElement> gotoDefinition(@NotNull AyaPsiElement element) {
     var proj = element.getProject();
     var source = sourceFileOf(element);
-    return source == null
-      ? SeqView.empty()
-      : GotoDefinition.findDefs(source, JB.toXyPosition(element), service.libraries())
+    return source == null ? SeqView.empty() : GotoDefinition.findDefs(source, JB.toXyPosition(element), service.libraries())
       .map(WithPos::data)
-      .mapNotNull(pos -> elementAt(proj, pos));
+      .mapNotNull(pos -> JB.elementAt(proj, pos, AyaPsiNamedElement.class));
   }
 
   /** Get the {@link Var} defined by the psi element. */
@@ -198,9 +200,9 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     var path = vf.toNioPath();
     var problems = problemCache.getOrNull(path);
     var maxOffset = file.getTextLength();
-    return problems != null
-      ? problems.view().filter(p -> JB.endOffset(p.sourcePos()) <= maxOffset)
-      : SeqView.empty();
+    return problems == null ? SeqView.empty() : problems.view()
+      .filter(p -> JB.endOffset(p.sourcePos()) <= maxOffset)
+      .filterNot(p -> JB.isEofError(p.sourcePos()));
   }
 
   public @NotNull SeqView<Problem> errorsInFile(@NotNull PsiFile file) {
@@ -234,17 +236,26 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   public @NotNull SeqView<Goal> goalsAt(@NotNull PsiElement element) {
-    var goals = goalsInFile(element.getContainingFile());
-    var textOffset = element.getTextOffset();
+    return goalsAt(element.getContainingFile(), element.getTextOffset());
+  }
+
+  public @NotNull SeqView<Goal> goalsAt(@NotNull PsiFile file, int textOffset) {
+    var goals = goalsInFile(file);
     return goals.filter(p -> JB.toRange(p.sourcePos()).containsOffset(textOffset));
   }
 
-  private @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
-    return pos.file().underlying()
-      .mapNotNull(path -> VirtualFileManager.getInstance().findFileByNioPath(path))
-      .mapNotNull(virtualFile -> PsiManager.getInstance(project).findFile(virtualFile))
-      .mapNotNull(psiFile -> psiFile.findElementAt(JB.toRange(pos).getStartOffset()))
-      .getOrNull();
+  public @NotNull SeqView<DefVar<?, ?>> symbolsInFile(@NotNull AyaPsiFile file) {
+    var source = sourceFileOf(file);
+    if (source == null) return SeqView.empty();
+    // TODO: consider the following code
+    // return source.resolveInfo().get().thisModule().definitions()
+    //   .valuesView()
+    //   .flatMap(MapLike::valuesView)
+    //   .filterIsInstance(DefVar.class)
+    //   .toImmutableSeq();
+    var collector = new DeclCollector(MutableList.create());
+    collector.visit(source.program().get());
+    return collector.decls.view().flatMap(Resolver::withChildren);
   }
 
   @Override public void publishAyaProblems(
@@ -281,5 +292,20 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   @Override public void publishDiagnostics(@NotNull PublishDiagnosticsParams diagnostics) {
     throw new IllegalStateException("unreachable");
+  }
+
+  private record DeclCollector(@NotNull MutableList<Decl> decls) {
+    public void visit(@Nullable SeqLike<Stmt> stmts) {
+      if (stmts == null) return;
+      stmts.forEach(this::visit);
+    }
+
+    public void visit(@NotNull Stmt stmt) {
+      switch (stmt) {
+        case Command.Module mod -> visit(mod.contents());
+        case Decl decl -> decls.append(decl);
+        default -> {}
+      }
+    }
   }
 }

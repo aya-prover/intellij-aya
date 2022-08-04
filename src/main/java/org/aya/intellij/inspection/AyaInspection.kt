@@ -11,7 +11,6 @@ import org.aya.intellij.inspection.goal.GoalInspection
 import org.aya.intellij.inspection.info.InfoInspection
 import org.aya.intellij.inspection.warning.*
 import org.aya.intellij.lsp.AyaLsp
-import org.aya.util.distill.DistillerOptions
 
 abstract class AyaInspection : LocalInspectionTool() {
   override fun isEnabledByDefault() = true
@@ -20,14 +19,11 @@ abstract class AyaInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = AyaLsp.use<_, IncorrectOperationException>(
     holder.project,
-    { lsp -> buildVisitor(lsp, holder, isOnTheFly) },
     { super.buildVisitor(holder, isOnTheFly) },
+    { lsp -> buildVisitor(lsp, holder, isOnTheFly) },
   )
 
   abstract fun buildVisitor(lsp: AyaLsp, holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor
-
-  // TODO: user-defined distiller options
-  fun distillerOptions() : DistillerOptions = DistillerOptions.pretty()
 
   class Provider : InspectionToolProvider {
     override fun getInspectionClasses(): Array<Class<out AyaInspection>> = arrayOf(

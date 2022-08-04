@@ -7,17 +7,17 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class AyaTyckRunSettingsEditor extends SettingsEditor<AyaTyckRunConfig> {
+public class TyckRunConfigEditorUI extends SettingsEditor<TyckRunConfig> {
   private @NotNull JPanel root;
   private @NotNull LabeledComponent<TextFieldWithBrowseButton> moduleName;
   private @NotNull LabeledComponent<TextFieldWithBrowseButton> definitionName;
 
-  @Override protected void resetEditorFrom(@NotNull AyaTyckRunConfig config) {
+  @Override protected void resetEditorFrom(@NotNull TyckRunConfig config) {
     moduleName.getComponent().setText(config.moduleName());
     definitionName.getComponent().setText(config.definitionName());
   }
 
-  @Override protected void applyEditorTo(@NotNull AyaTyckRunConfig config) {
+  @Override protected void applyEditorTo(@NotNull TyckRunConfig config) {
     config.moduleName(moduleName.getComponent().getText());
     config.definitionName(definitionName.getComponent().getText());
   }

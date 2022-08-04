@@ -1,17 +1,18 @@
-package org.aya.intellij.ui;
+package org.aya.intellij.ui.toolwindow;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
-import com.intellij.ui.content.ContentFactory;
+import org.aya.intellij.AyaIcons;
+import org.aya.intellij.service.ProblemService;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class AyaToolWindow implements ToolWindowFactory {
+  public static final String TOOLBAR_PLACE = "AyaToolWindow.toolbar";
+
   @Override public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-    var contentFactory = ContentFactory.getInstance();
-    var content = contentFactory.createContent(new JLabel("Hello AYA"), "Aya Prover", false);
-    toolWindow.getContentManager().addContent(content);
+    toolWindow.setIcon(AyaIcons.TOOL_WINDOW);
+    var service = project.getService(ProblemService.class);
+    service.initToolWindow(project, toolWindow);
   }
 }

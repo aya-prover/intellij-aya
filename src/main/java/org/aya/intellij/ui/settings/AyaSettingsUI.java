@@ -1,4 +1,4 @@
-package org.aya.intellij.settings;
+package org.aya.intellij.ui.settings;
 
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.FormBuilder;

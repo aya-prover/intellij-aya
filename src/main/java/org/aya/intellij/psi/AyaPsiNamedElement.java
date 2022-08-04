@@ -9,7 +9,8 @@ import org.aya.ref.LocalVar;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
-public interface AyaPsiNamedElement extends AyaPsiElement, PsiNameIdentifierOwner {
+/** elements that introduce a referable name */
+public interface AyaPsiNamedElement extends AyaPsiStructureElement, PsiNameIdentifierOwner {
   default @NotNull String nameOrEmpty() {
     var name = getName();
     return name != null ? name : "";
@@ -17,7 +18,7 @@ public interface AyaPsiNamedElement extends AyaPsiElement, PsiNameIdentifierOwne
 
   /** @return qualified name for definitions and modules if possible, parameter name for local variables. */
   default @NotNull String canonicalName() {
-    return AyaLsp.use(getProject(), lsp -> {
+    return AyaLsp.use(getProject(), this::nameOrEmpty, lsp -> {
       var resolvedVar = lsp.resolveVarDefinedBy(this).firstOption();
       return switch (resolvedVar.map(WithPos::data).getOrNull()) {
         case DefVar<?, ?> defVar && defVar.module != null -> QualifiedID.join(defVar.module.appended(defVar.name()));
@@ -25,6 +26,6 @@ public interface AyaPsiNamedElement extends AyaPsiElement, PsiNameIdentifierOwne
         case ModuleVar moduleVar -> moduleVar.name();
         case default, null -> nameOrEmpty();
       };
-    }, this::nameOrEmpty);
+    });
   }
 }

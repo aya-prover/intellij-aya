@@ -4,7 +4,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.aya.intellij.actions.ReferenceContributor;
 import org.aya.intellij.lsp.AyaLsp;
@@ -30,10 +29,9 @@ public class AyaPsiReference extends PsiReferenceBase<AyaPsiElement> {
   }
 
   @Override public @Nullable AyaPsiNamedElement resolve() {
-    return AyaLsp.use(myElement.getProject(), lsp -> {
-      var def = lsp.gotoDefinition(myElement).firstOrNull();
-      return PsiTreeUtil.getParentOfType(def, AyaPsiNamedElement.class);
-    }, () -> null);
+    return AyaLsp.use(myElement.getProject(),
+      () -> null,
+      lsp -> lsp.gotoDefinition(myElement).firstOrNull());
   }
 
   @Override public PsiElement handleElementRename(@NotNull String newName) throws IncorrectOperationException {

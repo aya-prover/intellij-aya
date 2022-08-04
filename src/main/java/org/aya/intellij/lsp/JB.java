@@ -1,15 +1,20 @@
 package org.aya.intellij.lsp;
 
 import com.intellij.diff.util.LineCol;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourcePos;
 import org.eclipse.lsp4j.Position;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
 import java.nio.file.Path;
 
 /**
@@ -25,12 +30,21 @@ public interface JB {
     return new Position(lineCol.line, lineCol.column + 1);
   }
 
+  static boolean isEofError(@NotNull SourcePos sourcePos) {
+    return sourcePos.tokenStartIndex() == SourcePos.UNAVAILABLE_AND_FUCK_ANTLR4
+      && sourcePos.tokenEndIndex() == SourcePos.UNAVAILABLE_AND_FUCK_ANTLR4;
+  }
+
   static @NotNull TextRange toRange(@NotNull SourcePos sourcePos) {
-    return new TextRange(sourcePos.tokenStartIndex(), endOffset(sourcePos));
+    return new TextRange(startOffset(sourcePos), endOffset(sourcePos));
   }
 
   static int endOffset(@NotNull SourcePos sourcePos) {
     return sourcePos.tokenEndIndex() + 1;
+  }
+
+  static int startOffset(@NotNull SourcePos sourcePos) {
+    return sourcePos.tokenStartIndex();
   }
 
   static boolean fileSupported(@NotNull VirtualFile file) {
@@ -43,7 +57,23 @@ public interface JB {
     return FileUtil.canonicalize(file.toNioPath());
   }
 
-  static @NotNull Path canonicalize(@NotNull String uri) {
-    return FileUtil.canonicalize(Path.of(URI.create(uri)));
+  static @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
+    return pos.file().underlying()
+      .mapNotNull(path -> VirtualFileManager.getInstance().findFileByNioPath(path))
+      .mapNotNull(virtualFile -> PsiManager.getInstance(project).findFile(virtualFile))
+      .mapNotNull(psiFile -> elementAt(psiFile, pos))
+      .getOrNull();
+  }
+
+  static @Nullable PsiElement elementAt(@NotNull PsiFile file, @NotNull SourcePos pos) {
+    return file.findElementAt(toRange(pos).getStartOffset());
+  }
+
+  static <T extends PsiElement> @Nullable T elementAt(@NotNull PsiFile file, @NotNull SourcePos pos, @NotNull Class<T> type) {
+    return PsiTreeUtil.getParentOfType(elementAt(file, pos), type);
+  }
+
+  static <T extends PsiElement> @Nullable T elementAt(@NotNull Project project, @NotNull SourcePos pos, @NotNull Class<T> type) {
+    return PsiTreeUtil.getParentOfType(elementAt(project, pos), type);
   }
 }

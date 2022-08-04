@@ -110,7 +110,7 @@ BLOCK_COMMENT_END   = "-}"
 
 %%
 <YYINITIAL> {
-  {DOC_COMMENT}         { return DOC_COMMENT; }
+  {DOC_COMMENT}         { return AyaParserDefinition.DOC_COMMENT; }
   {LINE_COMMENT}        { return LINE_COMMENT; }
   {BLOCK_COMMENT_START} { yybegin(IN_BLOCK_COMMENT); yypushback(2); }
 

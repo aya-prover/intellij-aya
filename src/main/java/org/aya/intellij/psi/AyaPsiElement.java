@@ -1,34 +1,53 @@
 package org.aya.intellij.psi;
 
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.psi.PsiElement;
+import com.intellij.ide.projectView.PresentationData;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.intellij.psi.concrete.AyaPsiModule;
+import org.aya.concrete.stmt.QualifiedID;
+import org.aya.intellij.AyaIcons;
+import org.aya.intellij.psi.concrete.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public interface AyaPsiElement extends PsiElement {
+import javax.swing.*;
+
+public interface AyaPsiElement extends NavigatablePsiElement {
+  default @Override Icon getIcon(int flags) {
+    return ayaIcon();
+  }
+
+  default @Nullable Icon ayaIcon() {
+    return switch (this) {
+      case AyaPsiFile $ -> AyaIcons.AYA_FILE;
+      case AyaPsiDataDecl $ -> AyaIcons.AYA_DATA;
+      case AyaPsiStructDecl $ -> AyaIcons.AYA_STRUCT;
+      case AyaPsiPrimDecl $ -> AyaIcons.AYA_PRIM;
+      case AyaPsiFnDecl $ -> AyaIcons.AYA_FN;
+      case AyaPsiDataBody $ -> AyaIcons.AYA_CTOR;
+      case AyaPsiStructField $ -> AyaIcons.AYA_FIELD;
+      default -> null;
+    };
+  }
+
+  default @NotNull ItemPresentation ayaPresentation(boolean verbose) {
+    var location = verbose ? QualifiedID.join(containingModule()) : null;
+    return new PresentationData(presentableName(), location, ayaIcon(), null);
+  }
+
+  default @NotNull String presentableName() {
+    return switch (this) {
+      case AyaPsiNamedElement named -> named.nameOrEmpty();
+      case AyaPsiFile file -> QualifiedID.join(file.containingFileModule());
+      default -> "";
+    };
+  }
+
   default @NotNull ImmutableSeq<String> containingFileModule() {
-    var psiFile = getContainingFile();
-    var fileModule = SeqView.of(psiFile.getName().replaceAll("\\.aya$", ""));
-
-    // If the file only exists in memory, the file name represents the module name.
-    var virtualFile = psiFile.getVirtualFile();
-    if (virtualFile == null) return fileModule.toImmutableSeq();
-
-    // Otherwise, find the relative path to source root
-    var indexer = ProjectFileIndex.getInstance(getProject());
-    var sourceRoot = indexer.getSourceRootForFile(virtualFile);
-    if (sourceRoot == null) return fileModule.toImmutableSeq();
-
-    var relativePath = VfsUtilCore.getRelativePath(virtualFile, sourceRoot, VfsUtilCore.VFS_SEPARATOR_CHAR);
-    assert relativePath != null;
-    return ImmutableSeq.of(relativePath.split(VfsUtilCore.VFS_SEPARATOR)).view()
-      .dropLast(1)
-      .concat(fileModule)
-      .toImmutableSeq();
+    var file = (AyaPsiFile) getContainingFile();
+    return file.containingFileModule();
   }
 
   default @NotNull ImmutableSeq<String> containingSubModule() {

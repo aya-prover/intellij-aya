@@ -1,5 +1,6 @@
 package org.aya.intellij.psi.utils;
 
+import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -29,5 +30,10 @@ public class AyaPsiUtils {
     var weakId = PsiTreeUtil.findChildOfType(element, AyaPsiWeakId.class);
     var id = findChild(weakId, AyaPsiElementTypes.ID);
     return id != null ? id : findChild(weakId, AyaPsiElementTypes.REPL_COMMAND);
+  }
+
+  public static void navigate(@NotNull PsiElement element, boolean requestFocus) {
+    var descriptor = EditSourceUtil.getDescriptor(element);
+    if (descriptor != null && descriptor.canNavigate()) descriptor.navigate(requestFocus);
   }
 }

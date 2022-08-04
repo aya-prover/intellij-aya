@@ -1,12 +1,10 @@
-package org.aya.intellij.settings;
+package org.aya.intellij.ui.settings;
 
-import com.intellij.lang.Language;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.util.NlsContexts;
 import org.aya.intellij.AyaIcons;
 import org.aya.intellij.AyaLanguage;
@@ -18,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Map;
 
-public class AyaColorSettingsPage implements ColorSettingsPage, RainbowColorSettingsPage {
+public class AyaColorSettingsPage implements ColorSettingsPage {
   private static final AttributesDescriptor[] DESCRIPTORS = new AttributesDescriptor[]{
     new AttributesDescriptor("Keyword", SyntaxHighlight.KEYWORD),
     new AttributesDescriptor("Identifier", SyntaxHighlight.ID),
@@ -49,7 +47,23 @@ public class AyaColorSettingsPage implements ColorSettingsPage, RainbowColorSett
 
   @Override public @NonNls @NotNull String getDemoText() {
     return """
-      open data Nat | zero | suc Nat
+      open data Nat : Type
+        | zero
+        | suc Nat
+      
+      open struct Pair (A B : Type) : Type
+        | fst : A
+        | snd : B
+      
+      variable A B : Type
+      
+      def first (p : Pair A B) : A => p.fst
+      
+      def second (p : Pair A B) : B => p.snd
+      
+      def minus1 (n : Nat) : Nat
+        | zero => zero
+        | suc n => n
       """.stripIndent();
   }
 
@@ -67,13 +81,5 @@ public class AyaColorSettingsPage implements ColorSettingsPage, RainbowColorSett
 
   @Override public @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
     return AyaLanguage.INSTANCE.getDisplayName();
-  }
-
-  @Override public boolean isRainbowType(TextAttributesKey type) {
-    return SyntaxHighlight.SEMANTICS.equals(type);
-  }
-
-  @Override public @Nullable Language getLanguage() {
-    return AyaLanguage.INSTANCE;
   }
 }

@@ -6,13 +6,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.aya.generic.Constants;
-import org.aya.intellij.settings.AyaSettingsState;
+import org.aya.intellij.service.AyaSettingService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AyaStartup implements StartupActivity {
   @Override public void runActivity(@NotNull Project project) {
-    if (!AyaSettingsState.getInstance().useAyaLsp) return;
+    if (!AyaSettingService.getInstance().useAyaLsp) return;
     var ayaJson = findAyaJson(project);
     if (ayaJson != null) {
       if (!JB.fileSupported(ayaJson)) return;

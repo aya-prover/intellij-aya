@@ -21,7 +21,7 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
 
     AyaParserDefinition.BLOCK_COMMENT -> pack(BLOCK_COMMENT)
     AyaParserDefinition.LINE_COMMENT -> pack(LINE_COMMENT)
-    AyaPsiElementTypes.DOC_COMMENT -> pack(DOC_COMMENT)
+    AyaParserDefinition.DOC_COMMENT -> pack(DOC_COMMENT)
 
     AyaPsiElementTypes.ID -> pack(ID)
     AyaPsiElementTypes.NUMBER -> pack(NUMBER)
@@ -31,10 +31,11 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
     AyaPsiElementTypes.LPAREN, AyaPsiElementTypes.RPAREN -> pack(PARENTHESES)
     AyaPsiElementTypes.LBRACE, AyaPsiElementTypes.RBRACE -> pack(BRACES)
     AyaPsiElementTypes.LARRAY, AyaPsiElementTypes.RARRAY -> pack(BRACKETS)
+    AyaPsiElementTypes.LIDIOM, AyaPsiElementTypes.RIDIOM -> pack(BRACKETS)
     AyaPsiElementTypes.LGOAL, AyaPsiElementTypes.RGOAL -> pack(GOAL)
 
     TokenType.BAD_CHARACTER -> pack(HighlighterColors.BAD_CHARACTER)
-    else -> pack(SEMANTICS)
+    else -> TextAttributesKey.EMPTY_ARRAY
   }
 
   companion object {
@@ -90,7 +91,5 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
     val CON_CALL = TextAttributesKey.createTextAttributesKey("AYA_CON_CALL", DefaultLanguageHighlighterColors.INSTANCE_METHOD)
     @JvmField
     val GENERALIZE = TextAttributesKey.createTextAttributesKey("AYA_GENERALIZE", JavaHighlightingColors.TYPE_PARAMETER_NAME_ATTRIBUTES)
-    @JvmField
-    val SEMANTICS = TextAttributesKey.createTextAttributesKey("AYA_SEMANTIC")
   }
 }
