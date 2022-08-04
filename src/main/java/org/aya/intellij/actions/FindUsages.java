@@ -1,7 +1,10 @@
 package org.aya.intellij.actions;
 
+import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
+import org.aya.intellij.parser.AyaParserDefinition;
+import org.aya.intellij.parser.AyaWordsScanner;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.concrete.*;
 import org.jetbrains.annotations.Nls;
@@ -10,6 +13,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FindUsages implements FindUsagesProvider {
+  @Override public @Nullable WordsScanner getWordsScanner() {
+    return new AyaWordsScanner(AyaParserDefinition.createLexer(), AyaParserDefinition.IDENTIFIERS,
+      AyaParserDefinition.COMMENTS, AyaParserDefinition.STRINGS);
+  }
+
   @Override
   public boolean canFindUsagesFor(@NotNull PsiElement psi) {
     return psi instanceof AyaPsiNamedElement;
@@ -50,6 +58,8 @@ public class FindUsages implements FindUsagesProvider {
 
   @Override
   public @Nls @NotNull String getNodeText(@NotNull PsiElement element, boolean useFullName) {
-    return element instanceof AyaPsiNamedElement named ? named.nameOrEmpty() : "";
+    return element instanceof AyaPsiNamedElement named
+      ? useFullName ? named.canonicalName() : named.nameOrEmpty()
+      : "";
   }
 }
