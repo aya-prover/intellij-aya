@@ -7,3 +7,7 @@
 <!-- Plugin description -->
 This is the Aya Prover plugin for IntelliJ IDEA.
 <!-- Plugin description end -->
+
+You can download the nightly version of the plugin from GitHub Actions artifact. We decide to upload to JetBrains Marketplace after the first release.
+
+This project is under active development. Demo and screenshots will be uploaded later.
