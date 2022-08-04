@@ -30,12 +30,21 @@ public interface JB {
     return new Position(lineCol.line, lineCol.column + 1);
   }
 
+  static boolean isEofError(@NotNull SourcePos sourcePos) {
+    return sourcePos.tokenStartIndex() == SourcePos.UNAVAILABLE_AND_FUCK_ANTLR4
+      && sourcePos.tokenEndIndex() == SourcePos.UNAVAILABLE_AND_FUCK_ANTLR4;
+  }
+
   static @NotNull TextRange toRange(@NotNull SourcePos sourcePos) {
-    return new TextRange(sourcePos.tokenStartIndex(), endOffset(sourcePos));
+    return new TextRange(startOffset(sourcePos), endOffset(sourcePos));
   }
 
   static int endOffset(@NotNull SourcePos sourcePos) {
     return sourcePos.tokenEndIndex() + 1;
+  }
+
+  static int startOffset(@NotNull SourcePos sourcePos) {
+    return sourcePos.tokenStartIndex();
   }
 
   static boolean fileSupported(@NotNull VirtualFile file) {
