@@ -19,8 +19,8 @@ abstract class AyaInspection : LocalInspectionTool() {
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = AyaLsp.use<_, IncorrectOperationException>(
     holder.project,
-    { lsp -> buildVisitor(lsp, holder, isOnTheFly) },
     { super.buildVisitor(holder, isOnTheFly) },
+    { lsp -> buildVisitor(lsp, holder, isOnTheFly) },
   )
 
   abstract fun buildVisitor(lsp: AyaLsp, holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor

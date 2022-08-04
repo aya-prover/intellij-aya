@@ -91,7 +91,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   /**
    * A fallback behavior when LSP is not available is required.
-   * Use {@link #use(Project, CheckedFunction, CheckedSupplier)} instead.
+   * Use {@link #use(Project, CheckedSupplier, CheckedFunction)} instead.
    */
   private static @Nullable AyaLsp of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
@@ -99,8 +99,8 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   public static <R, E extends Throwable> R use(
     @NotNull Project project,
-    @NotNull CheckedFunction<AyaLsp, R, E> block,
-    @NotNull CheckedSupplier<R, E> orElse
+    @NotNull CheckedSupplier<R, E> orElse,
+    @NotNull CheckedFunction<AyaLsp, R, E> block
   ) throws E {
     var lsp = of(project);
     if (lsp == null) return orElse.getChecked();
@@ -244,9 +244,9 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return goals.filter(p -> JB.toRange(p.sourcePos()).containsOffset(textOffset));
   }
 
-  public @NotNull ImmutableSeq<DefVar<?, ?>> symbolsInFile(@NotNull AyaPsiFile file) {
+  public @NotNull SeqView<DefVar<?, ?>> symbolsInFile(@NotNull AyaPsiFile file) {
     var source = sourceFileOf(file);
-    if (source == null) return ImmutableSeq.empty();
+    if (source == null) return SeqView.empty();
     // TODO: consider the following code
     // return source.resolveInfo().get().thisModule().definitions()
     //   .valuesView()
@@ -255,7 +255,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     //   .toImmutableSeq();
     var collector = new DeclCollector(MutableList.create());
     collector.visit(source.program().get());
-    return collector.decls.view().flatMap(Resolver::withChildren).toImmutableSeq();
+    return collector.decls.view().flatMap(Resolver::withChildren);
   }
 
   @Override public void publishAyaProblems(

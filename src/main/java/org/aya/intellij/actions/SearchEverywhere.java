@@ -8,18 +8,19 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
+import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
+import kala.tuple.Tuple;
+import kala.tuple.Tuple2;
 import org.aya.intellij.AyaFileType;
 import org.aya.intellij.lsp.AyaLsp;
 import org.aya.intellij.lsp.JB;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiGenericDecl;
+import org.aya.intellij.ui.AyaNavItem;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public interface SearchEverywhere extends ChooseByNameContributorEx2 {
   default @Override void processNames(
@@ -45,32 +46,22 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
     throw new UnsupportedOperationException();
   }
 
-  private static void search(
-    @NotNull FindSymbolParameters parameters,
-    @NotNull BiConsumer<AyaPsiFile, DefVar<?, ?>> consumer
-  ) {
+  private static @NotNull SeqView<Tuple2<AyaPsiFile, SeqView<DefVar<?, ?>>>> search(@NotNull FindSymbolParameters parameters) {
     var project = parameters.getProject();
-    AyaLsp.use(project, lsp -> {
-      var m = PsiManager.getInstance(project);
-      ImmutableSeq.from(FileTypeIndex.getFiles(AyaFileType.INSTANCE, parameters.getSearchScope()))
-        .view()
-        .map(m::findFile)
-        .filterIsInstance(AyaPsiFile.class)
-        .forEach(file -> lsp.symbolsInFile(file).forEach(s -> {
-          if (s.concrete == null) return;
-          consumer.accept(file, s);
-        }));
-    });
+    var manager = PsiManager.getInstance(project);
+    var indexed = FileTypeIndex.getFiles(AyaFileType.INSTANCE, parameters.getSearchScope());
+    return AyaLsp.use(project, SeqView::empty, lsp -> ImmutableSeq.from(indexed).view()
+      .map(manager::findFile)
+      .filterIsInstance(AyaPsiFile.class)
+      .map(file -> Tuple.of(file, lsp.symbolsInFile(file)))
+      .map(tup -> Tuple.of(tup._1, tup._2.filter(s -> s.concrete != null))));
   }
 
-  private static void searchPsi(
-    @NotNull FindSymbolParameters parameters,
-    @NotNull Consumer<AyaPsiGenericDecl> consumer
-  ) {
-    search(parameters, (file, defVar) -> {
-      var decl = JB.elementAt(file, defVar.concrete.sourcePos(), AyaPsiGenericDecl.class);
-      if (decl != null) consumer.accept(decl);
-    });
+  private static @NotNull SeqView<Tuple2<DefVar<?, ?>, AyaPsiGenericDecl>> searchGenericDecl(@NotNull FindSymbolParameters parameters) {
+    return search(parameters).flatMap(tup -> tup._2.mapNotNull(defVar -> {
+      var psi = JB.elementAt(tup._1, defVar.concrete.sourcePos(), AyaPsiGenericDecl.class);
+      return psi == null ? null : Tuple.of(defVar, psi);
+    }));
   }
 
   class Symbol implements SearchEverywhere {
@@ -78,7 +69,7 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       @NotNull Processor<? super String> processor,
       @NotNull FindSymbolParameters parameters
     ) {
-      searchPsi(parameters, decl -> processor.process(decl.nameOrEmpty()));
+      searchGenericDecl(parameters).forEach(psi -> processor.process(psi._2.nameOrEmpty()));
     }
 
     @Override public void processElementsWithName(
@@ -86,7 +77,10 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       @NotNull Processor<? super NavigationItem> processor,
       @NotNull FindSymbolParameters parameters
     ) {
-      searchPsi(parameters, processor::process);
+      searchGenericDecl(parameters)
+        .filter(psi -> psi._1.name().equals(name))
+        .map(t -> new AyaNavItem(t._2, true))
+        .forEach(processor::process);
     }
   }
 }

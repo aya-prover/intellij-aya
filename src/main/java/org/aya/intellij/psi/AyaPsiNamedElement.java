@@ -18,7 +18,7 @@ public interface AyaPsiNamedElement extends AyaPsiStructureElement, PsiNameIdent
 
   /** @return qualified name for definitions and modules if possible, parameter name for local variables. */
   default @NotNull String canonicalName() {
-    return AyaLsp.use(getProject(), lsp -> {
+    return AyaLsp.use(getProject(), this::nameOrEmpty, lsp -> {
       var resolvedVar = lsp.resolveVarDefinedBy(this).firstOption();
       return switch (resolvedVar.map(WithPos::data).getOrNull()) {
         case DefVar<?, ?> defVar && defVar.module != null -> QualifiedID.join(defVar.module.appended(defVar.name()));
@@ -26,6 +26,6 @@ public interface AyaPsiNamedElement extends AyaPsiStructureElement, PsiNameIdent
         case ModuleVar moduleVar -> moduleVar.name();
         case default, null -> nameOrEmpty();
       };
-    }, this::nameOrEmpty);
+    });
   }
 }

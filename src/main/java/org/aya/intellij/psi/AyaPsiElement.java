@@ -28,7 +28,7 @@ public interface AyaPsiElement extends NavigatablePsiElement {
       case AyaPsiFnDecl $ -> AyaIcons.AYA_FN;
       case AyaPsiDataBody $ -> AyaIcons.AYA_CTOR;
       case AyaPsiStructField $ -> AyaIcons.AYA_FIELD;
-      default -> throw new IllegalStateException("unreachable");
+      default -> null;
     };
   }
 

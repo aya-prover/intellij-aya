@@ -118,7 +118,7 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
   }
 
   @Override public @Nullable Tuple3<GoalNode, TreePath, Boolean> findNode(@NotNull AyaPsiFile file, int offset) {
-    var goals = AyaLsp.use(project, lsp -> lsp.goalsAt(file, offset), SeqView::<Goal>empty);
+    var goals = AyaLsp.use(project, SeqView::<Goal>empty, lsp -> lsp.goalsAt(file, offset));
     var selected = goals.firstOption(this::solved).getOrElse(goals::firstOrNull);
     return Option.ofNullable(selected)
       .mapNotNull(goal -> treeView.find(n -> switch (n) {
