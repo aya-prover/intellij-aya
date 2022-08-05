@@ -14,6 +14,8 @@ import org.aya.intellij.service.DistillerService;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.regex.Pattern;
+
 public interface ProofSearch {
   sealed interface Proof permits Proof.Err, Proof.Yes {
     record Err(@NotNull String message) implements Proof {}
@@ -31,11 +33,12 @@ public interface ProofSearch {
     }
   }
 
-  sealed interface PSTerm {
-    record Ref(@NotNull String name) implements PSTerm {}
-    record App(@NotNull PSTerm head, @NotNull ImmutableSeq<PSTerm> spine) implements PSTerm {}
-    record Licit(boolean explicit, @NotNull PSTerm term) implements PSTerm {}
-    record CalmFace() implements PSTerm {}
+  /** Aya Proof Query Language */
+  sealed interface AyaPQL {
+    record Ref(@NotNull String name) implements AyaPQL {}
+    record App(@NotNull ImmutableSeq<AyaPQL> terms) implements AyaPQL {}
+    record Licit(boolean explicit, @NotNull AyaPQL term) implements AyaPQL {}
+    record CalmFace() implements AyaPQL {}
   }
 
   static @NotNull SeqView<Proof> search(@NotNull Project project, boolean everywhere, @NotNull String pattern) {
@@ -50,15 +53,32 @@ public interface ProofSearch {
     );
   }
 
-  private static boolean matches(@NotNull PSTerm ps, @NotNull DefVar<?, ?> defVar) {
-    return true;
+  private static boolean matches(@NotNull AyaPQL ps, @NotNull DefVar<?, ?> defVar) {
+    if (defVar.core == null) return false;
+    return matches(ps, defVar.core.result());
   }
 
-  private static boolean matches(@NotNull PSTerm ps, @NotNull Term term) {
-    return false;
+  private static boolean matches(@NotNull AyaPQL ps, @NotNull Term term) {
+    // TODO: structural comparison
+    var doc = DistillerService.solution(term);
+    var compiled = compile(ps);
+    System.out.println("PQL compiled: " + compiled);
+    var pattern = Pattern.compile(compiled);
+    return pattern.matcher(doc).matches();
   }
 
-  private static @NotNull Either<String, PSTerm> parse(@NotNull String pattern) {
-    return Either.right(new PSTerm.CalmFace());
+  private static @NotNull String compile(@NotNull AyaPQL ps) {
+    return switch (ps) {
+      case AyaPQL.App app -> app.terms.map(ProofSearch::compile).joinToString(" ");
+      case AyaPQL.CalmFace $ -> "(.+)";
+      case AyaPQL.Licit licit -> licit.explicit
+        ? "\\(" + compile(licit.term) + "\\)"
+        : "\\{" + compile(licit.term) + "\\}";
+      case AyaPQL.Ref ref -> Pattern.quote(ref.name);
+    };
+  }
+
+  private static @NotNull Either<String, AyaPQL> parse(@NotNull String pattern) {
+    return Either.left("PQL parsing not implemented: " + pattern);
   }
 }
