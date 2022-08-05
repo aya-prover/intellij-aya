@@ -20,7 +20,7 @@ plugins {
   // Kotlin support
   kotlin("jvm") version "1.7.10"
   // Gradle IntelliJ Plugin
-  id("org.jetbrains.intellij") version "1.7.0"
+  id("org.jetbrains.intellij") version "1.9.0"
   // Gradle Changelog Plugin
   id("org.jetbrains.changelog") version "1.3.1"
   // Gradle Qodana Plugin
@@ -34,9 +34,6 @@ version = deps.getProperty("version.project")
 
 // Configure project's dependencies
 repositories {
-  if (System.getProperty("user.name").contains("kiva", ignoreCase = true)) {
-    mavenLocal()
-  }
   mavenCentral()
   if (ayaVersion.endsWith("SNAPSHOT")) {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
