@@ -2,6 +2,7 @@ package org.aya.intellij.actions;
 
 import com.intellij.navigation.ChooseByNameContributorEx2;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -46,10 +47,9 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
     throw new UnsupportedOperationException();
   }
 
-  private static @NotNull SeqView<Tuple2<AyaPsiFile, SeqView<DefVar<?, ?>>>> search(@NotNull FindSymbolParameters parameters) {
-    var project = parameters.getProject();
+  static @NotNull SeqView<Tuple2<AyaPsiFile, SeqView<DefVar<?, ?>>>> search(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     var manager = PsiManager.getInstance(project);
-    var indexed = FileTypeIndex.getFiles(AyaFileType.INSTANCE, parameters.getSearchScope());
+    var indexed = FileTypeIndex.getFiles(AyaFileType.INSTANCE, searchScope);
     return AyaLsp.use(project, SeqView::empty, lsp -> ImmutableSeq.from(indexed).view()
       .map(manager::findFile)
       .filterIsInstance(AyaPsiFile.class)
@@ -57,11 +57,15 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       .map(tup -> Tuple.of(tup._1, tup._2.filter(s -> s.concrete != null))));
   }
 
-  private static @NotNull SeqView<Tuple2<DefVar<?, ?>, AyaPsiGenericDecl>> searchGenericDecl(@NotNull FindSymbolParameters parameters) {
-    return search(parameters).flatMap(tup -> tup._2.mapNotNull(defVar -> {
+  static @NotNull SeqView<Tuple2<DefVar<?, ?>, AyaPsiGenericDecl>> searchGenericDecl(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+    return search(project, searchScope).flatMap(tup -> tup._2.mapNotNull(defVar -> {
       var psi = JB.elementAt(tup._1, defVar.concrete.sourcePos(), AyaPsiGenericDecl.class);
       return psi == null ? null : Tuple.of(defVar, psi);
     }));
+  }
+
+  private static @NotNull SeqView<Tuple2<DefVar<?, ?>, AyaPsiGenericDecl>> searchGenericDecl(@NotNull FindSymbolParameters parameters) {
+    return searchGenericDecl(parameters.getProject(), parameters.getSearchScope());
   }
 
   class Symbol implements SearchEverywhere {

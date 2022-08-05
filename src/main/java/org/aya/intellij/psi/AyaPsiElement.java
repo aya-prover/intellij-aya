@@ -1,7 +1,6 @@
 package org.aya.intellij.psi;
 
 import com.intellij.ide.projectView.PresentationData;
-import com.intellij.navigation.ItemPresentation;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import kala.collection.SeqView;
@@ -32,7 +31,7 @@ public interface AyaPsiElement extends NavigatablePsiElement {
     };
   }
 
-  default @NotNull ItemPresentation ayaPresentation(boolean verbose) {
+  default @NotNull PresentationData ayaPresentation(boolean verbose) {
     var location = verbose ? QualifiedID.join(containingModule()) : null;
     return new PresentationData(presentableName(), location, ayaIcon(), null);
   }
