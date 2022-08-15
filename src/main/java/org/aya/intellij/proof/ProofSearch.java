@@ -33,12 +33,11 @@ public interface ProofSearch {
     }
   }
 
-  /** Aya Proof Query Language */
-  sealed interface AyaPQL {
-    record Ref(@NotNull String name) implements AyaPQL {}
-    record App(@NotNull ImmutableSeq<AyaPQL> terms) implements AyaPQL {}
-    record Licit(boolean explicit, @NotNull AyaPQL term) implements AyaPQL {}
-    record CalmFace() implements AyaPQL {}
+  sealed interface ProofShape {
+    record Ref(@NotNull String name) implements ProofShape {}
+    record App(@NotNull ImmutableSeq<ProofShape> terms) implements ProofShape {}
+    record Licit(boolean explicit, @NotNull ProofShape term) implements ProofShape {}
+    record CalmFace() implements ProofShape {}
   }
 
   static @NotNull SeqView<Proof> search(@NotNull Project project, boolean everywhere, @NotNull String pattern) {
@@ -53,12 +52,12 @@ public interface ProofSearch {
     );
   }
 
-  private static boolean matches(@NotNull AyaPQL ps, @NotNull DefVar<?, ?> defVar) {
+  private static boolean matches(@NotNull ProofShape ps, @NotNull DefVar<?, ?> defVar) {
     if (defVar.core == null) return false;
     return matches(ps, defVar.core.result());
   }
 
-  private static boolean matches(@NotNull AyaPQL ps, @NotNull Term term) {
+  private static boolean matches(@NotNull ProofShape ps, @NotNull Term term) {
     // TODO: structural comparison
     var doc = DistillerService.solution(term);
     var compiled = compile(ps);
@@ -67,18 +66,18 @@ public interface ProofSearch {
     return pattern.matcher(doc).matches();
   }
 
-  private static @NotNull String compile(@NotNull AyaPQL ps) {
+  private static @NotNull String compile(@NotNull ProofShape ps) {
     return switch (ps) {
-      case AyaPQL.App app -> app.terms.map(ProofSearch::compile).joinToString(" ");
-      case AyaPQL.CalmFace $ -> "(.+)";
-      case AyaPQL.Licit licit -> licit.explicit
+      case ProofShape.App app -> app.terms.map(ProofSearch::compile).joinToString(" ");
+      case ProofShape.CalmFace $ -> "(.+)";
+      case ProofShape.Licit licit -> licit.explicit
         ? "\\(" + compile(licit.term) + "\\)"
         : "\\{" + compile(licit.term) + "\\}";
-      case AyaPQL.Ref ref -> Pattern.quote(ref.name);
+      case ProofShape.Ref ref -> Pattern.quote(ref.name);
     };
   }
 
-  private static @NotNull Either<String, AyaPQL> parse(@NotNull String pattern) {
-    return Either.left("PQL parsing not implemented: " + pattern);
+  private static @NotNull Either<String, ProofShape> parse(@NotNull String pattern) {
+    return Either.left("ProofShape parsing not implemented: " + pattern);
   }
 }
