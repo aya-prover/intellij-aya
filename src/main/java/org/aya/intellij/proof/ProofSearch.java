@@ -6,12 +6,18 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import org.aya.cli.parse.AyaParserImpl;
+import org.aya.concrete.Expr;
+import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.term.Term;
+import org.aya.generic.util.InterruptException;
 import org.aya.intellij.AyaIcons;
 import org.aya.intellij.actions.SearchEverywhere;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.service.DistillerService;
 import org.aya.ref.DefVar;
+import org.aya.util.distill.DistillerOptions;
+import org.aya.util.reporter.BufferReporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -34,10 +40,10 @@ public interface ProofSearch {
   }
 
   sealed interface ProofShape {
-    record Ref(@NotNull String name) implements ProofShape {}
-    record App(@NotNull ImmutableSeq<ProofShape> terms) implements ProofShape {}
-    record Licit(boolean explicit, @NotNull ProofShape term) implements ProofShape {}
+    record Ref(@NotNull QualifiedID name) implements ProofShape {}
+    record App(@NotNull ImmutableSeq<Arg> terms) implements ProofShape {}
     record CalmFace() implements ProofShape {}
+    record Arg(@NotNull ProofShape shape, boolean explicit) {}
   }
 
   static @NotNull SeqView<Proof> search(@NotNull Project project, boolean everywhere, @NotNull String pattern) {
@@ -60,24 +66,57 @@ public interface ProofSearch {
   private static boolean matches(@NotNull ProofShape ps, @NotNull Term term) {
     // TODO: structural comparison
     var doc = DistillerService.solution(term);
-    var compiled = compile(ps);
-    System.out.println("PQL compiled: " + compiled);
-    var pattern = Pattern.compile(compiled);
+    var pattern = Pattern.compile(compile(0, ps));
     return pattern.matcher(doc).matches();
   }
 
-  private static @NotNull String compile(@NotNull ProofShape ps) {
+  static @NotNull String compile(int nested, @NotNull ProofShape ps) {
     return switch (ps) {
-      case ProofShape.App app -> app.terms.map(ProofSearch::compile).joinToString(" ");
-      case ProofShape.CalmFace $ -> "(.+)";
-      case ProofShape.Licit licit -> licit.explicit
-        ? "\\(" + compile(licit.term) + "\\)"
-        : "\\{" + compile(licit.term) + "\\}";
-      case ProofShape.Ref ref -> Pattern.quote(ref.name);
+      case ProofShape.App app && app.terms.sizeEquals(1) -> compile(nested, app.terms.first().shape);
+      case ProofShape.App app -> paren(nested, app.terms.map(arg ->
+        braced(arg.explicit(), compile(nested + 1, arg.shape))));
+      case ProofShape.CalmFace $ -> "((?![ (){}:]).)+";
+      case ProofShape.Ref ref -> Pattern.quote(ref.name.justName());
     };
   }
 
-  private static @NotNull Either<String, ProofShape> parse(@NotNull String pattern) {
-    return Either.left("ProofShape parsing not implemented: " + pattern);
+  private static @NotNull String braced(boolean explicit, @NotNull String s) {
+    return explicit ? s : "\\{" + s + "\\}";
+  }
+
+  private static @NotNull String paren(int nested, @NotNull ImmutableSeq<String> args) {
+    var app = args.joinToString(" ");
+    return nested == 0 ? app : "\\(" + app + "\\)";
+  }
+
+  static @NotNull Either<String, ProofShape> parse(@NotNull String pattern) {
+    var reporter = new BufferReporter();
+    try {
+      return Either.right(parse(AyaParserImpl.replExpr(reporter, pattern)));
+    } catch (PatternNotSupported e) {
+      return Either.left("Pattern `%s` was not supported".formatted(e.getMessage()));
+    } catch (InterruptException ignored) {
+      return Either.left(reporter.problems().view()
+        .map(DistillerService::plainBrief)
+        .joinToString(";"));
+    }
+  }
+
+  static @NotNull ProofShape parse(@NotNull Expr expr) {
+    return switch (expr) {
+      case Expr.HoleExpr hole -> new ProofShape.CalmFace();
+      case Expr.UnresolvedExpr unresolved -> new ProofShape.Ref(unresolved.name());
+      case Expr.BinOpSeq seq -> new ProofShape.App(seq.seq().view()
+        .map(arg -> new ProofShape.Arg(parse(arg.expr()), arg.explicit()))
+        .toImmutableSeq());
+      // TODO: more?
+      case Expr misc -> throw new PatternNotSupported(misc);
+    };
+  }
+
+  class PatternNotSupported extends RuntimeException {
+    PatternNotSupported(@NotNull Expr message) {
+      super(message.toDoc(DistillerOptions.pretty()).debugRender());
+    }
   }
 }
