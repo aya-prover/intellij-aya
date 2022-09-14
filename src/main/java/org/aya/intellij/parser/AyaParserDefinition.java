@@ -95,7 +95,6 @@ public class AyaParserDefinition extends SyntaxHighlighterFactory implements Par
   );
   public static final @NotNull TokenSet KEYWORDS = TokenSet.create(
     AyaPsiElementTypes.KW_AS,
-    AyaPsiElementTypes.KW_BIND,
     AyaPsiElementTypes.KW_CODATA,
     AyaPsiElementTypes.KW_COERCE,
     AyaPsiElementTypes.KW_COMPLETED,
@@ -113,7 +112,6 @@ public class AyaParserDefinition extends SyntaxHighlighterFactory implements Par
     AyaPsiElementTypes.KW_INFIXL,
     AyaPsiElementTypes.KW_INFIXR,
     AyaPsiElementTypes.KW_INLINE,
-    AyaPsiElementTypes.KW_INTERVAL,
     AyaPsiElementTypes.KW_LAMBDA,
     AyaPsiElementTypes.KW_LAND,
     AyaPsiElementTypes.KW_LET,

@@ -143,8 +143,6 @@ BLOCK_COMMENT_END   = "-}"
   "prim"                { return KW_PRIM; }
   "extends"             { return KW_EXTENDS; }
   "new"                 { return KW_NEW; }
-  "pattern"             { return KW_PATTERN; }
-  "I"                   { return KW_INTERVAL; }
   "do"                  { return KW_DO; }
   "codata"              { return KW_CODATA; }
   "let"                 { return KW_LET; }
