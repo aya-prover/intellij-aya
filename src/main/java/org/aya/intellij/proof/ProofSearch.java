@@ -43,6 +43,7 @@ public interface ProofSearch {
     record Ref(@NotNull QualifiedID name) implements ProofShape {}
     record App(@NotNull ImmutableSeq<Arg> terms) implements ProofShape {}
     record CalmFace() implements ProofShape {}
+    record AnyId() implements ProofShape {}
     record Arg(@NotNull ProofShape shape, boolean explicit) {}
   }
 
@@ -75,7 +76,8 @@ public interface ProofSearch {
       case ProofShape.App app && app.terms.sizeEquals(1) -> compile(nested, app.terms.first().shape);
       case ProofShape.App app -> paren(nested, app.terms.map(arg ->
         braced(arg.explicit(), compile(nested + 1, arg.shape))));
-      case ProofShape.CalmFace $ -> "((?![ (){}:]).)+";
+      case ProofShape.AnyId $ -> "((?![ (){}:]).)+";
+      case ProofShape.CalmFace $ -> "(.+)";
       case ProofShape.Ref ref -> Pattern.quote(ref.name.justName());
     };
   }
@@ -105,7 +107,7 @@ public interface ProofSearch {
   static @NotNull ProofShape parse(@NotNull Expr expr) {
     return switch (expr) {
       case Expr.HoleExpr hole -> new ProofShape.CalmFace();
-      case Expr.UnresolvedExpr unresolved -> new ProofShape.Ref(unresolved.name());
+      case Expr.UnresolvedExpr e -> e.name().join().equals("?") ? new ProofShape.AnyId() : new ProofShape.Ref(e.name());
       case Expr.BinOpSeq seq -> new ProofShape.App(seq.seq().view()
         .map(arg -> new ProofShape.Arg(parse(arg.expr()), arg.explicit()))
         .toImmutableSeq());
