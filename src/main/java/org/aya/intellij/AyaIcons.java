@@ -20,4 +20,5 @@ public interface AyaIcons {
   @NotNull Icon GOAL_CONTEXT = IconLoader.getIcon("/icons/goalContext.svg", AyaIcons.class);
   @NotNull Icon GUTTER_RUN = AllIcons.RunConfigurations.TestState.Run;
   @NotNull Icon TOOL_WINDOW = AllIcons.Toolwindows.ToolWindowMessages;
+  @NotNull Icon PROOF_SEARCH_ERROR = AllIcons.RunConfigurations.ToolbarError;
 }

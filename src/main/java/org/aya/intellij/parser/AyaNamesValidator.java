@@ -29,7 +29,7 @@ public class AyaNamesValidator implements NamesValidator {
   }
 
   public static boolean isAyaSimpleLetter(char c) {
-    // flex: AYA_SIMPLE_LETTER = [~!@#$%\^&*+=<>?/|\[\]a-zA-Z_u+2200-u+22FF]
+    // AYA_SIMPLE_LETTER = [~!@#$%\^&*+=<>?/|\[\]a-zA-Z_u+2200-u+22FF]
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
       || "~!@#$%^&*+=<>?/|[]_".indexOf(c) != -1
       || (c >= '\u2200' && c <= '\u22FF');
