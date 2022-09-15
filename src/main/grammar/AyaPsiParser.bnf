@@ -54,8 +54,6 @@
     KW_PRIM = 'prim'
     KW_EXTENDS = 'extends'
     KW_NEW = 'new'
-    KW_PATTERN = 'pattern'
-    KW_INTERVAL = 'I'
     KW_DO = 'do'
 
     // Unimplemented but reserved
@@ -66,7 +64,7 @@
 
     // symbols
     KW_SIGMA =  'regexp:Sig|\u03a3'
-    KW_LAMBDA = 'regexp:\\|\u03bb'
+    KW_LAMBDA = 'regexp:[\\\u03bb]'
     KW_PI = 'regexp:Pi|\u03a0'
     KW_FORALL = 'regexp:forall|\u2200'
     KW_LAND = 'regexp:/\\|\u2227'
@@ -130,7 +128,7 @@ private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
                      | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
                      | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
 
-repl ::= stmt+ | REPL_COMMAND? expr 
+repl ::= stmt+ | REPL_COMMAND? expr
 
 // statements
 stmt ::= decl
@@ -312,7 +310,6 @@ literal ::= refExpr
           | litIntExpr
           | litStringExpr
           | univExpr
-          | intervalExpr
 holeExpr ::= goalExpr | calmFaceExpr
 calmFaceExpr ::= CALM_FACE
 
@@ -321,7 +318,6 @@ refExpr ::= qualifiedId
 litIntExpr ::= NUMBER
 litStringExpr ::= STRING
 univExpr ::= KW_TYPE
-intervalExpr ::= KW_INTERVAL
 
 // tele is always typed
 tele ::= teleLit
