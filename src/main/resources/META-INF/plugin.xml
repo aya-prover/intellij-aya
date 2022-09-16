@@ -64,6 +64,7 @@
     <runLineMarkerContributor
       language="Aya"
       implementationClass="org.aya.intellij.actions.run.AyaRunLineMarkerContributor"/>
+    <programRunner implementation="org.aya.intellij.actions.run.AyaProgramRunner"/>
 
     <!-- settings -->
     <applicationConfigurable
