@@ -182,8 +182,8 @@ assoc ::= KW_INFIX | KW_INFIXL | KW_INFIXR | KW_FIXL | KW_FIXR
 declNameOrInfix ::= weakId | assoc weakId
 
 bindBlock ::= (tighters | loosers)+
-tighters ::= KW_TIGHTER qIdsComma
-loosers ::= KW_LOOSER qIdsComma
+tighters ::= KW_TIGHTER qualifiedId+
+loosers ::= KW_LOOSER qualifiedId+
 
 fnDecl ::= sampleModifiers? KW_DEF fnModifiers* declNameOrInfix tele* type? fnBody bindBlock?
 
@@ -381,7 +381,6 @@ pathTele ::= teleParamName
 exprList ::= (expr COMMA)* expr
 barred ::= expr+ BAR
 idsComma ::= (weakId COMMA)* weakId?
-qIdsComma ::= (qualifiedId COMMA)* qualifiedId?
 type ::= COLON expr { pin = 1 }
 doBinding ::= weakId LARROW expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
