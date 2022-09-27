@@ -8,17 +8,15 @@ import org.aya.intellij.lsp.AyaLsp
 import org.aya.intellij.psi.AyaPsiElement
 import org.aya.intellij.psi.AyaPsiNamedElement
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
-import org.aya.resolve.error.AmbiguousNameWarn
-import org.aya.resolve.error.ModShadowingWarn
-import org.aya.resolve.error.ShadowingWarn
+import org.aya.resolve.error.NameProblem
 import org.aya.util.reporter.Problem
 
 class NamingInspection : WarningInspection() {
   companion object {
     init {
-      JOBS.passMe(ShadowingWarn::class.java)
-      JOBS.passMe(ModShadowingWarn::class.java)
-      JOBS.passMe(AmbiguousNameWarn::class.java)
+      JOBS.passMe(NameProblem.ShadowingWarn::class.java)
+      JOBS.passMe(NameProblem.ModShadowingWarn::class.java)
+      JOBS.passMe(NameProblem.AmbiguousNameWarn::class.java)
     }
   }
 
@@ -31,7 +29,7 @@ class NamingInspection : WarningInspection() {
         when (it) {
           // TODO: 1. make module name a named element
           //       2. make LSP resolves module/import/open commands
-          is ShadowingWarn, is ModShadowingWarn, is AmbiguousNameWarn -> holder.registerProblem(
+          is NameProblem.ShadowingWarn, is NameProblem.ModShadowingWarn, is NameProblem.AmbiguousNameWarn -> holder.registerProblem(
             holder.manager.createProblemDescriptor(
               nameId, nameId,
               AyaBundle.message("aya.insp.shadow"),

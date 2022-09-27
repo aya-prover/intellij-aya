@@ -11,7 +11,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourcePos;
-import org.eclipse.lsp4j.Position;
+import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

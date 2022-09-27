@@ -190,7 +190,6 @@ tasks {
 }
 
 dependencies {
-  implementation("org.aya-prover", "cli", ayaVersion)
   implementation("org.aya-prover", "lsp", ayaVersion)
   testImplementation(kotlin("test-junit"))
 }
