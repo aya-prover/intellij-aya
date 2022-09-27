@@ -15,6 +15,8 @@ public class BraceMatcher implements PairedBraceMatcher {
     new BracePair(AyaPsiElementTypes.LGOAL, AyaPsiElementTypes.RGOAL, false),
     new BracePair(AyaPsiElementTypes.LARRAY, AyaPsiElementTypes.RARRAY, false),
     new BracePair(AyaPsiElementTypes.LIDIOM, AyaPsiElementTypes.RIDIOM, false),
+    new BracePair(AyaPsiElementTypes.LPARTIAL, AyaPsiElementTypes.RPARTIAL, false),
+    new BracePair(AyaPsiElementTypes.LPATH, AyaPsiElementTypes.RPATH, false),
   };
 
   @Override public BracePair @NotNull [] getPairs() {

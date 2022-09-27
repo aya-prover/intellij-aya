@@ -92,13 +92,15 @@ SIGMA = Sig | \u03a3
 LAMBDA = \\ | \u03bb
 PI = Pi | \u03a0
 FORALL = forall | \u2200
-LAND = "/"\\ | \u2227
-LOR = \\"/" | \u2228
 TO = -> | \u2192
 LARROW = <- | \u2190
 IMPLIES = => | \u21d2
 LIDIOM = \(\| | \u2987
 RIDIOM = \|\) | \u2988
+LPARTIAL = \{\| | \u2983
+RPARTIAL = \|\} |\u2984
+LPATH = \[\| | \u27E6
+RPATH = \|\] | \u27E7
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Comments, adapted from AyaLexer.g4
@@ -117,11 +119,17 @@ BLOCK_COMMENT_END   = "-}"
   "infix"               { return KW_INFIX; }
   "infixl"              { return KW_INFIXL; }
   "infixr"              { return KW_INFIXR; }
+  "fixl"                { return KW_FIXL; }
+  "fixr"                { return KW_FIXR; }
+
   "tighter"             { return KW_TIGHTER; }
   "looser"              { return KW_LOOSER; }
   "example"             { return KW_EXAMPLE; }
   "counterexample"      { return KW_COUNTEREXAMPLE; }
   "Type"                { return KW_TYPE; }
+  "Set"                 { return KW_SET; }
+  "Prop"                { return KW_PROP; }
+  "ISet"                { return KW_ISET; }
   "as"                  { return KW_AS; }
   "open"                { return KW_OPEN; }
   "import"              { return KW_IMPORT; }
@@ -134,7 +142,6 @@ BLOCK_COMMENT_END   = "-}"
   "inline"              { return KW_INLINE; }
   "overlap"             { return KW_OVERLAP; }
   "module"              { return KW_MODULE; }
-  "bind"                { return KW_BIND; }
   "match"               { return KW_MATCH; }
   "variable"            { return KW_VARIABLE; }
   "def"                 { return KW_DEF; }
@@ -144,6 +151,8 @@ BLOCK_COMMENT_END   = "-}"
   "extends"             { return KW_EXTENDS; }
   "new"                 { return KW_NEW; }
   "do"                  { return KW_DO; }
+  "this"                { return KW_THIS; }
+  "override"            { return KW_OVERRIDE; }
   "codata"              { return KW_CODATA; }
   "let"                 { return KW_LET; }
   "in"                  { return KW_IN; }
@@ -163,6 +172,7 @@ BLOCK_COMMENT_END   = "-}"
   "]"                   { return RARRAY; }
   "{?"                  { return LGOAL; }
   "?}"                  { return RGOAL; }
+  "@"                   { return AT; }
   "_"                   { return CALM_FACE; }
 
   {ULIFT}               { return KW_ULIFT; }
@@ -170,13 +180,15 @@ BLOCK_COMMENT_END   = "-}"
   {LAMBDA}              { return KW_LAMBDA; }
   {PI}                  { return KW_PI; }
   {FORALL}              { return KW_FORALL; }
-  {LAND}                { return KW_LAND; }
-  {LOR}                 { return KW_LOR; }
   {TO}                  { return TO; }
   {LARROW}              { return LARROW; }
   {IMPLIES}             { return IMPLIES; }
   {LIDIOM}              { return LIDIOM; }
   {RIDIOM}              { return RIDIOM; }
+  {LPARTIAL}            { return LPARTIAL; }
+  {RPARTIAL}            { return RPARTIAL; }
+  {LPATH}               { return LPATH; }
+  {RPATH}               { return RPATH; }
 
 
 

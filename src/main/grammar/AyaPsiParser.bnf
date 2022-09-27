@@ -59,6 +59,8 @@
     KW_EXTENDS = 'extends'
     KW_NEW = 'new'
     KW_DO = 'do'
+    KW_THIS = 'this'
+    KW_OVERRIDE = 'override'
 
     // Unimplemented but reserved
     KW_CODATA = 'codata'
@@ -71,8 +73,6 @@
     KW_LAMBDA = 'regexp:[\\\u03bb]'
     KW_PI = 'regexp:Pi|\u03a0'
     KW_FORALL = 'regexp:forall|\u2200'
-    KW_LAND = 'regexp:/\\|\u2227'
-    KW_LOR = 'regexp:\\/|\u2228'
 
     // ---- AyaLexer end: Keywords
 
@@ -98,6 +98,11 @@
     RARRAY = ']'
     LGOAL = '{?'
     RGOAL = '?}'
+    LPARTIAL = 'regexp:\{\||\u2983'
+    RPARTIAL = 'regexp:\|\}|\u2984'
+    LPATH = 'regexp:\[\||\u27E6'
+    RPATH = 'regexp:\|\]|\u27E7'
+    AT = '@'
 
     CALM_FACE = '_'
 
@@ -107,7 +112,7 @@
     STRING = 'regexp:"[^"]*"'
   ]
 
-  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr") = expr
+  extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
   extends("literal") = expr
   extends("refExpr|holeExpr|litIntExpr|litStringExpr|univExpr|intervalExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
@@ -188,13 +193,15 @@ fnBody ::= IMPLIES expr
 fnModifiers ::= KW_OPAQUE
               | KW_INLINE
               | KW_OVERLAP
-              | KW_PATTERN
 
 // turn the keyword into a psi node, so quick fix can easily delete it
 // see: BadCounterexampleInspection
 openKw::= KW_OPEN
 
-structDecl ::= sampleModifiers? (KW_PUBLIC? openKw)? KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)? (BAR structField)* bindBlock?
+structDecl
+  ::=  sampleModifiers? (KW_PUBLIC? openKw)?
+       KW_STRUCT declNameOrInfix tele* type? (KW_EXTENDS idsComma)?
+       (BAR structField)* bindBlock?
 
 // primName should not be mixed-in with NamedWeakId -- the primDecl already is a named element.
 // This rule is used for convenience in semantic highlight.
@@ -202,8 +209,9 @@ structDecl ::= sampleModifiers? (KW_PUBLIC? openKw)? KW_STRUCT declNameOrInfix t
 primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type?
 
-structField ::=      declNameOrInfix tele* type? IMPLIES expr bindBlock?
-        | KW_COERCE? declNameOrInfix tele* type  clauses?     bindBlock? {
+structField
+  ::= KW_OVERRIDE?            declNameOrInfix tele* type? IMPLIES expr bindBlock?
+    | KW_OVERRIDE? KW_COERCE? declNameOrInfix tele* type               bindBlock? {
   mixin="org.aya.intellij.psi.impl.AyaPsiGenericDeclImpl"
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
@@ -231,6 +239,9 @@ expr ::= newExpr
        | doExpr
        | idiomExpr
        | arrayExpr
+       | thisExpr
+       | partialExpr
+       | pathExpr
        | atomExpr
        | appExpr
        | arrowExpr
@@ -253,7 +264,15 @@ sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? doBlock RBRACE?
+thisExpr ::= KW_THIS (AT qualifiedId)?
 idiomExpr ::= LIDIOM idiomBlock? RIDIOM
+pathExpr ::= LPATH weakId+ RPATH expr? partialExpr?
+
+partialExpr ::= LPARTIAL (bareSubSystem barredSubSystem*)? RPARTIAL
+subSystem ::= expr DEFINE_AS expr
+bareSubSystem ::= subSystem
+barredSubSystem ::= BAR subSystem
+
 arrayExpr ::= LARRAY arrayBlock? RARRAY
 
 arrayBlock ::= arrayCompBlock | arrayElementsBlock
@@ -334,7 +353,7 @@ teleIm ::= LBRACE teleBinder RBRACE
 // Explicit arguments may be anonymous
 teleBinder ::= teleBinderTyped
              | teleBinderAnonymous
-teleBinderTyped ::= KW_PATTERN? teleParamName+ type
+teleBinderTyped ::= teleParamName+ type
 teleBinderAnonymous ::= expr
 
 teleParamName ::= weakId {
@@ -360,8 +379,6 @@ exprList ::= (expr COMMA)* expr
 barred ::= expr+ BAR
 idsComma ::= (weakId COMMA)* weakId?
 qIdsComma ::= (qualifiedId COMMA)* qualifiedId?
-ids ::= weakId*
-idsNonEmpty ::= weakId+
 type ::= COLON expr { pin = 1 }
 doBinding ::= weakId LARROW expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
