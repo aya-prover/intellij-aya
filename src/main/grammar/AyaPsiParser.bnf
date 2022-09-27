@@ -266,7 +266,7 @@ matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
 idiomExpr ::= LIDIOM idiomBlock? RIDIOM
-pathExpr ::= LPATH weakId+ RPATH expr? partialExpr?
+pathExpr ::= LPATH pathTele+ RPATH expr? partialExpr?
 
 partialExpr ::= LPARTIAL (bareSubSystem barredSubSystem*)? RPARTIAL
 subSystem ::= expr DEFINE_AS expr
@@ -373,6 +373,9 @@ lambdaTeleIm ::= LBRACE lambdaTeleBinder RBRACE
 lambdaTeleBinder ::= teleBinderTyped
                    | lambdaTeleBinderAnonymous
 lambdaTeleBinderAnonymous ::= teleParamName
+
+// path type tele
+pathTele ::= teleParamName
 
 // utilities
 exprList ::= (expr COMMA)* expr
