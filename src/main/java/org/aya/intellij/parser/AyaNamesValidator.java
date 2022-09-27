@@ -19,13 +19,13 @@ public class AyaNamesValidator implements NamesValidator {
   }
 
   public static boolean isAyaIdentifierStart(char c) {
-    // ID = {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \- {AYA_LETTER} {AYA_LETTER_FOLLOW}*
-    return isAyaLetter(c) || c == '-';
+    // ID = {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \- {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \/\\ | \\\/
+    return isAyaLetter(c) || c == '-' || c == '/' || c == '\\';
   }
 
   public static boolean isAyaIdentifierPart(char c) {
     // ID = {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \- {AYA_LETTER} {AYA_LETTER_FOLLOW}*
-    return isAyaLetterFollow(c);
+    return isAyaLetterFollow(c) || c == '\\' || c == '/';
   }
 
   public static boolean isAyaSimpleLetter(char c) {
