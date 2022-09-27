@@ -20,6 +20,8 @@
     KW_INFIX  = 'infix'
     KW_INFIXL = 'infixl'
     KW_INFIXR = 'infixr'
+    KW_FIXL = 'fixl'
+    KW_FIXR = 'fixr'
 
     // operator precedence
     KW_TIGHTER = 'tighter'
@@ -32,6 +34,9 @@
     // universe
     KW_ULIFT = 'regexp:ulift|\u2191'
     KW_TYPE = 'Type'
+    KW_SET = 'Set'
+    KW_PROP = 'Prop'
+    KW_ISET = 'ISet'
 
     KW_AS = 'as'
     KW_OPEN = 'open'
@@ -45,7 +50,6 @@
     KW_INLINE = 'inline'
     KW_OVERLAP = 'overlap'
     KW_MODULE = 'module'
-    KW_BIND = 'bind'
     KW_MATCH = 'match'
     KW_VARIABLE = 'variable'
     KW_DEF = 'def'
@@ -168,12 +172,11 @@ decl ::= KW_PRIVATE?
   implements="org.aya.intellij.psi.AyaPsiGenericDecl"
 }
 
-assoc ::= KW_INFIX | KW_INFIXL | KW_INFIXR
+assoc ::= KW_INFIX | KW_INFIXL | KW_INFIXR | KW_FIXL | KW_FIXR
 
 declNameOrInfix ::= weakId | assoc weakId
 
-bindBlock ::= KW_BIND (KW_TIGHTER | KW_LOOSER) qIdsComma
-            | KW_BIND LBRACE (tighters | loosers)* RBRACE
+bindBlock ::= (tighters | loosers)+
 tighters ::= KW_TIGHTER qIdsComma
 loosers ::= KW_LOOSER qIdsComma
 
@@ -317,7 +320,7 @@ goalExpr ::= LGOAL expr? RGOAL
 refExpr ::= qualifiedId
 litIntExpr ::= NUMBER
 litStringExpr ::= STRING
-univExpr ::= KW_TYPE
+univExpr ::= KW_TYPE | KW_SET | KW_PROP | KW_ISET
 
 // tele is always typed
 tele ::= teleLit
