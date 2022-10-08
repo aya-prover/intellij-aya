@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.FileViewProvider;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.intellij.AyaFileType;
+import org.aya.intellij.language.AyaFileType;
 import org.aya.parser.AyaLanguage;
 import org.jetbrains.annotations.NotNull;
 

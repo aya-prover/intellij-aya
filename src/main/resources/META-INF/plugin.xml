@@ -9,18 +9,18 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity
-      implementation="org.aya.intellij.lsp.AyaStartup"/>
+      implementation="org.aya.intellij.actions.lsp.AyaStartup"/>
 
     <fileType
       name="Aya File"
-      implementationClass="org.aya.intellij.AyaFileType"
+      implementationClass="org.aya.intellij.language.AyaFileType"
       language="Aya"
       extensions="aya"/>
 
     <!-- language features -->
     <lang.parserDefinition
       language="Aya"
-      implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
+      implementationClass="org.aya.intellij.language.AyaParserDefinition"/>
     <lang.findUsagesProvider
       language="Aya"
       implementationClass="org.aya.intellij.actions.FindUsages"/>
@@ -29,10 +29,10 @@
       implementationClass="org.aya.intellij.actions.RefactoringSupport"/>
     <lang.namesValidator
       language="Aya"
-      implementationClass="org.aya.intellij.parser.AyaNamesValidator"/>
+      implementationClass="org.aya.intellij.language.AyaNamesValidator"/>
     <lang.syntaxHighlighterFactory
       language="Aya"
-      implementationClass="org.aya.intellij.parser.AyaParserDefinition$SyntaxHighlightFactory"/>
+      implementationClass="org.aya.intellij.language.AyaParserDefinition$SyntaxHighlightFactory"/>
     <lang.braceMatcher
       language="Aya"
       implementationClass="org.aya.intellij.actions.BraceMatcher"/>
@@ -53,17 +53,17 @@
     <psi.referenceContributor
       implementation="org.aya.intellij.actions.ReferenceContributor"/>
     <navbar implementation="org.aya.intellij.ui.structure.AyaNavBar"/>
-    <gotoSymbolContributor implementation="org.aya.intellij.actions.SearchEverywhere$Symbol"/>
-    <searchEverywhereContributor implementation="org.aya.intellij.proof.ProofSearchContributorFactory"/>
+    <gotoSymbolContributor implementation="org.aya.intellij.actions.search.SearchEverywhere$Symbol"/>
+    <searchEverywhereContributor implementation="org.aya.intellij.actions.search.ProofSearchContributorFactory"/>
 
     <!-- run configuration -->
     <configurationType
-      implementation="org.aya.intellij.run.TyckRunConfig$Type"/>
+      implementation="org.aya.intellij.actions.run.TyckRunConfig$Type"/>
     <runConfigurationProducer
-      implementation="org.aya.intellij.run.TyckRunConfig$Producer"/>
+      implementation="org.aya.intellij.actions.run.TyckRunConfig$Producer"/>
     <runLineMarkerContributor
       language="Aya"
-      implementationClass="org.aya.intellij.run.AyaRunLineMarkerContributor"/>
+      implementationClass="org.aya.intellij.actions.run.AyaRunLineMarkerContributor"/>
 
     <!-- settings -->
     <applicationConfigurable

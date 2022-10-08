@@ -1,4 +1,4 @@
-package org.aya.intellij.run;
+package org.aya.intellij.actions.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;

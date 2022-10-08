@@ -1,7 +1,8 @@
-package org.aya.intellij
+package org.aya.intellij.language
 
 import com.intellij.openapi.fileTypes.LanguageFileType
 import org.aya.generic.Constants
+import org.aya.intellij.ui.AyaIcons
 import org.aya.parser.AyaLanguage
 
 object AyaFileType : LanguageFileType(AyaLanguage.INSTANCE) {

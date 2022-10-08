@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
-import org.aya.intellij.parser.AyaParserDefinition
+import org.aya.intellij.language.AyaParserDefinition
 import org.aya.parser.AyaPsiElementTypes
 
 class SyntaxHighlight : SyntaxHighlighterBase() {

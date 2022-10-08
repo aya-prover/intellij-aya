@@ -1,4 +1,4 @@
-package org.aya.intellij.lsp;
+package org.aya.intellij.actions.lsp;
 
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;

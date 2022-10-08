@@ -1,4 +1,4 @@
-package org.aya.intellij.proof
+package org.aya.intellij.actions.search
 
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory

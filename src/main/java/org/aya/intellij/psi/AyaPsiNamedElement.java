@@ -2,7 +2,7 @@ package org.aya.intellij.psi;
 
 import com.intellij.psi.PsiNameIdentifierOwner;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.intellij.lsp.AyaLsp;
+import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.lsp.utils.ModuleVar;
 import org.aya.ref.DefVar;
 import org.aya.ref.LocalVar;

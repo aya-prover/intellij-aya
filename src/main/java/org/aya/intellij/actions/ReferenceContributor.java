@@ -7,11 +7,11 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
 import org.aya.intellij.psi.AyaPsiElement;
+import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.psi.concrete.AyaPsiAtomBindPattern;
 import org.aya.intellij.psi.concrete.AyaPsiNewArgField;
 import org.aya.intellij.psi.concrete.AyaPsiProjFixId;
 import org.aya.intellij.psi.concrete.AyaPsiRefExpr;
-import org.aya.intellij.psi.ref.AyaPsiReference;
 import org.jetbrains.annotations.NotNull;
 
 /**

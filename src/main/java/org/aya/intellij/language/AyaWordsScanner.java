@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.aya.intellij.parser;
+package org.aya.intellij.language;
 
 import com.intellij.lang.cacheBuilder.VersionedWordsScanner;
 import com.intellij.lang.cacheBuilder.WordOccurrence;

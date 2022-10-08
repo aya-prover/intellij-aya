@@ -4,7 +4,7 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import org.aya.concrete.error.BadModifierWarn
 import org.aya.intellij.AyaBundle
-import org.aya.intellij.lsp.AyaLsp
+import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.psi.concrete.AyaPsiFnModifiers
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
 

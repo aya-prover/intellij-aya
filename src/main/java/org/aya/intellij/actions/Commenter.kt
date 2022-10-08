@@ -3,7 +3,7 @@ package org.aya.intellij.actions
 import com.intellij.lang.CodeDocumentationAwareCommenterEx
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import org.aya.intellij.parser.AyaParserDefinition
+import org.aya.intellij.language.AyaParserDefinition
 import org.aya.intellij.psi.concrete.AyaPsiRemark
 
 class Commenter : CodeDocumentationAwareCommenterEx {

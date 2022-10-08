@@ -1,6 +1,6 @@
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
-import org.aya.intellij.proof.ProofSearch
+import org.aya.intellij.actions.search.ProofSearch
 
 class ProofSearchParserTest : BasePlatformTestCase() {
   fun `test wildcard matches any id`() = "_".matches("hello")

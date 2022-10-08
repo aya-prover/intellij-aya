@@ -1,4 +1,4 @@
-package org.aya.intellij.actions;
+package org.aya.intellij.actions.search;
 
 import com.intellij.navigation.ChooseByNameContributorEx2;
 import com.intellij.navigation.NavigationItem;
@@ -13,12 +13,12 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple2;
-import org.aya.intellij.AyaFileType;
-import org.aya.intellij.lsp.AyaLsp;
-import org.aya.intellij.lsp.JB;
+import org.aya.intellij.actions.lsp.AyaLsp;
+import org.aya.intellij.actions.lsp.JB;
+import org.aya.intellij.language.AyaFileType;
+import org.aya.intellij.psi.AyaNavItem;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiGenericDecl;
-import org.aya.intellij.ui.AyaNavItem;
 import org.aya.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

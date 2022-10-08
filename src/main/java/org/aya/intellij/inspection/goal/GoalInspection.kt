@@ -6,8 +6,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.aya.intellij.AyaBundle
+import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.inspection.AyaInspection
-import org.aya.intellij.lsp.AyaLsp
 import org.aya.intellij.psi.concrete.AyaPsiHoleExpr
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
 import org.aya.intellij.psi.utils.AyaPsiFactory

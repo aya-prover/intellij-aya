@@ -4,7 +4,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.RenameElementFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.aya.intellij.AyaBundle
-import org.aya.intellij.lsp.AyaLsp
+import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.psi.AyaPsiElement
 import org.aya.intellij.psi.AyaPsiNamedElement
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
