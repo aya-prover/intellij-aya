@@ -1,4 +1,4 @@
-package org.aya.intellij.run;
+package org.aya.intellij.actions.run;
 
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.ui.LabeledComponent;

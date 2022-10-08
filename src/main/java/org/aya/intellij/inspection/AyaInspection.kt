@@ -6,11 +6,11 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.IncorrectOperationException
 import org.aya.intellij.AyaBundle.message
+import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.inspection.error.ErrorInspection
 import org.aya.intellij.inspection.goal.GoalInspection
 import org.aya.intellij.inspection.info.InfoInspection
 import org.aya.intellij.inspection.warning.*
-import org.aya.intellij.lsp.AyaLsp
 
 abstract class AyaInspection : LocalInspectionTool() {
   override fun isEnabledByDefault() = true

@@ -1,4 +1,4 @@
-package org.aya.intellij.run;
+package org.aya.intellij.actions.run;
 
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
@@ -8,11 +8,11 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.intellij.AyaIcons;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.concrete.AyaPsiDecl;
 import org.aya.intellij.psi.concrete.AyaPsiDeclNameOrInfix;
 import org.aya.intellij.psi.concrete.AyaPsiPrimName;
+import org.aya.intellij.ui.AyaIcons;
 import org.aya.parser.AyaPsiElementTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,4 +1,4 @@
-package org.aya.intellij;
+package org.aya.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;

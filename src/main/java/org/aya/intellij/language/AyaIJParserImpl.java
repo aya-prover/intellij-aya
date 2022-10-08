@@ -1,4 +1,4 @@
-package org.aya.intellij.lsp;
+package org.aya.intellij.language;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +14,7 @@ import org.aya.cli.parse.AyaGKProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.intellij.actions.lsp.JB;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.utils.AyaPsiFactory;

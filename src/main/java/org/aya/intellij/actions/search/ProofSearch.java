@@ -1,4 +1,4 @@
-package org.aya.intellij.proof;
+package org.aya.intellij.actions.search;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
@@ -10,11 +10,10 @@ import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
-import org.aya.intellij.AyaIcons;
-import org.aya.intellij.actions.SearchEverywhere;
-import org.aya.intellij.lsp.AyaIJParserImpl;
+import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.service.DistillerService;
+import org.aya.intellij.ui.AyaIcons;
 import org.aya.ref.DefVar;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;

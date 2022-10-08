@@ -1,4 +1,4 @@
-package org.aya.intellij.parser;
+package org.aya.intellij.language;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.FlexAdapter;

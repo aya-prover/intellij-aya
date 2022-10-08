@@ -1,4 +1,4 @@
-package org.aya.intellij.psi.ref;
+package org.aya.intellij.psi;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -6,9 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.util.IncorrectOperationException;
 import org.aya.intellij.actions.ReferenceContributor;
-import org.aya.intellij.lsp.AyaLsp;
-import org.aya.intellij.psi.AyaPsiElement;
-import org.aya.intellij.psi.AyaPsiNamedElement;
+import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.intellij.psi.concrete.AyaPsiAtomBindPattern;
 import org.aya.intellij.psi.concrete.AyaPsiNewArgField;
 import org.aya.intellij.psi.concrete.AyaPsiProjFixId;

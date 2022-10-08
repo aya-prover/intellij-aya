@@ -6,8 +6,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.concrete.stmt.QualifiedID;
-import org.aya.intellij.AyaIcons;
 import org.aya.intellij.psi.concrete.*;
+import org.aya.intellij.ui.AyaIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

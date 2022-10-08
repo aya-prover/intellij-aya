@@ -1,4 +1,4 @@
-package org.aya.intellij.lsp;
+package org.aya.intellij.actions.lsp;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,10 +29,11 @@ import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.Constants;
+import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiNamedElement;
-import org.aya.intellij.psi.ref.AyaPsiReference;
+import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.service.ProblemService;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.server.AyaLanguageClient;

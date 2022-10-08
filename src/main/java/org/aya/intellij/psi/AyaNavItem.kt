@@ -1,8 +1,7 @@
-package org.aya.intellij.ui
+package org.aya.intellij.psi
 
 import com.intellij.navigation.NavigationItem
 import com.intellij.pom.Navigatable
-import org.aya.intellij.psi.AyaPsiElement
 
 /**
  * Provide flexible (the verbose flag) presentation control over psi elements.

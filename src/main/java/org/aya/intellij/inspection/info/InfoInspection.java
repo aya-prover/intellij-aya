@@ -4,8 +4,8 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiFile;
 import kala.collection.SeqView;
 import org.aya.intellij.AyaBundle;
+import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.intellij.inspection.CatchAll;
-import org.aya.intellij.lsp.AyaLsp;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
