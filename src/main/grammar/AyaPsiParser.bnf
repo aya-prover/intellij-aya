@@ -1,14 +1,20 @@
+/*
+ * Copyright (c) 2020-2022 Tesla (Yinsen) Zhang.
+ * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
+ */
+
 {
-  parserClass='org.aya.intellij.parser.AyaPsiParser'
-  implements='org.aya.intellij.psi.AyaPsiElement'
-  extends='org.aya.intellij.psi.impl.AyaPsiElementImpl'
+  // we only need the parser and element types.
+  parserClass='org.aya.parser.AyaPsiParser'
+  elementTypeHolderClass='org.aya.parser.AyaPsiElementTypes'
+  elementTypeClass='org.aya.parser.AyaPsiElementType'
+  tokenTypeClass='org.aya.parser.AyaPsiTokenType'
 
-  elementTypeHolderClass='org.aya.intellij.psi.types.AyaPsiElementTypes'
-  elementTypeClass='org.aya.intellij.psi.types.AyaPsiElementType'
-  tokenTypeClass='org.aya.intellij.psi.types.AyaPsiTokenType'
-
+  // we don't need psi here, but IJ plugin does --- Don't delete!
   psiClassPrefix='AyaPsi'
   psiImplClassSuffix='Impl'
+  implements='org.aya.intellij.psi.AyaPsiElement'
+  extends='org.aya.intellij.psi.impl.AyaPsiElementImpl'
   psiPackage='org.aya.intellij.psi.concrete'
   psiImplPackage='org.aya.intellij.psi.concrete.impl'
 
@@ -32,7 +38,8 @@
     KW_COUNTEREXAMPLE = 'counterexample'
 
     // universe
-    KW_ULIFT = 'regexp:ulift|\u2191'
+    // KW_ULIFT = 'regexp:ulift|\u2191'
+    KW_ULIFT = 'ulift'
     KW_TYPE = 'Type'
     KW_SET = 'Set'
     KW_PROP = 'Prop'
@@ -69,10 +76,13 @@
     KW_COMPLETED = 'completed'
 
     // symbols
-    KW_SIGMA =  'regexp:Sig|\u03a3'
+    // KW_SIGMA =  'regexp:Sig|\u03a3'
+    KW_SIGMA =  'Sig'
     KW_LAMBDA = 'regexp:[\\\u03bb]'
-    KW_PI = 'regexp:Pi|\u03a0'
-    KW_FORALL = 'regexp:forall|\u2200'
+    // KW_PI = 'regexp:Pi|\u03a0'
+    KW_PI = 'Pi'
+    // KW_FORALL = 'regexp:forall|\u2200'
+    KW_FORALL = 'forall'
 
     // ---- AyaLexer end: Keywords
 
@@ -99,9 +109,9 @@
     LGOAL = '{?'
     RGOAL = '?}'
     LPARTIAL = 'regexp:\{\||\u2983'
-    RPARTIAL = 'regexp:\|\}|\u2984'
+    RPARTIAL = 'regexp:\|}|\u2984'
     LPATH = 'regexp:\[\||\u27E6'
-    RPATH = 'regexp:\|\]|\u27E7'
+    RPATH = 'regexp:\|]|\u27E7'
     AT = '@'
 
     CALM_FACE = '_'
@@ -112,9 +122,10 @@
     STRING = 'regexp:"[^"]*"'
   ]
 
+  // IMPORTANT: when editing extends(..), please also modify `AyaGKProducer` accordingly!
   extends("newExpr|piExpr|forallExpr|sigmaExpr|lambdaExpr|matchExpr|doExpr|idiomExpr|arrayExpr|atomExpr|appExpr|arrowExpr|projExpr|thisExpr|partialExpr|pathExpr") = expr
   extends("literal") = expr
-  extends("refExpr|holeExpr|litIntExpr|litStringExpr|univExpr|intervalExpr") = literal
+  extends("refExpr|holeExpr|litIntExpr|litStringExpr|univExpr") = literal
   extends("goalExpr|calmFaceExpr") = holeExpr
 
   extends("atomUliftExpr|atomTupleExpr") = atomExpr
@@ -126,7 +137,7 @@
   extends("stmt|decl|importCmd|openCmd|module|remark|generalize") = stmt
 }
 
-program ::= stmts
+program ::= repl | stmts
 private stmts ::= stmt_with_recover*
 private stmt_with_recover ::= !(<<eof>>) stmt {
   pin = 1
@@ -137,7 +148,7 @@ private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
                      | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
                      | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
 
-repl ::= stmt+ | REPL_COMMAND? expr
+private repl ::= REPL_COMMAND? expr
 
 // statements
 stmt ::= decl
@@ -265,7 +276,7 @@ lambdaExpr ::= KW_LAMBDA lambdaTele+ (IMPLIES expr)?
 matchExpr ::= KW_MATCH exprList clauses
 doExpr ::= KW_DO LBRACE? doBlock RBRACE?
 thisExpr ::= KW_THIS (AT qualifiedId)?
-idiomExpr ::= LIDIOM idiomBlock? RIDIOM
+idiomExpr ::= LIDIOM idiomBlock? RIDIOM { pin=1 }
 pathExpr ::= LPATH pathTele+ RPATH expr partialExpr?
 
 partialExpr ::= LPARTIAL (bareSubSystem? barredSubSystem*)? RPARTIAL
@@ -273,12 +284,12 @@ subSystem ::= expr DEFINE_AS expr
 bareSubSystem ::= subSystem
 barredSubSystem ::= BAR subSystem
 
-arrayExpr ::= LARRAY arrayBlock? RARRAY
+arrayExpr ::= LARRAY arrayBlock? RARRAY { pin=1 }
 
 arrayBlock ::= arrayCompBlock | arrayElementsBlock
 arrayCompBlock ::= expr BAR listComp
 arrayElementsBlock ::= exprList
-idiomBlock ::= barred* expr+
+idiomBlock ::= barred* expr
 listComp ::= (doBinding COMMA)* doBinding
 
 doBlock ::= (doBlockContent COMMA)* doBlockContent
@@ -378,7 +389,7 @@ pathTele ::= teleParamName
 
 // utilities
 exprList ::= (expr COMMA)* expr
-barred ::= expr+ BAR
+barred ::= expr BAR
 idsComma ::= (weakId COMMA)* weakId?
 type ::= COLON expr { pin = 1 }
 doBinding ::= weakId LARROW expr {
@@ -387,5 +398,5 @@ doBinding ::= weakId LARROW expr {
 }
 
 qualifiedId ::= weakId (COLON2 weakId)*
-weakId ::= ID | REPL_COMMAND
+weakId ::= ID
 

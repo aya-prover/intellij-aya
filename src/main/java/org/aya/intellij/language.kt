@@ -1,16 +1,10 @@
 package org.aya.intellij
 
-import com.intellij.lang.Language
 import com.intellij.openapi.fileTypes.LanguageFileType
 import org.aya.generic.Constants
+import org.aya.parser.AyaLanguage
 
-object AyaLanguage : Language("Aya") {
-  override fun getDisplayName() = "Aya Prover"
-  override fun isCaseSensitive() = true
-  override fun getAssociatedFileType() = AyaFileType
-}
-
-object AyaFileType : LanguageFileType(AyaLanguage) {
+object AyaFileType : LanguageFileType(AyaLanguage.INSTANCE) {
   override fun getName() = "Aya File"
   override fun getDescription() = "Aya Prover source file"
   override fun getDefaultExtension() = Constants.AYA_POSTFIX.drop(1)

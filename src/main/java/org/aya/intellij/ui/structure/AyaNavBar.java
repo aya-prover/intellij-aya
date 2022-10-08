@@ -2,8 +2,8 @@ package org.aya.intellij.ui.structure;
 
 import com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension;
 import com.intellij.lang.Language;
-import org.aya.intellij.AyaLanguage;
 import org.aya.intellij.psi.AyaPsiElement;
+import org.aya.parser.AyaLanguage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.concrete.AyaPsiWeakId;
-import org.aya.intellij.psi.types.AyaPsiElementTypes;
+import org.aya.parser.AyaPsiElementTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

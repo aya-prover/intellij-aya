@@ -8,7 +8,7 @@ import com.intellij.psi.FileViewProvider;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import org.aya.intellij.AyaFileType;
-import org.aya.intellij.AyaLanguage;
+import org.aya.parser.AyaLanguage;
 import org.jetbrains.annotations.NotNull;
 
 public class AyaPsiFile extends PsiFileBase implements AyaPsiElement {

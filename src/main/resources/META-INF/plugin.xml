@@ -32,7 +32,7 @@
       implementationClass="org.aya.intellij.parser.AyaNamesValidator"/>
     <lang.syntaxHighlighterFactory
       language="Aya"
-      implementationClass="org.aya.intellij.parser.AyaParserDefinition"/>
+      implementationClass="org.aya.intellij.parser.AyaParserDefinition$SyntaxHighlightFactory"/>
     <lang.braceMatcher
       language="Aya"
       implementationClass="org.aya.intellij.actions.BraceMatcher"/>

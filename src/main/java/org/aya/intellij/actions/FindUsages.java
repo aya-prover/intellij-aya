@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class FindUsages implements FindUsagesProvider {
   @Override public @Nullable WordsScanner getWordsScanner() {
-    return new AyaWordsScanner(AyaParserDefinition.createLexer(), AyaParserDefinition.IDENTIFIERS,
+    return new AyaWordsScanner(AyaParserDefinition.createIJLexer(), AyaParserDefinition.IDENTIFIERS,
       AyaParserDefinition.COMMENTS, AyaParserDefinition.STRINGS);
   }
 

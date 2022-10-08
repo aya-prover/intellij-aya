@@ -14,7 +14,7 @@ public class AyaNamesValidator implements NamesValidator {
   }
 
   @Override public boolean isIdentifier(@NotNull String name, Project project) {
-    var lexer = AyaParserDefinition.createLexer();
+    var lexer = AyaParserDefinition.createIJLexer();
     lexer.start(name);
     var type = lexer.getTokenType();
     return lexer.getTokenEnd() == lexer.getBufferEnd() && AyaParserDefinition.IDENTIFIERS.contains(type);

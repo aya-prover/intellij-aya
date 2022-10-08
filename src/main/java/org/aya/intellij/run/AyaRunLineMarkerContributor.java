@@ -13,7 +13,7 @@ import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.concrete.AyaPsiDecl;
 import org.aya.intellij.psi.concrete.AyaPsiDeclNameOrInfix;
 import org.aya.intellij.psi.concrete.AyaPsiPrimName;
-import org.aya.intellij.psi.types.AyaPsiElementTypes;
+import org.aya.parser.AyaPsiElementTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

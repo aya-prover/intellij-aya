@@ -1,7 +1,6 @@
 package org.aya.intellij.actions
 
 import com.intellij.ide.highlighter.JavaHighlightingColors
-import com.intellij.lexer.FlexAdapter
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -9,11 +8,10 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighterBase
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import org.aya.intellij.parser.AyaParserDefinition
-import org.aya.intellij.parser._AyaPsiLexer
-import org.aya.intellij.psi.types.AyaPsiElementTypes
+import org.aya.parser.AyaPsiElementTypes
 
 class SyntaxHighlight : SyntaxHighlighterBase() {
-  override fun getHighlightingLexer() = FlexAdapter(_AyaPsiLexer())
+  override fun getHighlightingLexer() = AyaParserDefinition.createIJLexer()
 
   override fun getTokenHighlights(tokenType: IElementType): Array<TextAttributesKey> = when (tokenType) {
     in AyaParserDefinition.KEYWORDS -> pack(KEYWORD)

@@ -24,6 +24,7 @@ import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
@@ -44,6 +45,7 @@ import org.aya.tyck.error.Goal;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
+import org.aya.util.reporter.Reporter;
 import org.javacs.lsp.MessageType;
 import org.javacs.lsp.ShowMessageParams;
 import org.jetbrains.annotations.NotNull;
@@ -269,6 +271,10 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       case MessageType.Info -> LOG.info(message.message);
       case MessageType.Log -> LOG.debug(message.message);
     }
+  }
+
+  @Override public @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {
+    return new AyaIJParserImpl(reporter);
   }
 
   private record DeclCollector(@NotNull MutableList<Decl> decls) {

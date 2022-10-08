@@ -1,6 +1,5 @@
 import org.aya.gradle.BuildUtil
 import org.jetbrains.changelog.markdownToHTML
-import org.jetbrains.grammarkit.tasks.GenerateLexerTask
 import org.jetbrains.grammarkit.tasks.GenerateParserTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
@@ -78,21 +77,18 @@ sourceSets.main {
   java.srcDirs(genDir)
 }
 
-val genAyaPsiLexer = tasks.register<GenerateLexerTask>("genAyaLexer") {
-  group = "build setup"
-  source.set("src/main/grammar/AyaPsiLexer.flex")
-  targetDir.set("src/main/gen/org/aya/intellij/parser")
-  targetClass.set("_AyaPsiLexer")
-  purgeOldFiles.set(true)
-}
-
 val genAyaPsiParser = tasks.register<GenerateParserTask>("genAyaParser") {
   group = "build setup"
   source.set("src/main/grammar/AyaPsiParser.bnf")
   targetRoot.set("src/main/gen")
-  pathToParser.set("org/aya/intellij/parser/AyaPsiParser.java")
+  pathToParser.set("org/aya/parser/AyaPsiParser.java")
   pathToPsiRoot.set("org/aya/intellij/psi")
   purgeOldFiles.set(true)
+
+  doLast {
+    // Already exists in "org.aya-prover:parser"
+    file("src/main/gen/org/aya/parser").deleteRecursively()
+  }
 }
 
 tasks {
@@ -112,14 +108,14 @@ tasks {
       val root = project.buildDir.toPath().resolve("classes/java/main")
       tree.forEach { BuildUtil.stripPreview(root, it.toPath()) }
     }
-    dependsOn(genAyaPsiLexer, genAyaPsiParser)
+    dependsOn(genAyaPsiParser)
   }
 
   withType<KotlinCompile>().configureEach {
     kotlinOptions {
       jvmTarget = javaVersion.toString()
     }
-    dependsOn(genAyaPsiLexer, genAyaPsiParser)
+    dependsOn(genAyaPsiParser)
   }
 
   withType<Test>().configureEach {
