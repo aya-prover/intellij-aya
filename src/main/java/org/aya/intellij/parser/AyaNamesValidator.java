@@ -2,13 +2,15 @@ package org.aya.intellij.parser;
 
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
-import org.aya.parser.GeneratedLexerTokens;
+import org.aya.parser.AyaParserDefinitionBase;
 import org.jetbrains.annotations.NotNull;
 
 public class AyaNamesValidator implements NamesValidator {
   @Override public boolean isKeyword(@NotNull String name, Project project) {
-    // TODO: generate unicode keywords in build tasks
-    return GeneratedLexerTokens.KEYWORDS.containsValue(name);
+    for (var token : AyaParserDefinitionBase.KEYWORDS.getTypes()) {
+      if (token.toString().equals(name)) return true;
+    }
+    return false;
   }
 
   @Override public boolean isIdentifier(@NotNull String name, Project project) {

@@ -190,6 +190,8 @@ tasks {
 }
 
 dependencies {
-  implementation("org.aya-prover", "lsp", ayaVersion)
+  implementation("org.aya-prover", "lsp", ayaVersion) {
+    exclude("org.aya-prover.upstream", "ij-parsing-core")
+  }
   testImplementation(kotlin("test-junit"))
 }

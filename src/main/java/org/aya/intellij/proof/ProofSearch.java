@@ -6,7 +6,7 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import org.aya.cli.parse.AyaParserImpl;
+import org.aya.cli.parse.AyaGKParserImpl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.term.Term;
@@ -17,6 +17,7 @@ import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.service.DistillerService;
 import org.aya.ref.DefVar;
 import org.aya.util.distill.DistillerOptions;
+import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.BufferReporter;
 import org.jetbrains.annotations.NotNull;
 
@@ -94,7 +95,8 @@ public interface ProofSearch {
   static @NotNull Either<String, ProofShape> parse(@NotNull String pattern) {
     var reporter = new BufferReporter();
     try {
-      return Either.right(parse(AyaParserImpl.replExpr(reporter, pattern)));
+      var parser = new AyaGKParserImpl(reporter);
+      return Either.right(parse(parser.expr(pattern, SourcePos.NONE)));
     } catch (PatternNotSupported e) {
       return Either.left("Pattern `%s` was not supported".formatted(e.getMessage()));
     } catch (InterruptException ignored) {
