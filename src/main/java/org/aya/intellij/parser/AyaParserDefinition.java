@@ -14,9 +14,9 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.aya.intellij.actions.SyntaxHighlight;
 import org.aya.intellij.psi.AyaPsiFile;
-import org.aya.intellij.psi.utils.AyaPsiElementFactory;
 import org.aya.parser.AyaLanguage;
 import org.aya.parser.AyaParserDefinitionBase;
+import org.aya.parser.AyaPsiElementTypesFactory;
 import org.aya.parser._AyaPsiLexer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +39,7 @@ public class AyaParserDefinition extends AyaParserDefinitionBase {
   }
 
   @Override public @NotNull PsiElement createElement(@NotNull ASTNode node) {
-    return AyaPsiElementFactory.createElement(node);
+    return AyaPsiElementTypesFactory.Factory.createElement(node);
   }
 
   @Override public @NotNull TokenSet getCommentTokens() {

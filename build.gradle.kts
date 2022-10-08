@@ -87,7 +87,22 @@ val genAyaPsiParser = tasks.register<GenerateParserTask>("genAyaParser") {
 
   doLast {
     // Already exists in "org.aya-prover:parser"
-    file("src/main/gen/org/aya/parser").deleteRecursively()
+    file("src/main/gen/org/aya/parser/AyaPsiParser.java").delete()
+    // We only need the Factory class
+    val src = file("src/main/gen/org/aya/parser/AyaPsiElementTypes.java")
+    val dst = file("src/main/gen/org/aya/parser/AyaPsiElementTypesFactory.java")
+    dst.writer().use { out ->
+      src.readLines().forEach { line ->
+        if (line == "public interface AyaPsiElementTypes {")
+          out.write("""
+            import static org.aya.parser.AyaPsiElementTypes.*;
+            public interface AyaPsiElementTypesFactory {
+          """.trimIndent())
+        else if (!line.contains("IElementType (.+) = new AyaPsi(Element|Token)Type\\(\\\"(.+)\\\"\\);".toRegex()))
+          out.write("$line\n")
+      }
+    }
+    src.delete()
   }
 }
 
