@@ -9,7 +9,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import kala.control.Option;
 import org.aya.util.FileUtil;
+import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
@@ -57,10 +59,14 @@ public interface JB {
     return FileUtil.canonicalize(file.toNioPath());
   }
 
-  static @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
-    return pos.file().underlying()
+  static @NotNull Option<PsiFile> fileAt(@NotNull Project project, @NotNull SourceFile sourceFile) {
+    return sourceFile.underlying()
       .mapNotNull(path -> VirtualFileManager.getInstance().findFileByNioPath(path))
-      .mapNotNull(virtualFile -> PsiManager.getInstance(project).findFile(virtualFile))
+      .mapNotNull(virtualFile -> PsiManager.getInstance(project).findFile(virtualFile));
+  }
+
+  static @Nullable PsiElement elementAt(@NotNull Project project, @NotNull SourcePos pos) {
+    return fileAt(project, pos.file())
       .mapNotNull(psiFile -> elementAt(psiFile, pos))
       .getOrNull();
   }

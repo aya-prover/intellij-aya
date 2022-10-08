@@ -274,7 +274,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   @Override public @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {
-    return new AyaIJParserImpl(reporter);
+    return new AyaIJParserImpl(project, reporter);
   }
 
   private record DeclCollector(@NotNull MutableList<Decl> decls) {
