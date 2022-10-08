@@ -36,8 +36,9 @@ public record AyaIJParserImpl(@NotNull Project project, @NotNull Reporter report
     return ApplicationManager.getApplication().runReadAction((ThrowableComputable<? extends ImmutableSeq<Stmt>, ? extends RuntimeException>) () -> {
       var psiFile = JB.fileAt(project, sourceFile).getOrNull();
       if (!(psiFile instanceof AyaPsiFile ayaFile))
-        throw new IllegalArgumentException("File not found in IntelliJ documents: " + sourceFile);
-      var producer = new AyaGKProducer(Either.left(sourceFile), reporter);
+        throw new IllegalArgumentException("File not found in IntelliJ documents: " + sourceFile.display());
+      var updated = new SourceFile(sourceFile.display(), sourceFile.underlying(), ayaFile.getText());
+      var producer = new AyaGKProducer(Either.left(updated), reporter);
       return producer.program(new ASTGenericNode(ayaFile.getNode())).getLeftValue();
     });
   }

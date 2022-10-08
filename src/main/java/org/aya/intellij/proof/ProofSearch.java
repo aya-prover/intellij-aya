@@ -6,13 +6,13 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import org.aya.cli.parse.AyaGKParserImpl;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.intellij.AyaIcons;
 import org.aya.intellij.actions.SearchEverywhere;
+import org.aya.intellij.lsp.AyaIJParserImpl;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.service.DistillerService;
 import org.aya.ref.DefVar;
@@ -49,7 +49,7 @@ public interface ProofSearch {
   }
 
   static @NotNull SeqView<Proof> search(@NotNull Project project, boolean everywhere, @NotNull String pattern) {
-    return parse(pattern).fold(
+    return parse(project, pattern).fold(
       err -> SeqView.of(new Proof.Err(err)),
       ps -> {
         var scope = FindSymbolParameters.searchScopeFor(project, everywhere);
@@ -92,10 +92,10 @@ public interface ProofSearch {
     return nested == 0 ? app : "\\(" + app + "\\)";
   }
 
-  static @NotNull Either<String, ProofShape> parse(@NotNull String pattern) {
+  static @NotNull Either<String, ProofShape> parse(@NotNull Project project, @NotNull String pattern) {
     var reporter = new BufferReporter();
     try {
-      var parser = new AyaGKParserImpl(reporter);
+      var parser = new AyaIJParserImpl(project, reporter);
       return Either.right(parse(parser.expr(pattern, SourcePos.NONE)));
     } catch (PatternNotSupported e) {
       return Either.left("Pattern `%s` was not supported".formatted(e.getMessage()));
