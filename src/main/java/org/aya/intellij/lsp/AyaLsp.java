@@ -24,6 +24,7 @@ import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
@@ -35,26 +36,23 @@ import org.aya.intellij.psi.ref.AyaPsiReference;
 import org.aya.intellij.service.ProblemService;
 import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.server.AyaLanguageClient;
-import org.aya.lsp.server.AyaServer;
-import org.aya.lsp.server.AyaService;
+import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
 import org.aya.lsp.utils.Resolver;
+import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
-import org.aya.ref.Var;
 import org.aya.tyck.error.Goal;
 import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Problem;
-import org.eclipse.lsp4j.MessageActionItem;
-import org.eclipse.lsp4j.MessageParams;
-import org.eclipse.lsp4j.PublishDiagnosticsParams;
-import org.eclipse.lsp4j.ShowMessageRequestParams;
+import org.aya.util.reporter.Reporter;
+import org.javacs.lsp.MessageType;
+import org.javacs.lsp.ShowMessageParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -69,8 +67,7 @@ import java.util.concurrent.Executors;
 public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguageClient {
   private static final @NotNull Key<AyaLsp> AYA_LSP = Key.create("intellij.aya.lsp");
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
-  private final @NotNull AyaServer server;
-  private final @NotNull AyaService service;
+  private final @NotNull AyaLanguageServer server;
   private final @NotNull Project project;
   private final @NotNull MutableSet<VirtualFile> libraryPathCache = MutableSet.create();
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
@@ -117,9 +114,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   public AyaLsp(@NotNull Project project) {
     this.project = project;
-    this.server = new AyaServer(this);
-    this.service = server.getTextDocumentService();
-    server.connect(this);
+    this.server = new AyaLanguageServer(this, this);
   }
 
   void fireVfsEvent(List<? extends VFileEvent> events) {
@@ -138,7 +133,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   void recompile(@Nullable Runnable callback) {
-    recompile(service::reload, callback);
+    recompile(server::reload, callback);
   }
 
   void recompile(@NotNull Runnable compile, @Nullable Runnable callback) {
@@ -156,7 +151,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   public void registerLibrary(@NotNull VirtualFile library) {
     if (JB.fileSupported(library)) {
       libraryPathCache.add(library);
-      service.registerLibrary(JB.canonicalize(library));
+      server.registerLibrary(JB.canonicalize(library));
     }
   }
 
@@ -170,24 +165,24 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   public @Nullable LibrarySource sourceFileOf(@NotNull AyaPsiElement element) {
     var vf = element.getContainingFile().getVirtualFile();
-    return JB.fileSupported(vf) ? service.find(JB.canonicalize(vf)) : null;
+    return JB.fileSupported(vf) ? server.find(JB.canonicalize(vf)) : null;
   }
 
   /**
-   * Jump to the defining {@link Var} from the psi element position.
+   * Jump to the defining {@link AnyVar} from the psi element position.
    *
    * @return The psi element that defined the var.
    */
   public @NotNull SeqView<AyaPsiNamedElement> gotoDefinition(@NotNull AyaPsiElement element) {
     var proj = element.getProject();
     var source = sourceFileOf(element);
-    return source == null ? SeqView.empty() : GotoDefinition.findDefs(source, JB.toXyPosition(element), service.libraries())
+    return source == null ? SeqView.empty() : GotoDefinition.findDefs(source, JB.toXyPosition(element), server.libraries())
       .map(WithPos::data)
       .mapNotNull(pos -> JB.elementAt(proj, pos, AyaPsiNamedElement.class));
   }
 
-  /** Get the {@link Var} defined by the psi element. */
-  public @NotNull SeqView<WithPos<Var>> resolveVarDefinedBy(@NotNull AyaPsiNamedElement element) {
+  /** Get the {@link AnyVar} defined by the psi element. */
+  public @NotNull SeqView<WithPos<AnyVar>> resolveVarDefinedBy(@NotNull AyaPsiNamedElement element) {
     var source = sourceFileOf(element);
     if (source == null) return SeqView.empty();
     return Resolver.resolveVar(source, JB.toXyPosition(element));
@@ -269,29 +264,17 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     files.forEach(problemCache::remove);
   }
 
-  @Override public void logMessage(@NotNull MessageParams message) {
-    switch (message.getType()) {
-      case Error -> LOG.error(message.getMessage());
-      case Warning -> LOG.warn(message.getMessage());
-      case Info -> LOG.info(message.getMessage());
-      case Log -> LOG.debug(message.getMessage());
+  @Override public void logMessage(@NotNull ShowMessageParams message) {
+    switch (message.type) {
+      case MessageType.Error -> LOG.error(message.message);
+      case MessageType.Warning -> LOG.warn(message.message);
+      case MessageType.Info -> LOG.info(message.message);
+      case MessageType.Log -> LOG.debug(message.message);
     }
   }
 
-  @Override public void showMessage(MessageParams messageParams) {
-    throw new IllegalStateException("unreachable");
-  }
-
-  @Override public CompletableFuture<MessageActionItem> showMessageRequest(ShowMessageRequestParams requestParams) {
-    throw new IllegalStateException("unreachable");
-  }
-
-  @Override public void telemetryEvent(Object object) {
-    throw new IllegalStateException("unreachable");
-  }
-
-  @Override public void publishDiagnostics(@NotNull PublishDiagnosticsParams diagnostics) {
-    throw new IllegalStateException("unreachable");
+  @Override public @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {
+    return new AyaIJParserImpl(project, reporter);
   }
 
   private record DeclCollector(@NotNull MutableList<Decl> decls) {

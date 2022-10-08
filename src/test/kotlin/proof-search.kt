@@ -15,7 +15,7 @@ class ProofSearchParserTest : BasePlatformTestCase() {
   private fun String.matches(test: String) = matches(test, true)
   private fun String.doesNotMatch(test: String) = matches(test, false)
   private fun String.matches(test: String, success: Boolean) {
-    val expr = ProofSearch.parse(this).rightValue
+    val expr = ProofSearch.parse(project, this).rightValue
     val regex = ProofSearch.compile(0, expr)
     TestCase.assertEquals(success, regex.toPattern().matcher(test).matches())
   }

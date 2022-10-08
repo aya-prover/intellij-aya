@@ -2,30 +2,31 @@ package org.aya.intellij.parser;
 
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.project.Project;
-import org.aya.parser.GeneratedLexerTokens;
 import org.jetbrains.annotations.NotNull;
 
 public class AyaNamesValidator implements NamesValidator {
   @Override public boolean isKeyword(@NotNull String name, Project project) {
-    // TODO: generate unicode keywords in build tasks
-    return GeneratedLexerTokens.KEYWORDS.containsValue(name);
+    for (var token : AyaParserDefinition.KEYWORDS.getTypes()) {
+      if (token.toString().equals(name)) return true;
+    }
+    return false;
   }
 
   @Override public boolean isIdentifier(@NotNull String name, Project project) {
-    var lexer = AyaParserDefinition.createLexer();
+    var lexer = AyaParserDefinition.createIJLexer();
     lexer.start(name);
     var type = lexer.getTokenType();
     return lexer.getTokenEnd() == lexer.getBufferEnd() && AyaParserDefinition.IDENTIFIERS.contains(type);
   }
 
   public static boolean isAyaIdentifierStart(char c) {
-    // ID = {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \- {AYA_LETTER} {AYA_LETTER_FOLLOW}*
-    return isAyaLetter(c) || c == '-';
+    // ID = {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \- {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \/\\ | \\\/
+    return isAyaLetter(c) || c == '-' || c == '/' || c == '\\';
   }
 
   public static boolean isAyaIdentifierPart(char c) {
     // ID = {AYA_LETTER} {AYA_LETTER_FOLLOW}* | \- {AYA_LETTER} {AYA_LETTER_FOLLOW}*
-    return isAyaLetterFollow(c);
+    return isAyaLetterFollow(c) || c == '\\' || c == '/';
   }
 
   public static boolean isAyaSimpleLetter(char c) {

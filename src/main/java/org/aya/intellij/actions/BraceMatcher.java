@@ -4,7 +4,7 @@ import com.intellij.lang.BracePair;
 import com.intellij.lang.PairedBraceMatcher;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
-import org.aya.intellij.psi.types.AyaPsiElementTypes;
+import org.aya.parser.AyaPsiElementTypes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +15,8 @@ public class BraceMatcher implements PairedBraceMatcher {
     new BracePair(AyaPsiElementTypes.LGOAL, AyaPsiElementTypes.RGOAL, false),
     new BracePair(AyaPsiElementTypes.LARRAY, AyaPsiElementTypes.RARRAY, false),
     new BracePair(AyaPsiElementTypes.LIDIOM, AyaPsiElementTypes.RIDIOM, false),
+    new BracePair(AyaPsiElementTypes.LPARTIAL, AyaPsiElementTypes.RPARTIAL, false),
+    new BracePair(AyaPsiElementTypes.LPATH, AyaPsiElementTypes.RPATH, false),
   };
 
   @Override public BracePair @NotNull [] getPairs() {

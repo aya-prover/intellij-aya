@@ -5,11 +5,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
-import org.aya.intellij.AyaLanguage;
 import org.aya.intellij.psi.concrete.AyaPsiFnDecl;
 import org.aya.intellij.psi.concrete.AyaPsiImportCmd;
 import org.aya.intellij.psi.concrete.AyaPsiQualifiedId;
 import org.aya.intellij.psi.concrete.AyaPsiWeakId;
+import org.aya.parser.AyaLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
