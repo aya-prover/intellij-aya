@@ -1,6 +1,7 @@
 package org.aya.intellij.actions
 
 import com.intellij.lang.documentation.AbstractDocumentationProvider
+import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.psi.PsiElement
 import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.psi.AyaPsiElement
@@ -42,9 +43,17 @@ class DocumentationProvider : AbstractDocumentationProvider() {
      */
     fun generateTypeWithName(element: AyaPsiElement, name: String) : String? {
       val type = generateType(element) ?: return null
+      val builder = StringBuilder()
 
-      // TODO: use Doc
-      return "$name : $type"
+      // For saturationFactor, see DocumentationSettings.getHighlightingSaturation
+      // and [this](https://github.com/JetBrains/intellij-community/blob/28b957346d4353f3970d8288e081bf59e32d4fc5/java/java-impl/src/com/intellij/lang/java/JavaDocumentationProvider.java#L90)
+      HtmlSyntaxInfoUtil.appendStyledSpan(builder, SyntaxHighlight.ID, name, 1.0F)
+      builder.append(' ')
+      HtmlSyntaxInfoUtil.appendStyledSpan(builder, SyntaxHighlight.KEYWORD, ":", 1.0F)
+      builder.append(' ')
+      builder.append(type)
+
+      return builder.toString()
     }
   }
 }
