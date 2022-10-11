@@ -14,6 +14,7 @@ import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
 import org.javacs.lsp.Position;
+import org.javacs.lsp.TextDocumentIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,23 @@ public interface JB {
 
   static @NotNull TextRange toRange(@NotNull SourcePos sourcePos) {
     return new TextRange(startOffset(sourcePos), endOffset(sourcePos));
+  }
+
+  /**
+   * Convert the {@link PsiFile} to {@link TextDocumentIdentifier}
+   *
+   * @return null if failed, see {@link PsiFile#getVirtualFile()}
+   */
+  static @Nullable TextDocumentIdentifier getIdentifier(@NotNull PsiFile file) {
+    var vf = file.getVirtualFile();
+
+    if (vf == null) return null;
+
+    // Convert to Path then to URI
+    // Don't use new URL(vf.getUrl()), it is buggy on Windows
+    var uri = Path.of(vf.getPath()).toUri();
+
+    return new TextDocumentIdentifier(uri);
   }
 
   static int endOffset(@NotNull SourcePos sourcePos) {

@@ -36,6 +36,7 @@ import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.service.ProblemService;
 import org.aya.lsp.actions.GotoDefinition;
+import org.aya.lsp.models.ComputeTermResult;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
@@ -49,6 +50,8 @@ import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.javacs.lsp.MessageType;
 import org.javacs.lsp.ShowMessageParams;
+import org.javacs.lsp.TextDocumentPositionParams;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -252,6 +255,30 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     var collector = new DeclCollector(MutableList.create());
     collector.visit(source.program().get());
     return collector.decls.view().flatMap(Resolver::withChildren);
+  }
+
+  /**
+   * Compute the type of the given element (reference)
+   *
+   * @return null if failed
+   * @see AyaLanguageServer#computeType(ComputeTermResult.Params)
+   */
+  public @Nullable @Nls String showRefType(@NotNull AyaPsiElement element) {
+    var param = new ComputeTermResult.Params();
+    var psiFile = element.getContainingFile();
+    var vf = psiFile != null ? psiFile.getVirtualFile() : null;
+    var uri = vf != null ? Path.of(vf.getPath()).toUri() : null;
+
+    if (uri == null) return null;   // What URI we should use if the element isn't in a actual file (e.g. in memory)
+
+    param.uri = uri;
+    param.position = JB.toXyPosition(element);
+
+    var result = server.computeType(param);
+
+    // TODO: extremely dirty, rewrite [this](ComputeTermResult)!!
+    if (result.computed().equals("<unknown>")) return null;
+    return result.computed();
   }
 
   @Override public void publishAyaProblems(

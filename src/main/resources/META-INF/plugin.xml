@@ -55,6 +55,7 @@
     <navbar implementation="org.aya.intellij.ui.structure.AyaNavBar"/>
     <gotoSymbolContributor implementation="org.aya.intellij.actions.search.SearchEverywhere$Symbol"/>
     <searchEverywhereContributor implementation="org.aya.intellij.actions.search.ProofSearchContributorFactory"/>
+    <lang.documentationProvider language="Aya" implementationClass="org.aya.intellij.actions.DocumentationProvider" />
 
     <!-- run configuration -->
     <configurationType
