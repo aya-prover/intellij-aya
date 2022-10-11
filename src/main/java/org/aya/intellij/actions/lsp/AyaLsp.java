@@ -264,20 +264,16 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
    * @see AyaLanguageServer#computeType(ComputeTermResult.Params)
    */
   public @Nullable @Nls String showRefType(@NotNull AyaPsiElement element) {
-    var param = new ComputeTermResult.Params();
     var psiFile = element.getContainingFile();
     var vf = psiFile != null ? psiFile.getVirtualFile() : null;
     var uri = vf != null ? Path.of(vf.getPath()).toUri() : null;
 
     if (uri == null) return null;   // What URI we should use if the element isn't in a actual file (e.g. in memory)
 
-    param.uri = uri;
-    param.position = JB.toXyPosition(element);
-
+    var param = new ComputeTermResult.Params(uri, JB.toXyPosition(element));
     var result = server.computeType(param);
 
     // TODO: extremely dirty, rewrite [this](ComputeTermResult)!!
-    if (result.computed().equals("<unknown>")) return null;
     return result.computed();
   }
 
