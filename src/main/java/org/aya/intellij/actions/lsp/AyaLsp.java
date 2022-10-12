@@ -277,6 +277,25 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return result.computed();
   }
 
+  /**
+   * Compute the signature of the given element (definition)
+   *
+   * @return null if failed
+   * @see AyaLanguageServer#hover(TextDocumentPositionParams)
+   */
+  public @Nullable @Nls String showDefType(@NotNull AyaPsiElement element) {
+    var psiFile = element.getContainingFile();
+
+    if (psiFile == null) return null;
+
+    var fileId = JB.getIdentifier(psiFile);
+    var result = server.hover(new TextDocumentPositionParams(fileId, JB.toXyPosition(element)));
+
+    if (result.isEmpty()) return null;
+
+    return LspUtils.renderMarkedStrings(result.get().contents);
+  }
+
   @Override public void publishAyaProblems(
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
     @NotNull DistillerOptions options
