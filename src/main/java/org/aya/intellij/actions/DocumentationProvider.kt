@@ -7,6 +7,7 @@ import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.psi.AyaPsiElement
 import org.aya.intellij.psi.AyaPsiNamedElement
 import org.aya.intellij.psi.AyaPsiNamedWeakId
+import org.aya.parser.AyaLanguage
 
 class DocumentationProvider : AbstractDocumentationProvider() {
   /**
@@ -53,6 +54,8 @@ class DocumentationProvider : AbstractDocumentationProvider() {
       // and [this](https://github.com/JetBrains/intellij-community/blob/28b957346d4353f3970d8288e081bf59e32d4fc5/java/java-impl/src/com/intellij/lang/java/JavaDocumentationProvider.java#L90)
       HtmlSyntaxInfoUtil.appendStyledSpan(builder, SyntaxHighlight.ID, name, 1.0F)
 
+      // FIXME: Wrongly displayed `O Nat` for the Ctor `O` of DataDecl `data Nat | O | S Nat`
+      //        The type is `Nat` but not `: Nat` in this case.
       // a local var, use `x : Nat`
       if (! isDefinition(resolved)) {
         builder.append(' ')
@@ -60,7 +63,7 @@ class DocumentationProvider : AbstractDocumentationProvider() {
       }
 
       builder.append(' ')
-      builder.append(type)
+      HtmlSyntaxInfoUtil.appendHighlightedByLexerAndEncodedAsHtmlCodeSnippet(builder, element.project, AyaLanguage.INSTANCE, type, 1.0F)
 
       return builder.toString()
     }
