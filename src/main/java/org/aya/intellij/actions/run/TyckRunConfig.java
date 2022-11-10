@@ -1,6 +1,5 @@
 package org.aya.intellij.actions.run;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.LazyRunConfigurationProducer;
@@ -38,12 +37,8 @@ public class TyckRunConfig extends LocatableConfigurationBase<TyckRunConfig.Opti
   }
 
   @Override
-  public @Nullable RunProfileState getState(
-    @NotNull Executor executor,
-    @NotNull ExecutionEnvironment environment
-  ) throws ExecutionException {
-    // TODO: call Aya tycker
-    return null;
+  public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
+    return AyaProgramRunner.prepare(executor, this);
   }
 
   @Override public @Nullable RefactoringElementListener getRefactoringElementListener(PsiElement element) {
