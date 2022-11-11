@@ -107,10 +107,10 @@ public interface ProofSearch {
 
   static @NotNull ProofShape parse(@NotNull Expr expr) {
     return switch (expr) {
-      case Expr.HoleExpr hole -> new ProofShape.CalmFace();
-      case Expr.UnresolvedExpr e -> e.name().join().equals("?") ? new ProofShape.AnyId() : new ProofShape.Ref(e.name());
+      case Expr.Hole hole -> new ProofShape.CalmFace();
+      case Expr.Unresolved e -> e.name().join().equals("?") ? new ProofShape.AnyId() : new ProofShape.Ref(e.name());
       case Expr.BinOpSeq seq -> new ProofShape.App(seq.seq().view()
-        .map(arg -> new ProofShape.Arg(parse(arg.expr()), arg.explicit()))
+        .map(arg -> new ProofShape.Arg(parse(arg.term()), arg.explicit()))
         .toImmutableSeq());
       // TODO: more?
       case Expr misc -> throw new PatternNotSupported(misc);
