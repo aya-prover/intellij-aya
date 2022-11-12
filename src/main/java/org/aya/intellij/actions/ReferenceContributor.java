@@ -15,7 +15,7 @@ import org.aya.intellij.psi.concrete.AyaPsiRefExpr;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Traverse referring terms and collect references to {@link org.aya.ref.Var}s.
+ * Traverse referring terms and collect references to {@link org.aya.ref.AnyVar}s.
  *
  * @see org.aya.lsp.utils.Resolver.ReferringResolver
  * @see AyaPsiReference#resolve()
