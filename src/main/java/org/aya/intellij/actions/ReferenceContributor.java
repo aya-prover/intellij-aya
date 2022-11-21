@@ -17,16 +17,16 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Traverse referring terms and collect references to {@link org.aya.ref.AnyVar}s.
  *
- * @see org.aya.lsp.utils.Resolver.ReferringResolver
+ * @see org.aya.concrete.visitor.StmtFolder
  * @see AyaPsiReference#resolve()
  */
 public class ReferenceContributor extends PsiReferenceContributor {
-  /** @implSpec Keep sync with {@link org.aya.lsp.utils.Resolver.ReferringResolver} */
+  /** @implSpec Keep sync with {@link org.aya.concrete.visitor.StmtFolder} */
   public static final ElementPattern<AyaPsiElement> REFERRING_TERMS = StandardPatterns.or(
     PlatformPatterns.psiElement(AyaPsiProjFixId.class),
     PlatformPatterns.psiElement(AyaPsiNewArgField.class),
     PlatformPatterns.psiElement(AyaPsiRefExpr.class),
-    PlatformPatterns.psiElement(AyaPsiAtomBindPattern.class)
+    PlatformPatterns.psiElement(AyaPsiAtomBindPattern.class) // If the bind resolves to a constructor.
   );
 
   @Override public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
