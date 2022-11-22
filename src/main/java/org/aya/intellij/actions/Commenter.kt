@@ -7,12 +7,12 @@ import org.aya.intellij.language.AyaParserDefinition
 import org.aya.intellij.psi.concrete.AyaPsiRemark
 
 class Commenter : CodeDocumentationAwareCommenterEx {
-  override fun getLineCommentPrefix() = "--"
-  override fun getBlockCommentPrefix() = "{-"
-  override fun getBlockCommentSuffix() = "-}"
+  override fun getLineCommentPrefix() = "//"
+  override fun getBlockCommentPrefix() = "/*"
+  override fun getBlockCommentSuffix() = "*/"
 
-  override fun getDocumentationCommentPrefix() = "--|"
-  override fun getDocumentationCommentLinePrefix() = "--|"
+  override fun getDocumentationCommentPrefix() = "///"
+  override fun getDocumentationCommentLinePrefix() = "///"
   override fun getDocumentationCommentSuffix() = null
 
   override fun getLineCommentTokenType() = AyaParserDefinition.LINE_COMMENT
