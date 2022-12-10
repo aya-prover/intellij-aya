@@ -19,7 +19,6 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
 
     AyaParserDefinition.BLOCK_COMMENT -> pack(BLOCK_COMMENT)
     AyaParserDefinition.LINE_COMMENT -> pack(LINE_COMMENT)
-    AyaParserDefinition.DOC_COMMENT -> pack(DOC_COMMENT)
 
     AyaPsiElementTypes.ID -> pack(ID)
     AyaPsiElementTypes.NUMBER -> pack(NUMBER)
@@ -49,8 +48,6 @@ class SyntaxHighlight : SyntaxHighlighterBase() {
     val LINE_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_LINE_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT)
     @JvmField
     val BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_BLOCK_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT)
-    @JvmField
-    val DOC_COMMENT = TextAttributesKey.createTextAttributesKey("AYA_DOC_COMMENT", DefaultLanguageHighlighterColors.DOC_COMMENT)
     @JvmField
     val COMMA = TextAttributesKey.createTextAttributesKey("AYA_COMMA", DefaultLanguageHighlighterColors.COMMA)
     @JvmField

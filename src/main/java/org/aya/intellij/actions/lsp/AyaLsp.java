@@ -197,8 +197,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     var problems = problemCache.getOrNull(path);
     var maxOffset = file.getTextLength();
     return problems == null ? SeqView.empty() : problems.view()
-      .filter(p -> JB.endOffset(p.sourcePos()) <= maxOffset)
-      .filterNot(p -> JB.isEofError(p.sourcePos()));
+      .filter(p -> JB.endOffset(p.sourcePos()) <= maxOffset);
   }
 
   public @NotNull SeqView<Problem> errorsInFile(@NotNull PsiFile file) {

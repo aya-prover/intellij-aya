@@ -17,9 +17,9 @@ plugins {
   // Java support
   java
   // Kotlin support
-  kotlin("jvm") version "1.7.10"
+  kotlin("jvm") version "1.7.22"
   // Gradle IntelliJ Plugin
-  id("org.jetbrains.intellij") version "1.10.0"
+  id("org.jetbrains.intellij") version "1.10.1"
   // Gradle Changelog Plugin
   id("org.jetbrains.changelog") version "1.3.1"
   // Gradle Qodana Plugin
