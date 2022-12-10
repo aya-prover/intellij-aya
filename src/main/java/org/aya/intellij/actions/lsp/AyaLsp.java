@@ -29,17 +29,17 @@ import org.aya.concrete.stmt.Command;
 import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
 import org.aya.generic.Constants;
+import org.aya.ide.Resolver;
+import org.aya.ide.action.GotoDefinition;
 import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.service.ProblemService;
-import org.aya.lsp.actions.GotoDefinition;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
-import org.aya.lsp.utils.Resolver;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.tyck.error.Goal;
@@ -177,7 +177,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   public @NotNull SeqView<AyaPsiNamedElement> gotoDefinition(@NotNull AyaPsiElement element) {
     var proj = element.getProject();
     var source = sourceFileOf(element);
-    return source == null ? SeqView.empty() : GotoDefinition.findDefs(source, JB.toXyPosition(element), server.libraries())
+    return source == null ? SeqView.empty() : GotoDefinition.findDefs(source, server.libraries(), JB.toXY(element))
       .map(WithPos::data)
       .mapNotNull(pos -> JB.elementAt(proj, pos, AyaPsiNamedElement.class));
   }
@@ -186,7 +186,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   public @NotNull SeqView<WithPos<AnyVar>> resolveVarDefinedBy(@NotNull AyaPsiNamedElement element) {
     var source = sourceFileOf(element);
     if (source == null) return SeqView.empty();
-    return Resolver.resolveVar(source, JB.toXyPosition(element));
+    return Resolver.resolveVar(source, JB.toXY(element));
   }
 
   private @NotNull SeqView<Problem> problemsFor(@NotNull PsiFile file) {

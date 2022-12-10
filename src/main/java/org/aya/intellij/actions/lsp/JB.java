@@ -10,10 +10,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import kala.control.Option;
+import org.aya.ide.util.XY;
 import org.aya.util.FileUtil;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
-import org.javacs.lsp.Position;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +26,10 @@ import java.nio.file.Path;
  */
 public interface JB {
   /** @return the return value will be converted to {@link org.aya.lsp.utils.XY} in LSP. */
-  static @NotNull Position toXyPosition(@NotNull PsiElement element) {
+  static @NotNull XY toXY(@NotNull PsiElement element) {
     var doc = element.getContainingFile().getViewProvider().getDocument();
     var lineCol = LineCol.fromOffset(doc, element.getTextOffset());
-    return new Position(lineCol.line, lineCol.column + 1);
+    return new XY(lineCol.line + 1, lineCol.column);
   }
 
   static @NotNull TextRange toRange(@NotNull SourcePos sourcePos) {
