@@ -17,6 +17,7 @@ import kala.tuple.Tuple3;
 import kotlin.Unit;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.intellij.actions.lsp.JB;
@@ -40,7 +41,7 @@ import java.nio.file.Path;
 public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
   private final @NotNull AyaTreeView<GoalNode> treeView;
   // TODO: user-defined distiller options
-  private final @NotNull DistillerOptions options = DistillerOptions.informative();
+  private final @NotNull DistillerOptions options = AyaDistillerOptions.informative();
   private final @NotNull Project project;
 
   public GoalsView(@NotNull Project project, @NotNull ToolWindow toolWindow) {

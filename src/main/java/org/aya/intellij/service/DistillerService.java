@@ -4,18 +4,18 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.xml.util.XmlStringUtil;
 import org.aya.core.term.Term;
-import org.aya.util.distill.DistillerOptions;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 
 // TODO: user-defined distiller options
 public class DistillerService {
-  private static @NotNull DistillerOptions goalSolution() {
-    return DistillerOptions.pretty();
+  private static @NotNull AyaDistillerOptions goalSolution() {
+    return AyaDistillerOptions.pretty();
   }
 
-  private static @NotNull DistillerOptions showingError() {
-    return DistillerOptions.pretty();
+  private static @NotNull AyaDistillerOptions showingError() {
+    return AyaDistillerOptions.pretty();
   }
 
   public static @NotNull String solution(@NotNull Term solution) {

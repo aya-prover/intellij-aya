@@ -9,13 +9,13 @@ import kala.control.Either;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.term.Term;
+import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.util.InterruptException;
 import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.service.DistillerService;
 import org.aya.intellij.ui.AyaIcons;
 import org.aya.ref.DefVar;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.BufferReporter;
 import org.jetbrains.annotations.NotNull;
@@ -119,7 +119,7 @@ public interface ProofSearch {
 
   class PatternNotSupported extends RuntimeException {
     PatternNotSupported(@NotNull Expr message) {
-      super(message.toDoc(DistillerOptions.pretty()).debugRender());
+      super(message.toDoc(AyaDistillerOptions.pretty()).debugRender());
     }
   }
 }
