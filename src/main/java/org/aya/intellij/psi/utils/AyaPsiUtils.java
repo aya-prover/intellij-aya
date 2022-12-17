@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import kala.collection.Seq;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.concrete.AyaPsiWeakId;
 import org.aya.parser.AyaPsiElementTypes;
@@ -27,9 +28,9 @@ public class AyaPsiUtils {
   }
 
   public static @Nullable PsiElement getNameIdFromWeakIdChild(@Nullable AyaPsiElement element) {
-    var weakId = PsiTreeUtil.findChildOfType(element, AyaPsiWeakId.class);
-    var id = findChild(weakId, AyaPsiElementTypes.ID);
-    return id != null ? id : findChild(weakId, AyaPsiElementTypes.REPL_COMMAND);
+    var weakId = Seq.wrapJava(PsiTreeUtil.findChildrenOfType(element, AyaPsiWeakId.class).stream().toList());
+    var id = findChild(weakId.lastOrNull(), AyaPsiElementTypes.ID);
+    return id != null ? id : findChild(weakId.lastOrNull(), AyaPsiElementTypes.REPL_COMMAND);
   }
 
   public static void navigate(@NotNull PsiElement element, boolean requestFocus) {
