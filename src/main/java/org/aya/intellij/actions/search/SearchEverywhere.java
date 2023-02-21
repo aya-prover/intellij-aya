@@ -54,12 +54,12 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       .map(manager::findFile)
       .filterIsInstance(AyaPsiFile.class)
       .map(file -> Tuple.of(file, lsp.symbolsInFile(file)))
-      .map(tup -> Tuple.of(tup._1, tup._2.filter(s -> s.concrete != null))));
+      .map(tup -> Tuple.of(tup.component1(), tup.component2().filter(s -> s.concrete != null))));
   }
 
   static @NotNull SeqView<Tuple2<DefVar<?, ?>, AyaPsiGenericDecl>> searchGenericDecl(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-    return search(project, searchScope).flatMap(tup -> tup._2.mapNotNull(defVar -> {
-      var psi = JB.elementAt(tup._1, defVar.concrete.sourcePos(), AyaPsiGenericDecl.class);
+    return search(project, searchScope).flatMap(tup -> tup.component2().mapNotNull(defVar -> {
+      var psi = JB.elementAt(tup.component1(), defVar.concrete.sourcePos(), AyaPsiGenericDecl.class);
       return psi == null ? null : Tuple.of(defVar, psi);
     }));
   }
@@ -73,7 +73,7 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       @NotNull Processor<? super String> processor,
       @NotNull FindSymbolParameters parameters
     ) {
-      searchGenericDecl(parameters).forEach(psi -> processor.process(psi._2.nameOrEmpty()));
+      searchGenericDecl(parameters).forEach(psi -> processor.process(psi.component2().nameOrEmpty()));
     }
 
     @Override public void processElementsWithName(
@@ -82,8 +82,8 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       @NotNull FindSymbolParameters parameters
     ) {
       searchGenericDecl(parameters)
-        .filter(psi -> psi._1.name().equals(name))
-        .map(t -> new AyaNavItem(t._2, true))
+        .filter(psi -> psi.component1().name().equals(name))
+        .map(t -> new AyaNavItem(t.component2(), true))
         .forEach(processor::process);
     }
   }

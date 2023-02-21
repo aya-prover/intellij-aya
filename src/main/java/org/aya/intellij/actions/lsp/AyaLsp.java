@@ -26,8 +26,8 @@ import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.concrete.GenericAyaParser;
 import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Decl;
 import org.aya.concrete.stmt.Stmt;
+import org.aya.concrete.stmt.decl.Decl;
 import org.aya.generic.Constants;
 import org.aya.ide.Resolver;
 import org.aya.ide.action.GotoDefinition;
@@ -43,8 +43,8 @@ import org.aya.lsp.utils.Log;
 import org.aya.ref.AnyVar;
 import org.aya.ref.DefVar;
 import org.aya.tyck.error.Goal;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.WithPos;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.javacs.lsp.MessageType;
@@ -255,7 +255,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   @Override public void publishAyaProblems(
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
-    @NotNull DistillerOptions options
+    @NotNull PrettierOptions options
   ) {
     problemCache.putAll(problems);
   }

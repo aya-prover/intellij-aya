@@ -128,9 +128,9 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     if (!(file instanceof AyaPsiFile ayaFile)) return;
     var node = adapter.findNode(ayaFile, editor.getCaretModel().getOffset());
     if (node != null) {
-      select(node._2);
-      if (node._3 && node._2.getParentPath() != null)
-        select(node._2.getParentPath());
+      select(node.component2());
+      if (node.component3() && node.component2().getParentPath() != null)
+        select(node.component2().getParentPath());
     }
   }
 

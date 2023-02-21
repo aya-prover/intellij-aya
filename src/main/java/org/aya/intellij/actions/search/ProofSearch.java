@@ -9,12 +9,12 @@ import kala.control.Either;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.QualifiedID;
 import org.aya.core.term.Term;
-import org.aya.distill.AyaDistillerOptions;
 import org.aya.generic.util.InterruptException;
 import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.service.DistillerService;
 import org.aya.intellij.ui.AyaIcons;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.ref.DefVar;
 import org.aya.util.error.SourcePos;
 import org.aya.util.reporter.BufferReporter;
@@ -53,8 +53,8 @@ public interface ProofSearch {
       ps -> {
         var scope = FindSymbolParameters.searchScopeFor(project, everywhere);
         return SearchEverywhere.searchGenericDecl(project, scope)
-          .filter(t -> matches(ps, t._1))
-          .map(t -> new Proof.Yes(t._1, t._2));
+          .filter(t -> matches(ps, t.component1()))
+          .map(t -> new Proof.Yes(t.component1(), t.component2()));
       }
     );
   }
@@ -78,7 +78,7 @@ public interface ProofSearch {
         braced(arg.explicit(), compile(nested + 1, arg.shape))));
       case ProofShape.AnyId $ -> "((?![ (){}:]).)+";
       case ProofShape.CalmFace $ -> "(.+)";
-      case ProofShape.Ref ref -> Pattern.quote(ref.name.justName());
+      case ProofShape.Ref ref -> Pattern.quote(ref.name.name());
     };
   }
 
@@ -119,7 +119,7 @@ public interface ProofSearch {
 
   class PatternNotSupported extends RuntimeException {
     PatternNotSupported(@NotNull Expr message) {
-      super(message.toDoc(AyaDistillerOptions.pretty()).debugRender());
+      super(message.toDoc(AyaPrettierOptions.pretty()).debugRender());
     }
   }
 }

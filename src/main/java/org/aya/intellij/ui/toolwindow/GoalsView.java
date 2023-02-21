@@ -17,7 +17,6 @@ import kala.tuple.Tuple3;
 import kotlin.Unit;
 import org.aya.core.term.ErrorTerm;
 import org.aya.core.term.Term;
-import org.aya.distill.AyaDistillerOptions;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.intellij.actions.lsp.JB;
@@ -26,10 +25,11 @@ import org.aya.intellij.psi.concrete.AyaPsiHoleExpr;
 import org.aya.intellij.service.ProblemService;
 import org.aya.intellij.ui.AyaIcons;
 import org.aya.intellij.ui.AyaTreeView;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
 import org.aya.tyck.error.Goal;
-import org.aya.util.distill.DistillerOptions;
 import org.aya.util.error.SourceFile;
+import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +41,7 @@ import java.nio.file.Path;
 public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
   private final @NotNull AyaTreeView<GoalNode> treeView;
   // TODO: user-defined distiller options
-  private final @NotNull DistillerOptions options = AyaDistillerOptions.informative();
+  private final @NotNull PrettierOptions options = AyaPrettierOptions.informative();
   private final @NotNull Project project;
 
   public GoalsView(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -127,7 +127,7 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
         case TeleG c -> goal == c.goal;
         case GoalG g -> goal == g.goal;
       }))
-      .map(found -> Tuple.of(found._1, found._2, found._1 instanceof TeleG))
+      .map(found -> Tuple.of(found.component1(), found.component2(), found.component1() instanceof TeleG))
       .getOrNull();
   }
 
@@ -157,11 +157,12 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
       this(goal, MutableList.create());
     }
 
-    /** Rewrite of {@link Goal#describe(DistillerOptions)} */
-    public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    /** Rewrite of {@link Goal#describe(PrettierOptions)} */
+    public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var meta = goal.hole().ref();
       var state = goal.state();
-      var result = meta.result != null ? meta.result.freezeHoles(state)
+      var nullableResult = meta.info.result();
+      var result = nullableResult != null ? nullableResult.freezeHoles(state)
         : new ErrorTerm(Doc.plain("???"), false);
       var resultDoc = result.toDoc(options);
       var name = Doc.plain(meta.name);
@@ -178,8 +179,8 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
       this(goal, param, MutableList.create());
     }
 
-    /** Rewrite of {@link Goal#describe(DistillerOptions)} */
-    public @NotNull Doc describe(@NotNull DistillerOptions options) {
+    /** Rewrite of {@link Goal#describe(PrettierOptions)} */
+    public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var paramDoc = param.toDoc(options);
       return inScope() ? paramDoc : Doc.sep(paramDoc, Doc.parened(
         Doc.english(AyaBundle.INSTANCE.message("aya.ui.goals.not.in.scope"))));
