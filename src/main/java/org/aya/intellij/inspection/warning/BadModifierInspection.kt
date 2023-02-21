@@ -5,7 +5,7 @@ import com.intellij.openapi.project.Project
 import org.aya.concrete.error.BadModifierWarn
 import org.aya.intellij.AyaBundle
 import org.aya.intellij.actions.lsp.AyaLsp
-import org.aya.intellij.psi.concrete.AyaPsiFnModifiers
+import org.aya.intellij.psi.concrete.AyaPsiDeclModifiers
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
 
 class BadModifierInspection : WarningInspection() {
@@ -18,7 +18,8 @@ class BadModifierInspection : WarningInspection() {
   override fun getDisplayName() = AyaBundle.message("aya.insp.bad.modifier")
 
   override fun buildVisitor(lsp: AyaLsp, holder: ProblemsHolder, isOnTheFly: Boolean) = object : AyaPsiVisitor() {
-    override fun visitFnModifiers(mod: AyaPsiFnModifiers) = lsp.warningsAt(mod, BadModifierWarn::class.java).forEach { _ ->
+    // TODO: also ModifierProblem::class.java
+    override fun visitDeclModifiers(mod: AyaPsiDeclModifiers) = lsp.warningsAt(mod, BadModifierWarn::class.java).forEach { _ ->
       holder.registerProblem(
         holder.manager.createProblemDescriptor(
           mod, mod,

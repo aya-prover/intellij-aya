@@ -87,10 +87,8 @@
     // symbols
     // KW_SIGMA =  'regexp:Sig|\u03a3'
     KW_SIGMA =  'Sig'
-    // KW_LAMBDA = 'regexp:[\\\u03bb]'
-    KW_LAMBDA = '\'
-    // KW_PI = 'regexp:Pi|\u03a0'
-    KW_PI = 'Pi'
+    KW_LAMBDA = 'fn'
+    KW_PI = 'Fn'
     // KW_FORALL = 'regexp:forall|\u2200'
     KW_FORALL = 'forall'
 
@@ -166,6 +164,7 @@ private stmt_recover ::= !(stmt_first)
 private stmt_first ::= KW_PUBLIC | KW_PRIVATE | KW_OPEN | KW_IMPORT | KW_MODULE
                      | KW_EXAMPLE | KW_COUNTEREXAMPLE | DOC_COMMENT
                      | KW_DEF | KW_STRUCT | KW_PRIM | KW_DATA | KW_VARIABLE
+                     | KW_OPAQUE | KW_INLINE | KW_OVERLAP
 
 private repl ::= REPL_COMMAND? expr
 
@@ -176,14 +175,14 @@ stmt ::= decl
        | module
        | generalize
 
-importCmd ::= KW_IMPORT qualifiedId (KW_AS weakId)?
+importCmd ::= KW_PUBLIC? KW_IMPORT qualifiedId (KW_AS weakId)?
 openCmd ::= KW_PUBLIC? KW_OPEN KW_IMPORT? qualifiedId useHide?
 module ::= KW_MODULE weakId LBRACE stmt* RBRACE
 
 useHide ::= KW_USING useList+ | KW_HIDING hideList+
-hideList ::= LPAREN <<commaSep weakId>>? RPAREN
+hideList ::= LPAREN <<commaSep qualifiedId>>? RPAREN
 useList ::= LPAREN <<commaSep useId>>? RPAREN
-useId ::= weakId useAs?
+useId ::= qualifiedId useAs?
 useAs ::= KW_AS assoc? weakId bindBlock?
 
 generalizeParamName ::= teleParamName
@@ -205,16 +204,12 @@ tighters ::= KW_TIGHTER qualifiedId+
 loosers ::= KW_LOOSER qualifiedId+
 
 fnDecl ::= declModifiers*
- KW_DEF fnModifiers* declNameOrInfix
+ KW_DEF declNameOrInfix
  tele* type? fnBody bindBlock? { pin=2 }
 
 private simpleBody ::= IMPLIES expr { pin=1 }
 fnBody ::= simpleBody
          | barredClause*
-
-fnModifiers ::= KW_OPAQUE
-              | KW_INLINE
-              | KW_OVERLAP
 
 // turn the keyword into a psi node, so quick fix can easily delete it
 // see: BadCounterexampleInspection
@@ -226,7 +221,14 @@ openKw ::= KW_OPEN
 primName ::= weakId
 primDecl ::= KW_PRIM primName tele* type? { pin=1 }
 
-declModifiers ::= KW_PRIVATE | openKw | KW_EXAMPLE | KW_COUNTEREXAMPLE
+// IMPORTANT NOTE: Adding all of these to stmt_first or you will get parser errors!
+declModifiers ::= KW_PRIVATE
+                | KW_EXAMPLE
+                | KW_COUNTEREXAMPLE
+                | KW_OPAQUE
+                | KW_INLINE
+                | KW_OVERLAP
+                | openKw
 
 structDecl
   ::= declModifiers*
@@ -241,7 +243,7 @@ structField
 }
 
 dataDecl ::= declModifiers*
- KW_DATA declNameOrInfix
+ KW_DATA declNameOrInfix?
  tele* type? dataBody* bindBlock? { pin=2 }
 
 dataBody ::= BAR (dataCtorClause | dataCtor) {
@@ -305,7 +307,7 @@ letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
 }
 letBindBlock ::= letBind | (BAR letBind)+
-letExpr ::= KW_LET letBindBlock KW_IN expr
+letExpr ::= KW_LET (KW_OPEN qualifiedId useHide? | letBindBlock) KW_IN expr
 
 partialAtom ::= LPARTIAL partialInner? RPARTIAL
 private partialInner ::= bareSubSystem? barredSubSystem*
