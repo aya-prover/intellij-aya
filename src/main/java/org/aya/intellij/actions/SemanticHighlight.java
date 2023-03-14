@@ -19,9 +19,9 @@ public class SemanticHighlight implements Annotator {
         switch (PsiTreeUtil.getParentOfType(name, AyaPsiGenericDecl.class)) {
           case AyaPsiFnDecl $ -> render(holder, id, SyntaxHighlight.FN_DEF);
           case AyaPsiDataDecl $ -> render(holder, id, SyntaxHighlight.DATA_DEF);
-          case AyaPsiStructDecl $ -> render(holder, id, SyntaxHighlight.STRUCT_DEF);
+          case AyaPsiClassDecl $ -> render(holder, id, SyntaxHighlight.STRUCT_DEF);
           case AyaPsiDataBody $ -> render(holder, id, SyntaxHighlight.CON_DEF);
-          case AyaPsiStructField $ -> render(holder, id, SyntaxHighlight.FIELD_DEF);
+          case AyaPsiClassMember $ -> render(holder, id, SyntaxHighlight.FIELD_DEF);
           // note: no PrimDecl here because it does not use declNameOrInfix.
           case default, null -> {}
         }
@@ -39,9 +39,9 @@ public class SemanticHighlight implements Annotator {
             case AyaPsiFnDecl $ -> render(holder, element, SyntaxHighlight.FN_CALL);
             case AyaPsiPrimDecl $ -> render(holder, element, SyntaxHighlight.PRIM_CALL);
             case AyaPsiDataDecl $ -> render(holder, element, SyntaxHighlight.DATA_CALL);
-            case AyaPsiStructDecl $ -> render(holder, element, SyntaxHighlight.STRUCT_CALL);
+            case AyaPsiClassDecl $ -> render(holder, element, SyntaxHighlight.STRUCT_CALL);
             case AyaPsiDataBody $ -> render(holder, element, SyntaxHighlight.CON_CALL);
-            // note: no StructField here because it can be highlighted without knowing the definition.
+            // note: no ClassMember here because it can be highlighted without knowing the definition.
             case default, null -> {}
           }
         }

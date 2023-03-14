@@ -33,6 +33,7 @@ version = deps.getProperty("version.project")
 
 // Configure project's dependencies
 repositories {
+  mavenLocal()
   mavenCentral()
   if (ayaVersion.endsWith("SNAPSHOT")) {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
@@ -201,7 +202,7 @@ tasks {
 }
 
 dependencies {
-  implementation("org.aya-prover", "lsp", ayaVersion) {
+  implementation("org.aya-prover", "ide-lsp", ayaVersion) {
     exclude("org.aya-prover.upstream", "ij-parsing-core")
   }
   testImplementation(kotlin("test-junit"))
