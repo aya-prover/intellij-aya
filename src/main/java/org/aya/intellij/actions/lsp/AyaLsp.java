@@ -167,10 +167,12 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   @NotNull ImmutableSeq<@NotNull VfsAction> fileDeletedEvent(boolean shouldRecompile, @Nullable VirtualFile file) {
-    if (file == null || !isWatched(file)) return ImmutableSeq.empty();
+    if (file == null) return ImmutableSeq.empty();
     return file.isDirectory()
       ? ImmutableSeq.of(file.getChildren()).flatMap(c -> fileDeletedEvent(shouldRecompile, c))
-      : ImmutableSeq.of(new VfsAction(shouldRecompile, createLspFileEvent(file, FileChangeType.Deleted)));
+      : isWatched(file)
+      ? ImmutableSeq.of(new VfsAction(shouldRecompile, createLspFileEvent(file, FileChangeType.Deleted)))
+      : ImmutableSeq.empty();
   }
 
   @NotNull ImmutableSeq<@NotNull VfsAction> fileModifiedEvent(boolean shouldRecompile, @Nullable VirtualFile file) {
