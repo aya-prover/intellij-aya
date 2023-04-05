@@ -1,4 +1,5 @@
 import org.aya.gradle.BuildUtil
+import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.grammarkit.tasks.GenerateParserTask
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -18,14 +19,14 @@ plugins {
   java
   // Kotlin support
   kotlin("jvm") version "1.7.22"
-  // Gradle IntelliJ Plugin
-  id("org.jetbrains.intellij") version "1.10.1"
-  // Gradle Changelog Plugin
-  id("org.jetbrains.changelog") version "1.3.1"
+  // https://github.com/JetBrains/gradle-intellij-plugin
+  id("org.jetbrains.intellij") version "1.13.3"
+  // https://github.com/JetBrains/gradle-changelog-plugin
+  id("org.jetbrains.changelog") version "2.0.0"
   // Gradle Qodana Plugin
   id("org.jetbrains.qodana") version "0.1.13"
   // GrammarKit Plugin
-  id("org.jetbrains.grammarkit") version "2021.2.2"
+  id("org.jetbrains.grammarkit") version "2022.3.1"
 }
 
 group = properties("pluginGroup")
@@ -51,7 +52,6 @@ intellij {
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
 changelog {
-  version.set(properties("pluginVersion"))
   groups.set(emptyList())
 }
 
@@ -79,7 +79,7 @@ sourceSets.main {
 
 val genAyaPsiParser = tasks.register<GenerateParserTask>("genAyaParser") {
   group = "build setup"
-  source.set("src/main/grammar/AyaPsiParser.bnf")
+  sourceFile.set(file("src/main/grammar/AyaPsiParser.bnf"))
   targetRoot.set("src/main/gen")
   pathToParser.set("org/aya/parser/AyaPsiParser.java")
   pathToPsiRoot.set("org/aya/intellij/psi")
@@ -94,10 +94,12 @@ val genAyaPsiParser = tasks.register<GenerateParserTask>("genAyaParser") {
     dst.writer().use { out ->
       src.readLines().forEach { line ->
         if (line == "public interface AyaPsiElementTypes {")
-          out.write("""
+          out.write(
+            """
             import static org.aya.parser.AyaPsiElementTypes.*;
             public interface AyaPsiElementTypesFactory {
-          """.trimIndent())
+          """.trimIndent(),
+          )
         else if (!line.contains("IElementType (.+) = new AyaPsi(Element|Token)Type\\(\\\"(.+)\\\"\\);".toRegex()))
           out.write("$line\n")
       }
@@ -166,11 +168,16 @@ tasks {
     )
 
     // Get the latest available change notes from the changelog file
+    val changelog = project.changelog // local variable for configuration cache compatibility
+    // Get the latest available change notes from the changelog file
     changeNotes.set(
-      provider {
-        changelog.run {
-          getOrNull(properties("pluginVersion")) ?: getLatest()
-        }.toHTML()
+      with(changelog) {
+        renderItem(
+          (getOrNull(project.version.toString()) ?: getUnreleased())
+            .withHeader(false)
+            .withEmptySections(false),
+          Changelog.OutputType.HTML,
+        )
       },
     )
   }
@@ -201,7 +208,7 @@ tasks {
 }
 
 dependencies {
-  implementation("org.aya-prover", "lsp", ayaVersion) {
+  implementation("org.aya-prover", "ide-lsp", ayaVersion) {
     exclude("org.aya-prover.upstream", "ij-parsing-core")
   }
   testImplementation(kotlin("test-junit"))
