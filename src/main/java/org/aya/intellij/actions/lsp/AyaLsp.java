@@ -72,7 +72,6 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private final @NotNull MutableSet<VirtualFile> libraryPathCache = MutableSet.create();
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
-  private boolean shouldRecompile = false;
 
   static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
@@ -133,11 +132,9 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       var params = new DidChangeWatchedFilesParams();
       params.changes = lspEvents.map(VfsAction::lspFileEvent).asJava();
       server.didChangeWatchedFiles(params);
-      shouldRecompile = true;
     }
-    if (!before && shouldRecompile) {
+    if (lspEvents.anyMatch(VfsAction::shouldRecompile)) {
       Log.d("[intellij-aya] A bunch of files have been changed, recompiling");
-      shouldRecompile = false;
       recompile(() -> {
         DaemonCodeAnalyzer.getInstance(project).restart();
         Log.d("[intellij-aya] Restarted DaemonCodeAnalyzer");
@@ -146,14 +143,14 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     Log.d("[intellij-aya] =================== FILE EVENTS ====================");
   }
 
-  record VfsAction(@NotNull FileEvent lspFileEvent) {
+  record VfsAction(boolean shouldRecompile, @NotNull FileEvent lspFileEvent) {
     @Override public String toString() {
-      return "(%s) '%s'".formatted(switch (lspFileEvent.type) {
+      return "(%s, %s) '%s'".formatted(switch (lspFileEvent.type) {
         case FileChangeType.Created -> "Created";
         case FileChangeType.Changed -> "Modified";
         case FileChangeType.Deleted -> "Deleted";
         case default -> "Unknown";
-      }, lspFileEvent.uri);
+      }, shouldRecompile ? "+" : "-", lspFileEvent.uri);
     }
   }
 
@@ -164,33 +161,34 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return lspEvent;
   }
 
-  @NotNull ImmutableSeq<@NotNull VfsAction> fileCreatedEvent(@Nullable VirtualFile file) {
+  @NotNull ImmutableSeq<@NotNull VfsAction> fileCreatedEvent(boolean shouldRecompile, @Nullable VirtualFile file) {
     if (file == null || file.isDirectory() || !isWatched(file)) return ImmutableSeq.empty();
-    return ImmutableSeq.of(new VfsAction(createLspFileEvent(file, FileChangeType.Created)));
+    return ImmutableSeq.of(new VfsAction(shouldRecompile, createLspFileEvent(file, FileChangeType.Created)));
   }
 
-  @NotNull ImmutableSeq<@NotNull VfsAction> fileDeletedEvent(@Nullable VirtualFile file) {
+  @NotNull ImmutableSeq<@NotNull VfsAction> fileDeletedEvent(boolean shouldRecompile, @Nullable VirtualFile file) {
     if (file == null || !isWatched(file)) return ImmutableSeq.empty();
     return file.isDirectory()
-      ? ImmutableSeq.of(file.getChildren()).flatMap(this::fileDeletedEvent)
-      : ImmutableSeq.of(new VfsAction(createLspFileEvent(file, FileChangeType.Deleted)));
+      ? ImmutableSeq.of(file.getChildren()).flatMap(c -> fileDeletedEvent(shouldRecompile, c))
+      : ImmutableSeq.of(new VfsAction(shouldRecompile, createLspFileEvent(file, FileChangeType.Deleted)));
   }
 
-  @NotNull ImmutableSeq<@NotNull VfsAction> fileModifiedEvent(@Nullable VirtualFile file) {
+  @NotNull ImmutableSeq<@NotNull VfsAction> fileModifiedEvent(boolean shouldRecompile, @Nullable VirtualFile file) {
     if (file == null || file.isDirectory() || !isWatched(file)) return ImmutableSeq.empty();
-    return ImmutableSeq.of(new VfsAction(createLspFileEvent(file, FileChangeType.Changed)));
+    return ImmutableSeq.of(new VfsAction(shouldRecompile, createLspFileEvent(file, FileChangeType.Changed)));
   }
 
   @NotNull ImmutableSeq<@NotNull VfsAction> processVfsEvent(boolean before, @Nullable VFileEvent event) {
     Log.d("[intellij-aya] (%s) VFS event: %s", before ? "Before" : "After", event);
     var after = !before;
     return switch (event) {
-      case VFileContentChangeEvent e && after -> fileModifiedEvent(e.getFile());
-      case VFileCreateEvent e && after -> fileCreatedEvent(e.getFile());
-      case VFileDeleteEvent e && before -> fileDeletedEvent(e.getFile());
-      case VFileCopyEvent e && after -> fileCreatedEvent(e.findCreatedFile());
-      case VFileMoveEvent e && before -> fileDeletedEvent(e.getFile());
-      case VFileMoveEvent e && after -> fileCreatedEvent(e.getFile());
+      case VFileContentChangeEvent e && after -> fileModifiedEvent(true, e.getFile());
+      case VFileCreateEvent e && after -> fileCreatedEvent(true, e.getFile());
+      case VFileDeleteEvent e && before -> fileDeletedEvent(true, e.getFile());
+      case VFileCopyEvent e && after -> fileCreatedEvent(true, e.findCreatedFile());
+      // do not trigger recompilation before moving files, do it after the move.
+      case VFileMoveEvent e && before -> fileDeletedEvent(false, e.getFile());
+      case VFileMoveEvent e && after -> fileCreatedEvent(true, e.getFile());
       case default, null -> ImmutableSeq.empty();
     };
   }
