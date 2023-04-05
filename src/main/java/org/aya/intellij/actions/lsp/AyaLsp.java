@@ -123,15 +123,11 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     var any = Seq.wrapJava(events).view()
       .filterIsInstance(VFileContentChangeEvent.class)
       .map(VFileContentChangeEvent::getFile)
-      .anyMatch(this::isSourceChanged);
+      .anyMatch(file -> isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX));
     if (any) recompile(() -> {
       DaemonCodeAnalyzer.getInstance(project).restart();
       Log.i("[intellij-aya] Restarted DaemonCodeAnalyzer");
     });
-  }
-
-  boolean isSourceChanged(@NotNull VirtualFile file) {
-    return isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX);
   }
 
   void recompile(@Nullable Runnable callback) {
