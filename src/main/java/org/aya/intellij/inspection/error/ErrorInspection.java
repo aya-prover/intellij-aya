@@ -7,6 +7,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import kala.collection.SeqView;
+import org.aya.concrete.error.ParseError;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.intellij.actions.lsp.JB;
@@ -33,6 +34,7 @@ public class ErrorInspection extends CatchAll {
     @Override public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (!(element instanceof AyaPsiFile file)) return;
       AyaLsp.use(file.getProject(), lsp -> JOBS.findMyJob(lsp.errorsInFile(file)).forEach(p -> {
+        if (p instanceof ParseError) return; // JetBrains will handle it
         var range = JB.toRange(p.sourcePos());
         var msg = DistillerService.plainDescribe(p);
         var tooltip = DistillerService.escapedBrief(p);

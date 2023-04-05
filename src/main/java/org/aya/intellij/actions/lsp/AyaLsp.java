@@ -36,6 +36,7 @@ import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.AyaPsiReference;
+import org.aya.intellij.service.DistillerService;
 import org.aya.intellij.service.ProblemService;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
@@ -142,7 +143,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       Log.i("[intellij-aya] Compilation started.");
       var service = project.getService(ProblemService.class);
       compile.run();
-      service.allProblems.set(problemCache.toImmutableMap());
+      service.allProblems.set(ImmutableMap.from(problemCache));
       Log.i("[intellij-aya] Compilation finished.");
       if (callback != null) callback.run();
       Log.i("[intellij-aya] Compilation finishing notified.");
@@ -258,6 +259,10 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     @NotNull PrettierOptions options
   ) {
     problemCache.putAll(problems);
+    problems.forEach((f, ps) -> {
+      Log.d("[intellij-aya] Problems for %s", f.toAbsolutePath().toString());
+      ps.forEach(p -> Log.d("[intellij-aya]   - %s", DistillerService.plainBrief(p)));
+    });
   }
 
   @Override public void clearAyaProblems(@NotNull ImmutableSeq<Path> files) {
