@@ -17,6 +17,7 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.nio.file.Path;
 
 /**
@@ -52,6 +53,10 @@ public interface JB {
   static @NotNull Path canonicalize(@NotNull VirtualFile file) {
     assert fileSupported(file);
     return FileUtil.canonicalize(file.toNioPath());
+  }
+
+  static @NotNull URI canonicalizedUri(@NotNull VirtualFile file) {
+    return canonicalize(file).toUri();
   }
 
   static @NotNull Option<PsiFile> fileAt(@NotNull Project project, @NotNull SourceFile sourceFile) {

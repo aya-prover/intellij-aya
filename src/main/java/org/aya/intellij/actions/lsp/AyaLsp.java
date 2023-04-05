@@ -7,11 +7,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import kala.collection.Seq;
 import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
@@ -48,8 +46,8 @@ import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
-import org.javacs.lsp.MessageType;
-import org.javacs.lsp.ShowMessageParams;
+import org.intellij.lang.annotations.MagicConstant;
+import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +72,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private final @NotNull MutableSet<VirtualFile> libraryPathCache = MutableSet.create();
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
+  private boolean shouldRecompile = false;
 
   static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
@@ -82,8 +81,12 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     lsp.recompile(null);
     project.putUserData(AYA_LSP, lsp);
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
+        lsp.fireVfsEvent(true, ImmutableSeq.from(events));
+      }
+
       @Override public void after(@NotNull List<? extends VFileEvent> events) {
-        lsp.fireVfsEvent(events);
+        lsp.fireVfsEvent(false, ImmutableSeq.from(events));
       }
     });
   }
@@ -119,15 +122,81 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     this.server = new AyaLanguageServer(this, this);
   }
 
-  void fireVfsEvent(List<? extends VFileEvent> events) {
-    var any = Seq.wrapJava(events).view()
-      .filterIsInstance(VFileContentChangeEvent.class)
-      .map(VFileContentChangeEvent::getFile)
-      .anyMatch(file -> isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX));
-    if (any) recompile(() -> {
-      DaemonCodeAnalyzer.getInstance(project).restart();
-      Log.i("[intellij-aya] Restarted DaemonCodeAnalyzer");
-    });
+  void fireVfsEvent(boolean before, @NotNull ImmutableSeq<? extends VFileEvent> events) {
+    var lspEvents = events.view()
+      .flatMap(e -> processVfsEvent(before, e))
+      .toImmutableSeq();
+    Log.d("[intellij-aya] =================== FILE EVENTS ====================");
+    if (lspEvents.isNotEmpty()) {
+      Log.d("[intellij-aya] Sending these file change events to LSP:");
+      lspEvents.forEach(e -> Log.d("[intellij-aya]   - %s", e));
+      var params = new DidChangeWatchedFilesParams();
+      params.changes = lspEvents.map(VfsAction::lspFileEvent).asJava();
+      server.didChangeWatchedFiles(params);
+      shouldRecompile = true;
+    }
+    if (!before && shouldRecompile) {
+      Log.d("[intellij-aya] A bunch of files have been changed, recompiling");
+      shouldRecompile = false;
+      recompile(() -> {
+        DaemonCodeAnalyzer.getInstance(project).restart();
+        Log.d("[intellij-aya] Restarted DaemonCodeAnalyzer");
+      });
+    }
+    Log.d("[intellij-aya] =================== FILE EVENTS ====================");
+  }
+
+  record VfsAction(@NotNull FileEvent lspFileEvent) {
+    @Override public String toString() {
+      return "(%s) '%s'".formatted(switch (lspFileEvent.type) {
+        case FileChangeType.Created -> "Created";
+        case FileChangeType.Changed -> "Modified";
+        case FileChangeType.Deleted -> "Deleted";
+        case default -> "Unknown";
+      }, lspFileEvent.uri);
+    }
+  }
+
+  private @NotNull FileEvent createLspFileEvent(@NotNull VirtualFile file, @MagicConstant(valuesFromClass = FileChangeType.class) int type) {
+    var lspEvent = new FileEvent();
+    lspEvent.type = type;
+    lspEvent.uri = JB.canonicalizedUri(file);
+    return lspEvent;
+  }
+
+  @NotNull ImmutableSeq<@NotNull VfsAction> fileCreatedEvent(@Nullable VirtualFile file) {
+    if (file == null || file.isDirectory() || !isWatched(file)) return ImmutableSeq.empty();
+    return ImmutableSeq.of(new VfsAction(createLspFileEvent(file, FileChangeType.Created)));
+  }
+
+  @NotNull ImmutableSeq<@NotNull VfsAction> fileDeletedEvent(@Nullable VirtualFile file) {
+    if (file == null || !isWatched(file)) return ImmutableSeq.empty();
+    return file.isDirectory()
+      ? ImmutableSeq.of(file.getChildren()).flatMap(this::fileDeletedEvent)
+      : ImmutableSeq.of(new VfsAction(createLspFileEvent(file, FileChangeType.Deleted)));
+  }
+
+  @NotNull ImmutableSeq<@NotNull VfsAction> fileModifiedEvent(@Nullable VirtualFile file) {
+    if (file == null || file.isDirectory() || !isWatched(file)) return ImmutableSeq.empty();
+    return ImmutableSeq.of(new VfsAction(createLspFileEvent(file, FileChangeType.Changed)));
+  }
+
+  @NotNull ImmutableSeq<@NotNull VfsAction> processVfsEvent(boolean before, @Nullable VFileEvent event) {
+    Log.d("[intellij-aya] (%s) VFS event: %s", before ? "Before" : "After", event);
+    var after = !before;
+    return switch (event) {
+      case VFileContentChangeEvent e && after -> fileModifiedEvent(e.getFile());
+      case VFileCreateEvent e && after -> fileCreatedEvent(e.getFile());
+      case VFileDeleteEvent e && before -> fileDeletedEvent(e.getFile());
+      case VFileCopyEvent e && after -> fileCreatedEvent(e.findCreatedFile());
+      case VFileMoveEvent e && before -> fileDeletedEvent(e.getFile());
+      case VFileMoveEvent e && after -> fileCreatedEvent(e.getFile());
+      case default, null -> ImmutableSeq.empty();
+    };
+  }
+
+  boolean isWatched(@Nullable VirtualFile file) {
+    return isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX);
   }
 
   void recompile(@Nullable Runnable callback) {
@@ -136,6 +205,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   void recompile(@NotNull Runnable compile, @Nullable Runnable callback) {
     compilerPool.execute(() -> {
+      Log.d("[intellij-aya] =================== COMPILATION ====================");
       Log.i("[intellij-aya] Compilation started.");
       var service = project.getService(ProblemService.class);
       compile.run();
@@ -143,6 +213,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       Log.i("[intellij-aya] Compilation finished.");
       if (callback != null) callback.run();
       Log.i("[intellij-aya] Compilation finishing notified.");
+      Log.d("[intellij-aya] =================== COMPILATION ====================");
     });
   }
 
@@ -190,7 +261,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     if (problemCache.isEmpty()) return SeqView.empty();
     var vf = file.getVirtualFile();
     if (vf == null || !JB.fileSupported(vf)) return SeqView.empty();
-    var path = vf.toNioPath();
+    var path = JB.canonicalize(vf);
     var problems = problemCache.getOrNull(path);
     var maxOffset = file.getTextLength();
     return problems == null ? SeqView.empty() : problems.view()
@@ -256,7 +327,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   ) {
     problemCache.putAll(problems);
     problems.forEach((f, ps) -> {
-      Log.d("[intellij-aya] Problems for %s", f.toAbsolutePath().toString());
+      Log.d("[intellij-aya] Problems in %s", f.toAbsolutePath().toString());
       ps.forEach(p -> Log.d("[intellij-aya]   - %s", DistillerService.plainBrief(p)));
     });
   }
