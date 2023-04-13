@@ -10,6 +10,7 @@ import kala.collection.Seq;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
+import kala.text.StringSlice;
 import org.aya.cli.parse.AyaProducer;
 import org.aya.concrete.Expr;
 import org.aya.concrete.GenericAyaParser;
@@ -28,7 +29,7 @@ import java.util.Arrays;
 
 public record AyaIJParserImpl(@NotNull Project project, @NotNull Reporter reporter) implements GenericAyaParser {
   @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos overridingSourcePos) {
-    var producer = new AyaProducer(Either.right(overridingSourcePos), reporter);
+    var producer = new AyaProducer(code, Either.right(overridingSourcePos), reporter);
     var expr = (AyaPsiElement) AyaPsiFactory.expr(project, code);
     return producer.expr(new ASTGenericNode(expr.getNode()));
   }
@@ -40,8 +41,9 @@ public record AyaIJParserImpl(@NotNull Project project, @NotNull Reporter report
       if (!(psiFile instanceof AyaPsiFile ayaFile))
         throw new IllegalArgumentException("File not found in IntelliJ documents: " + codeFile.display());
       // TODO: support literate mode
-      var updated = new SourceFile(codeFile.display(), codeFile.underlying(), ayaFile.getText());
-      var producer = new AyaProducer(Either.left(updated), reporter);
+      var code = ayaFile.getText();
+      var updated = new SourceFile(codeFile.display(), codeFile.underlying(), code);
+      var producer = new AyaProducer(code, Either.left(updated), reporter);
       return producer.program(new ASTGenericNode(ayaFile.getNode())).getLeftValue();
     });
   }
@@ -51,8 +53,8 @@ public record AyaIJParserImpl(@NotNull Project project, @NotNull Reporter report
       return node.getElementType();
     }
 
-    @Override public @NotNull String tokenText() {
-      return node.getText();
+    @Override public @NotNull StringSlice tokenText() {
+      return StringSlice.of(node.getText());
     }
 
     @Override public @NotNull TextRange range() {
