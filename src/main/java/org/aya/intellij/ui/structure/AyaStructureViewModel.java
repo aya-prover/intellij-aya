@@ -10,8 +10,8 @@ import kala.collection.Seq;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiStructureElement;
+import org.aya.intellij.psi.concrete.AyaPsiClassMember;
 import org.aya.intellij.psi.concrete.AyaPsiDataBody;
-import org.aya.intellij.psi.concrete.AyaPsiStructField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class AyaStructureViewModel extends StructureViewModelBase implements Str
 
   @Override public boolean isAlwaysLeaf(StructureViewTreeElement element) {
     var value = element.getValue();
-    return value instanceof AyaPsiDataBody || value instanceof AyaPsiStructField;
+    return value instanceof AyaPsiDataBody || value instanceof AyaPsiClassMember;
   }
 
   private record Element(@NotNull AyaPsiElement element) implements StructureViewTreeElement {

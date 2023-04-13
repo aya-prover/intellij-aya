@@ -22,11 +22,11 @@ public interface AyaPsiElement extends NavigatablePsiElement {
     return switch (this) {
       case AyaPsiFile $ -> AyaIcons.AYA_FILE;
       case AyaPsiDataDecl $ -> AyaIcons.AYA_DATA;
-      case AyaPsiStructDecl $ -> AyaIcons.AYA_STRUCT;
+      case AyaPsiClassDecl $ -> AyaIcons.AYA_STRUCT;
       case AyaPsiPrimDecl $ -> AyaIcons.AYA_PRIM;
       case AyaPsiFnDecl $ -> AyaIcons.AYA_FN;
       case AyaPsiDataBody $ -> AyaIcons.AYA_CTOR;
-      case AyaPsiStructField $ -> AyaIcons.AYA_FIELD;
+      case AyaPsiClassMember $ -> AyaIcons.AYA_FIELD;
       default -> null;
     };
   }

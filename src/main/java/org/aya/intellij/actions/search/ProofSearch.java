@@ -8,6 +8,8 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import org.aya.concrete.Expr;
 import org.aya.concrete.stmt.QualifiedID;
+import org.aya.concrete.stmt.decl.TeleDecl;
+import org.aya.core.def.Def;
 import org.aya.core.term.Term;
 import org.aya.generic.util.InterruptException;
 import org.aya.intellij.language.AyaIJParserImpl;
@@ -32,7 +34,9 @@ public interface ProofSearch {
         case Err err -> new PresentationData(err.message, null, AyaIcons.PROOF_SEARCH_ERROR, null);
         case Yes yes -> {
           var pre = yes.element.ayaPresentation(true);
-          pre.setTooltip(DistillerService.solution(yes.defVar.core.result()));
+          // TODO: class decl
+          pre.setTooltip(DistillerService.solution(
+            Def.defResult((DefVar<? extends Def, ? extends TeleDecl<? extends Term>>) yes.defVar)));
           yield pre;
         }
       };
@@ -61,7 +65,10 @@ public interface ProofSearch {
 
   private static boolean matches(@NotNull ProofShape ps, @NotNull DefVar<?, ?> defVar) {
     if (defVar.core == null) return false;
-    return matches(ps, defVar.core.result());
+    if (defVar.concrete instanceof TeleDecl<?> teleDecl)
+      return matches(ps, Def.defResult(teleDecl.ref()));
+    // TODO: class decl
+    return false;
   }
 
   private static boolean matches(@NotNull ProofShape ps, @NotNull Term term) {
