@@ -51,6 +51,7 @@
     <inspectionToolProvider
       implementation="org.aya.intellij.inspection.AyaInspection$Provider"/>
     <psi.referenceContributor
+      language="Aya"
       implementation="org.aya.intellij.actions.ReferenceContributor"/>
     <navbar implementation="org.aya.intellij.ui.structure.AyaNavBar"/>
     <gotoSymbolContributor implementation="org.aya.intellij.actions.search.SearchEverywhere$Symbol"/>
@@ -83,11 +84,32 @@
       serviceImplementation="org.aya.intellij.service.AyaSettingService"/>
     <projectService
       serviceImplementation="org.aya.intellij.service.ProblemService"/>
+    <!-- external system services -->
+    <projectOpenProcessor
+      implementation="org.aya.intellij.externalSystem.project.AyaProjectOpenProcessor" />
+    <projectService
+      serviceImplementation="org.aya.intellij.externalSystem.settings.AyaSettings" />
+    <projectService
+      serviceImplementation="org.aya.intellij.externalSystem.settings.AyaLocalSettings" />
+    <externalSystemManager
+      implementation="org.aya.intellij.externalSystem.AyaExternalSystemManager" />
+    <!-- This registryKey solves 'class java.lang.Object' problem -->
+    <registryKey
+      key="AYA.system.in.process"
+      description="Make aya better"
+      defaultValue="true" />
 
     <!-- UI components -->
     <toolWindow
       factoryClass="org.aya.intellij.ui.toolwindow.AyaToolWindow"
       id="Aya Prover"
       anchor="right"/>
+    
+    <notificationGroup displayType="BALLOON" id="org.aya.intellij.notification.AyaNotification.BALLOON"/>
+    <notificationGroup displayType="TOOL_WINDOW" id="org.aya.intellij.notification.AyaNotification.TOOL_WINDOW"/>
+    <editorNotificationProvider implementation="org.aya.intellij.notification.InLibraryChecker"/>
   </extensions>
+
+  <actions>
+  </actions>
 </idea-plugin>

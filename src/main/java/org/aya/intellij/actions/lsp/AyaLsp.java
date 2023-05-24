@@ -1,6 +1,7 @@
 package org.aya.intellij.actions.lsp;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -20,11 +21,14 @@ import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
+import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.Constants;
 import org.aya.ide.Resolver;
 import org.aya.ide.action.GotoDefinition;
+import org.aya.intellij.AyaBundle;
 import org.aya.intellij.language.AyaIJParserImpl;
+import org.aya.intellij.notification.AyaNotification;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiNamedElement;
@@ -52,6 +56,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Bridges between the Aya LSP and the IntelliJ platform.
@@ -70,9 +77,10 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
-  static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
+  public static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
     var lsp = new AyaLsp(project);
+    lsp.server.initialize(new InitializeParams());
     lsp.registerLibrary(ayaJson.getParent());
     lsp.recompile(null);
     project.putUserData(AYA_LSP, lsp);
@@ -93,6 +101,28 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
    */
   private static @Nullable AyaLsp of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
+  }
+
+  public static boolean isLspActive(@NotNull Project project) {
+    return of(project) != null;
+  }
+
+  public static void useUnchecked(
+    @NotNull Project project,
+    @NotNull Consumer<AyaLsp> block
+  ) {
+    var lsp = of(project);
+    if (lsp != null) block.accept(lsp);
+  }
+
+  public static <R> R useUnchecked(
+    @NotNull Project project,
+    @NotNull Supplier<R> orElse,
+    @NotNull Function<AyaLsp, R> block
+  ) {
+    var lsp = of(project);
+    if (lsp == null) return orElse.get();
+    return block.apply(lsp);
   }
 
   public static <R, E extends Throwable> R use(
@@ -159,7 +189,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   @NotNull ImmutableSeq<@NotNull VfsAction> fileCreatedEvent(boolean shouldRecompile, @Nullable VirtualFile file) {
-    if (file == null || file.isDirectory() || !isWatched(file)) return ImmutableSeq.empty();
+    if (file == null || ! file.isValid() || file.isDirectory() || !isWatched(file)) return ImmutableSeq.empty();
     return ImmutableSeq.of(new VfsAction(shouldRecompile, createLspFileEvent(file, FileChangeType.Created)));
   }
 
@@ -236,6 +266,12 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     var vf = element.getContainingFile().getVirtualFile();
     return JB.fileSupported(vf) ? server.find(JB.canonicalize(vf)) : null;
   }
+
+  public @Nullable LibraryOwner getEntryLibrary() {
+    return server.libraries().firstOrNull();
+  }
+
+  /// region LSP Actions
 
   /**
    * Jump to the defining {@link AnyVar} from the psi element position.
@@ -319,6 +355,8 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return list.view();
   }
 
+  /// endregion LSP Actions
+
   @Override public void publishAyaProblems(
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
     @NotNull PrettierOptions options
@@ -341,6 +379,26 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       case MessageType.Info -> LOG.info(message.message);
       case MessageType.Log -> LOG.debug(message.message);
     }
+  }
+
+  @Override
+  public void showMessage(@NotNull ShowMessageParams params) {
+    var type = switch (params.type) {
+      case MessageType.Error -> NotificationType.ERROR;
+      case MessageType.Warning -> NotificationType.WARNING;
+      case MessageType.Info, MessageType.Log -> NotificationType.INFORMATION;
+      default -> null;
+    };
+
+    var notifier = AyaNotification.BALLOON;
+    var title = AyaBundle.INSTANCE.message("aya.notification.lsp.title");
+    var content = type != null
+      ? params.message
+      : AyaBundle.INSTANCE.message("aya.notification.lsp.bad.message.type.content", params.type);
+
+    notifier.createNotification(content, NotificationType.ERROR)
+      .setTitle(title)
+      .notify(project);
   }
 
   @Override public @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,24 @@ import org.jetbrains.annotations.Nullable;
   storages = @Storage("IntellijAya.xml")
 )
 public class AyaSettingService implements PersistentStateComponent<AyaSettingService> {
-  public boolean useAyaLsp = true;
+  public enum AyaState {
+    Disable("Disable"),
+    Enable("Enable"),
+    UseIntegration("Use Integration");    // Enable external system integration
+
+    public final @NotNull String text;
+
+    AyaState(@Nls @NotNull String text) {
+      this.text = text;
+    }
+
+    @Override
+    public String toString() {
+      return text;
+    }
+  }
+
+  public AyaState ayaLspState = AyaState.Enable;
   public boolean autoScrollToSource = true;
   public boolean autoScrollFromSource = true;
 
