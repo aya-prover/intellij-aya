@@ -7,10 +7,21 @@ import kala.collection.mutable.MutableMap
 import org.aya.cli.library.source.LibraryOwner
 import org.aya.intellij.AyaConstants
 import org.jetbrains.annotations.Contract
+import java.nio.file.Path
 import kotlin.io.path.name
 
 /**
- * The dependency graph below
+ * A project:
+ *
+ * ```
+ * * A
+ *   * C
+ *     * D
+ * * B
+ *   * E
+ * ```
+ *
+ * with the dependency graph:
  *
  * ```
  * A ---> B ---> C
@@ -28,9 +39,24 @@ import kotlin.io.path.name
  *       + A.B.C.E
  *     + A.B.D
  * ```
+ *
+ * or
+ *
+ * ```
+ * + A
+ *   + A.B
+ *     + A.B.D
+ *       + A.B.D.E
+ *     + A.B.C
+ * ```
  */
 class AyaModuleResolver(val rootNode: DataNode<ProjectData>, val moduleTypeId: String, val moduleFileDirectoryPath: String, val externalConfigPath: String) {
   private val resolved: MutableMap<LibraryOwner, DataNode<ModuleData>> = MutableMap.create()
+
+  fun isInScope(dir: Path): Boolean {
+    // TODO
+    return true
+  }
 
   @Contract(mutates = "this,param1")
   fun resolve(parent: DataNode<ModuleData>?, library: LibraryOwner): DataNode<ModuleData> {
@@ -47,6 +73,7 @@ class AyaModuleResolver(val rootNode: DataNode<ProjectData>, val moduleTypeId: S
     val moduleData = ModuleData(libraryDirName, AyaConstants.SYSTEM_ID, moduleTypeId,
       externalName, moduleFileDirectoryPath, externalConfigPath)
     // Create modules on rootNode
+    // TODO: deal with out-of-scope modules
     val thisNode = rootNode.createChild(ProjectKeys.MODULE, moduleData).apply {
       val contentRoot = ContentRootData(AyaConstants.SYSTEM_ID, libraryDir.toString()).apply {
         storePath(ExternalSystemSourceType.SOURCE, libraryDir.resolve(AyaConstants.SOURCE_DIR_NAME).toString())

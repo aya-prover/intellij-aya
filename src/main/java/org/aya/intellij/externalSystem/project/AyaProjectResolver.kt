@@ -59,15 +59,16 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
     val projectFileDir = settings.projectFileDir?.toAbsolutePath()?.toString()
       ?: nioProjectPath.resolve(".idea").toString()
+    val linkedProjectPath = settings.linkedProjectPath
 
     if (! isPreviewMode) {
       initializeLsp(settings)
-      val moduleResolver = AyaModuleResolver(projectNode, ModuleTypeId.JAVA_MODULE, projectFileDir, projectFileDir)
+      val moduleResolver = AyaModuleResolver(projectNode, ModuleTypeId.JAVA_MODULE, projectFileDir, linkedProjectPath.toString())
       doResolveModules(settings, moduleResolver)
     } else {
       projectNode.createChild(ProjectKeys.MODULE, ModuleData(
         projectData.externalName, AyaConstants.SYSTEM_ID, ModuleTypeId.JAVA_MODULE,
-        projectData.externalName, projectFileDir, projectFileDir))
+        projectData.externalName, projectFileDir, linkedProjectPath.toString()))
         .createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPath))
     }
 
