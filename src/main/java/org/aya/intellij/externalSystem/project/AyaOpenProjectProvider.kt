@@ -18,27 +18,30 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override fun isProjectFile(file: VirtualFile): Boolean {
-    return ! file.isDirectory && AyaConstants.BUILD_FILE_NAME == file.name
+    return !file.isDirectory && AyaConstants.BUILD_FILE_NAME == file.name
   }
 
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
-    val projectDir = getProjectDirectory(projectFile) ?: return
-    val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project) ?: return
+    if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, AyaConstants.SYSTEM_ID)) {
+      val projectDir = getProjectDirectory(projectFile) ?: return
+      val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project) ?: return
 
-    ExternalSystemApiUtil.getSettings(project, AyaConstants.SYSTEM_ID).linkProject(projectSettings)
+      ExternalSystemApiUtil.getSettings(project, AyaConstants.SYSTEM_ID).linkProject(projectSettings)
 
-    ExternalSystemUtil.refreshProject(
-      projectSettings.externalProjectPath.toString(),
-      ImportSpecBuilder(project, AyaConstants.SYSTEM_ID)
-        .usePreviewMode()
-        .use(ProgressExecutionMode.MODAL_SYNC)
-    )
+      ExternalSystemUtil.refreshProject(
+        projectSettings.externalProjectPath.toString(),
+        ImportSpecBuilder(project, AyaConstants.SYSTEM_ID)
+          .usePreviewMode()
+          .use(ProgressExecutionMode.MODAL_SYNC),
+      )
 
-    if (AyaSettingService.getInstance().ayaLspState == AyaSettingService.AyaState.UseIntegration) {
-      ExternalProjectsManager.getInstance(project).runWhenInitialized {
-        ExternalSystemUtil.refreshProject(
-          projectSettings.externalProjectPath.toString(),
-          ImportSpecBuilder(project, AyaConstants.SYSTEM_ID))
+      if (AyaSettingService.getInstance().ayaLspState == AyaSettingService.AyaState.UseIntegration) {
+        ExternalProjectsManager.getInstance(project).runWhenInitialized {
+          ExternalSystemUtil.refreshProject(
+            projectSettings.externalProjectPath.toString(),
+            ImportSpecBuilder(project, AyaConstants.SYSTEM_ID),
+          )
+        }
       }
     }
   }

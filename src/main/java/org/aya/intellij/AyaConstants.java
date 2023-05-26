@@ -8,7 +8,4 @@ public interface AyaConstants {
   @NotNull String AYA_NAME = AyaBundle.INSTANCE.message("aya.name");
   @NotNull String BUILD_FILE_NAME = Constants.AYA_JSON;
   @NotNull ProjectSystemId SYSTEM_ID = new ProjectSystemId("AYA");
-  @NotNull String SOURCE_DIR_NAME = "src";
-  @NotNull String BUILD_DIR_NAME = "build";
-
 }
