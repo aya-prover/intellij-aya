@@ -8,6 +8,8 @@ interface AyaSettingsListener : ExternalSystemSettingsListener<AyaProjectSetting
     val TOPIC: Topic<AyaSettingsListener> = Topic(AyaSettingsListener::class.java, Topic.BroadcastDirection.NONE)
   }
 
-  class Delegate(val delegate: ExternalSystemSettingsListener<AyaProjectSettings>) : AyaSettingsListener {
+  class Delegate(val delegate: ExternalSystemSettingsListener<AyaProjectSettings>) :
+    ExternalSystemSettingsListener<AyaProjectSettings> by delegate,
+    AyaSettingsListener {
   }
 }
