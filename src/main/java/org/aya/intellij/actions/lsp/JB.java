@@ -17,7 +17,6 @@ import org.aya.util.error.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.net.URI;
 import java.nio.file.Path;
 
@@ -58,18 +57,6 @@ public interface JB {
 
   static @NotNull URI canonicalizedUri(@NotNull VirtualFile file) {
     return canonicalize(file).toUri();
-  }
-
-  /**
-   * Convert a {@link Path} to virtual file system preferred path.
-   * @param path the {@link Path}
-   */
-  static @NotNull String toVfsPath(@NotNull Path path) {
-    if (File.separatorChar != '/') {
-      return path.toString().replace(File.separatorChar, '/');
-    } else {
-      return path.toString();
-    }
   }
 
   static @NotNull Option<PsiFile> fileAt(@NotNull Project project, @NotNull SourceFile sourceFile) {

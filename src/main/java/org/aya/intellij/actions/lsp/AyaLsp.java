@@ -103,10 +103,6 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return project.getUserData(AYA_LSP);
   }
 
-  public static boolean isLspActive(@NotNull Project project) {
-    return of(project) != null;
-  }
-
   public static void useUnchecked(
     @NotNull Project project,
     @NotNull Consumer<AyaLsp> block
@@ -254,7 +250,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     }
   }
 
-  public boolean isInLibrary(@Nullable VirtualFile file) {
+  boolean isInLibrary(@Nullable VirtualFile file) {
     while (file != null && file.isValid() && JB.fileSupported(file)) {
       if (librarySrcPathCache.contains(file)) return true;
       file = file.getParent();
