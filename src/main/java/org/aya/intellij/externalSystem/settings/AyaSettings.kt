@@ -1,5 +1,6 @@
 package org.aya.intellij.externalSystem.settings
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -39,7 +40,7 @@ class AyaSettings(project: Project) :
     }
   }
 
-  override fun subscribe(listener: ExternalSystemSettingsListener<AyaProjectSettings>) {
+  override fun subscribe(listener: ExternalSystemSettingsListener<AyaProjectSettings>, parentDisposable: Disposable) {
     doSubscribe(AyaSettingsListener.Delegate(listener), this)
   }
 

@@ -84,8 +84,10 @@
       serviceImplementation="org.aya.intellij.service.AyaSettingService"/>
     <projectService
       serviceImplementation="org.aya.intellij.service.ProblemService"/>
+
     <!-- external system services -->
     <projectOpenProcessor
+      id="Aya"
       implementation="org.aya.intellij.externalSystem.project.AyaProjectOpenProcessor" />
     <projectService
       serviceImplementation="org.aya.intellij.externalSystem.settings.AyaSettings" />
@@ -93,6 +95,7 @@
       serviceImplementation="org.aya.intellij.externalSystem.settings.AyaLocalSettings" />
     <externalSystemManager
       implementation="org.aya.intellij.externalSystem.AyaExternalSystemManager" />
+
     <!-- This registryKey solves 'class java.lang.Object' problem -->
     <registryKey
       key="AYA.system.in.process"
@@ -115,12 +118,13 @@
     <group
       id="org.aya.intellij.debug.DebugActionGroup"
       text="Aya"
-      popup="true"
-      compact="true">
-      <action class="org.aya.intellij.actions.internal.RefreshAllAyaAction"/>
+      popup="true">
 
       <!-- Doesn't work for now!! -->
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
+    <action class="org.aya.intellij.actions.internal.RefreshAllAyaAction">
+      <add-to-group group-id="org.aya.intellij.debug.DebugActionGroup" anchor="last" />
+    </action>
   </actions>
 </idea-plugin>

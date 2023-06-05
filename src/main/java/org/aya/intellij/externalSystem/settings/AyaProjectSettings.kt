@@ -6,17 +6,16 @@ import com.intellij.openapi.vfs.VirtualFile
 
 /**
  * aya project-level settings
+ * > This class can be constructed by reflection
  */
-class AyaProjectSettings(
-  externalProjectPath: String
-) : ExternalProjectSettings() {
+class AyaProjectSettings() : ExternalProjectSettings() {
   companion object {
     fun createLinkSettings(projectDir: VirtualFile, project: Project): AyaProjectSettings? {
       return AyaProjectSettings(projectDir.toNioPath().toAbsolutePath().toString())
     }
   }
 
-  init {
+  constructor(externalProjectPath: String) : this() {
     this.externalProjectPath = externalProjectPath
   }
 
