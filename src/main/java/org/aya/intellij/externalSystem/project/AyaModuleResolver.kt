@@ -4,7 +4,6 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.*
 import kala.collection.mutable.MutableMap
-import org.aya.cli.library.json.LibraryConfig
 import org.aya.cli.library.source.LibraryOwner
 import org.aya.intellij.AyaConstants
 import org.jetbrains.annotations.Contract
@@ -57,7 +56,7 @@ class AyaModuleResolver(
   val moduleFileDirectoryPath: String,
   val externalProjectPath: String,
 ) {
-  private val resolved: MutableMap<LibraryConfig, DataNode<ModuleData>> = MutableMap.create()
+  private val resolved: MutableMap<Path, DataNode<ModuleData>> = MutableMap.create()
 
   fun isInScope(dir: Path): Boolean {
     // TODO
@@ -68,7 +67,7 @@ class AyaModuleResolver(
   fun resolve(parent: DataNode<ModuleData>?, library: LibraryOwner): DataNode<ModuleData> {
     val config = library.underlyingLibrary()
     val libraryDir = config.libraryRoot.toAbsolutePath()
-    val resolvedLib = resolved.getOrNull(config)
+    val resolvedLib = resolved.getOrNull(libraryDir)
     if (resolvedLib != null) return resolvedLib
 
     val libraryDirName = libraryDir.name
@@ -89,7 +88,7 @@ class AyaModuleResolver(
       createChild(ProjectKeys.CONTENT_ROOT, contentRoot)
     }
 
-    resolved.put(config, thisNode)
+    resolved.put(libraryDir, thisNode)
 
     library.libraryDeps().forEach { dep ->
       val depNode = resolve(thisNode, dep)

@@ -24,6 +24,7 @@ class AyaProjectOpenProcessor : ProjectOpenProcessor() {
     return true
   }
 
+  // FIXME: Doesn't work for now
   override fun importProjectAfterwards(project: Project, file: VirtualFile) {
     AyaOpenProjectProvider().linkToExistingProject(file, project)
   }

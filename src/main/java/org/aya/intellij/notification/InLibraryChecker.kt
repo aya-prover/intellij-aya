@@ -6,7 +6,6 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
-import com.intellij.util.ui.JBUI
 import org.aya.intellij.AyaBundle
 import org.aya.intellij.language.isAya
 import org.aya.intellij.service.AyaSettingService
@@ -18,7 +17,7 @@ class InLibraryChecker : EditorNotificationProvider {
     if (! isAya(file)) return@Function null
     if (AyaSettingService.getInstance().ayaLspState != AyaSettingService.AyaState.UseIntegration) return@Function null;
     if (! ProjectFileIndex.getInstance(project).isInSource(file)) {
-      EditorNotificationPanel(editor, JBUI.CurrentTheme.NotificationError.backgroundColor())
+      EditorNotificationPanel(editor, EditorNotificationPanel.Status.Error)
         .text(AyaBundle.message("aya.notification.lsp.untracked"))
     } else null
   }
