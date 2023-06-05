@@ -12,6 +12,7 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.impl.ContentImpl;
 import org.aya.intellij.AyaConstants;
 import org.aya.intellij.externalSystem.settings.AyaSettings;
+import org.aya.intellij.service.AyaSettingService;
 import org.aya.intellij.service.ProblemService;
 import org.aya.intellij.ui.AyaIcons;
 import org.jetbrains.annotations.NotNull;
@@ -28,21 +29,37 @@ public class AyaToolWindow extends AbstractExternalSystemToolWindowFactory {
     return AyaSettings.getInstance(project);
   }
 
+  @Override
+  public boolean shouldBeAvailable(@NotNull Project project) {
+    var ayaSetting = AyaSettingService.getInstance();
+    return ayaSetting.ayaLspState == AyaSettingService.AyaState.UseIntegration
+      ? super.shouldBeAvailable(project)
+      : ayaSetting.ayaLspState == AyaSettingService.AyaState.Enable;
+  }
+
   @Override public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     toolWindow.setIcon(AyaIcons.TOOL_WINDOW);
-
-    // copied from super.createToolWindowContent
-    toolWindow.setTitle(AyaConstants.SYSTEM_ID.getReadableName());
-    ContentManager contentManager = toolWindow.getContentManager();
+    toolWindow.setTitle(AyaConstants.AYA_PROVER_NAME);
 
     ExternalProjectsManager.getInstance(project).runWhenInitialized(() -> {
-      ExternalProjectsViewImpl projectView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, AyaConstants.SYSTEM_ID);
-      ExternalProjectsManagerImpl.getInstance(project).registerView(projectView);
-      ContentImpl taskContent = new ContentImpl(projectView, "Project", true);
-      contentManager.addContent(taskContent);
+      if (AyaSettingService.getInstance().ayaLspState == AyaSettingService.AyaState.UseIntegration) {
+        initExternalSystemToolWindow(project, toolWindow);
+      }
 
-      var service = project.getService(ProblemService.class);
-      service.initToolWindow(project, toolWindow);
+      initAyaToolWindow(project, toolWindow);
     });
+  }
+
+  private void initExternalSystemToolWindow(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+    ContentManager manager = toolWindow.getContentManager();
+    ExternalProjectsViewImpl projectView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, AyaConstants.SYSTEM_ID);
+    ExternalProjectsManagerImpl.getInstance(project).registerView(projectView);
+    ContentImpl taskContent = new ContentImpl(projectView, "Project", true);
+    manager.addContent(taskContent);
+  }
+
+  private void initAyaToolWindow(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+    var service = project.getService(ProblemService.class);
+    service.initToolWindow(project, toolWindow);
   }
 }
