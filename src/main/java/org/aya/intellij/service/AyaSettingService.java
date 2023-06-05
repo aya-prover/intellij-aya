@@ -9,6 +9,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Application level settings.<br/>
+ * For project level settings, see {@link org.aya.intellij.externalSystem.settings.AyaSettings}
+ */
 @State(
   name = "org.aya.intellij.settings",
   storages = @Storage("IntellijAya.xml")

@@ -20,4 +20,8 @@ class AyaProjectOpenProcessor : ProjectOpenProcessor() {
       AyaOpenProjectProvider().openProject(virtualFile, projectToClose, forceOpenInNewFrame)
     }
   }
+
+  override fun importProjectAfterwards(project: Project, file: VirtualFile) {
+    AyaOpenProjectProvider().linkToExistingProject(file, project)
+  }
 }

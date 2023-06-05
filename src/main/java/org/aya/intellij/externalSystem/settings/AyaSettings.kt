@@ -19,19 +19,20 @@ class AyaSettings(project: Project) :
     project,
   ) {
   companion object {
+    @JvmStatic
     fun getInstance(project: Project): AyaSettings {
       return project.getService(AyaSettings::class.java)
     }
   }
 
-  class MyState : State<AyaSettings> {
-    private val linkedProjectSettings : MutableSet<AyaSettings> = TreeSet()
+  class MyState : State<AyaProjectSettings> {
+    private val linkedProjectSettings : MutableSet<AyaProjectSettings> = TreeSet()
 
-    override fun getLinkedExternalProjectsSettings(): MutableSet<AyaSettings> {
+    override fun getLinkedExternalProjectsSettings(): MutableSet<AyaProjectSettings> {
       return linkedProjectSettings
     }
 
-    override fun setLinkedExternalProjectsSettings(settings: MutableSet<AyaSettings>?) {
+    override fun setLinkedExternalProjectsSettings(settings: MutableSet<AyaProjectSettings>?) {
       if (settings != null) {
         linkedProjectSettings.addAll(settings)
       }
@@ -49,9 +50,10 @@ class AyaSettings(project: Project) :
   }
 
   override fun getState(): MyState {
-    return MyState()
+    return MyState().apply(::fillState)
   }
 
   override fun loadState(state: MyState) {
+    super.loadState(state)
   }
 }

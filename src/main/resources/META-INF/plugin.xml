@@ -111,5 +111,16 @@
   </extensions>
 
   <actions>
+    <!-- Debugging Actions: Tools - Internal Actions - Aya -->
+    <group
+      id="org.aya.intellij.debug.DebugActionGroup"
+      text="Aya"
+      popup="true"
+      compact="true">
+      <action class="org.aya.intellij.actions.internal.RefreshAllAyaAction"/>
+
+      <!-- Doesn't work for now!! -->
+      <add-to-group group-id="Internal" anchor="last"/>
+    </group>
   </actions>
 </idea-plugin>
