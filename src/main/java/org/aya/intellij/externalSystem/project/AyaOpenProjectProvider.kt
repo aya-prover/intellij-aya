@@ -1,5 +1,6 @@
 package org.aya.intellij.externalSystem.project
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -14,6 +15,10 @@ import org.aya.intellij.externalSystem.settings.AyaProjectSettings
 import org.aya.intellij.service.AyaSettingService
 
 class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
+  companion object {
+    private val LOG = Logger.getInstance(AyaOpenProjectProvider::class.java)
+  }
+
   override val systemId: ProjectSystemId = AyaConstants.SYSTEM_ID
 
   override fun isProjectFile(file: VirtualFile): Boolean {
@@ -21,6 +26,8 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+    LOG.info("Linking file '${projectFile.path}' to project '${project.name}'")
+
     if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, AyaConstants.SYSTEM_ID)) {
       val projectDir = getProjectDirectory(projectFile)
       val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project) ?: return

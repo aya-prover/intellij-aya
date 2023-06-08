@@ -1,5 +1,6 @@
 package org.aya.intellij.externalSystem.project
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
@@ -18,10 +19,19 @@ import java.nio.file.Path
 import kotlin.io.path.name
 
 class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
-  fun initializeLsp(settings: AyaExecutionSettings) {
-    val ayaJson = VfsUtil.findFile(settings.buildFilePath, true)
-      ?: throw IllegalStateException("${AyaConstants.BUILD_FILE_NAME} not found")
-    AyaLsp.start(ayaJson, settings.project)
+  companion object {
+    private val LOG = Logger.getInstance(AyaProjectResolver::class.java)
+  }
+
+  fun tryInitializeLsp(settings: AyaExecutionSettings) {
+    LOG.info("Initializing Lsp")
+    if (!AyaLsp.isActive(settings.project)) {
+      val ayaJson = VfsUtil.findFile(settings.buildFilePath, true)
+        ?: throw IllegalStateException("${AyaConstants.BUILD_FILE_NAME} not found")
+      AyaLsp.start(ayaJson, settings.project)
+    } else {
+      LOG.info("Lsp was initialized")
+    }
   }
 
   fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
@@ -46,6 +56,8 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     settings: AyaExecutionSettings?,
     listener: ExternalSystemTaskNotificationListener,
   ): DataNode<ProjectData>? {
+    LOG.info("Resolving project $projectPath with isPreviewMode=$isPreviewMode")
+
     // TODO: When is settings null?
     if (settings == null) return null
 
@@ -62,7 +74,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     val linkedProjectPath = settings.linkedProjectPath
 
     if (! isPreviewMode) {
-      initializeLsp(settings)
+      tryInitializeLsp(settings)
       val moduleResolver = AyaModuleResolver(projectNode, ModuleTypeId.JAVA_MODULE, projectFileDir, linkedProjectPath.toString())
       doResolveModules(settings, moduleResolver)
     } else {

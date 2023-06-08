@@ -41,7 +41,7 @@ class AyaExternalSystemManager : ExternalSystemManager<
     val linkedProjectPath = Path.of(pair.second)
     val projectFileDir = project.projectFile?.toNioPath()?.toAbsolutePath()
 
-    AyaExecutionSettings(project, projectFileDir, linkedProjectPath.toAbsolutePath())   // TODO
+    AyaExecutionSettings(project, projectFileDir, linkedProjectPath.toAbsolutePath())
   }
 
   override fun getProjectResolverClass(): Class<out ExternalSystemProjectResolver<AyaExecutionSettings>> {

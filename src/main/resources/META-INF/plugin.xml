@@ -119,7 +119,6 @@
       id="org.aya.intellij.debug.DebugActionGroup"
       text="Aya"
       popup="true">
-
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
     <action class="org.aya.intellij.actions.internal.RefreshAllAyaAction">

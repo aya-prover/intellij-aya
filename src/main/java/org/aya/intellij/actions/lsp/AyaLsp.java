@@ -103,6 +103,10 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return project.getUserData(AYA_LSP);
   }
 
+  public static boolean isActive(@NotNull Project project) {
+    return of(project) != null;
+  }
+
   public static void useUnchecked(
     @NotNull Project project,
     @NotNull Consumer<AyaLsp> block
