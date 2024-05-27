@@ -31,7 +31,6 @@ abstract class AyaInspection : LocalInspectionTool() {
       DominationInspection::class.java,
       NamingInspection::class.java,
       BadModifierInspection::class.java,
-      BadCounterexampleInspection::class.java,
       WarningInspection::class.java,
       // errors
       ErrorInspection::class.java,

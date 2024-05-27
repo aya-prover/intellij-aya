@@ -18,15 +18,13 @@ plugins {
   // Java support
   java
   // Kotlin support
-  kotlin("jvm") version "1.9.0"
+  kotlin("jvm") version "2.0.0"
   // https://github.com/JetBrains/gradle-intellij-plugin
-  id("org.jetbrains.intellij") version "1.15.0"
+  id("org.jetbrains.intellij") version "1.17.3"
   // https://github.com/JetBrains/gradle-changelog-plugin
   id("org.jetbrains.changelog") version "2.2.0"
-  // https://github.com/JetBrains/gradle-qodana-plugin
-  id("org.jetbrains.qodana") version "0.1.13"
   // https://github.com/JetBrains/gradle-grammar-kit-plugin
-  id("org.jetbrains.grammarkit") version "2022.3.2"
+  id("org.jetbrains.grammarkit") version "2022.3.2.2"
 }
 
 group = properties("pluginGroup")
