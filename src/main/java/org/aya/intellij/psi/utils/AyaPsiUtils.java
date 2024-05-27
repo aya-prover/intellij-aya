@@ -29,8 +29,8 @@ public class AyaPsiUtils {
 
   public static @Nullable PsiElement getNameIdFromWeakIdChild(@Nullable AyaPsiElement element) {
     var weakId = Seq.wrapJava(PsiTreeUtil.findChildrenOfType(element, AyaPsiWeakId.class).stream().toList());
-    var id = findChild(weakId.lastOrNull(), AyaPsiElementTypes.ID);
-    return id != null ? id : findChild(weakId.lastOrNull(), AyaPsiElementTypes.REPL_COMMAND);
+    var id = findChild(weakId.getLastOrNull(), AyaPsiElementTypes.ID);
+    return id != null ? id : findChild(weakId.getLastOrNull(), AyaPsiElementTypes.REPL_COMMAND);
   }
 
   public static void navigate(@NotNull PsiElement element, boolean requestFocus) {

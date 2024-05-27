@@ -7,7 +7,6 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import kala.collection.SeqView;
-import org.aya.concrete.error.ParseError;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.intellij.actions.lsp.JB;
@@ -15,6 +14,7 @@ import org.aya.intellij.inspection.CatchAll;
 import org.aya.intellij.inspection.Jobs;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.service.DistillerService;
+import org.aya.producer.error.ParseError;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 

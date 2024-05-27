@@ -22,6 +22,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AyaParserDefinition extends AyaParserDefinitionBase {
+  public AyaParserDefinition(@NotNull IFileElementType file) {
+    super(file);
+  }
+
   public static @NotNull Lexer createIJLexer() {
     return new FlexAdapter(new _AyaPsiLexer(false));
   }

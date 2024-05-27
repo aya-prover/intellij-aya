@@ -23,7 +23,7 @@ public class SemanticHighlight implements Annotator {
           case AyaPsiDataBody $ -> render(holder, id, SyntaxHighlight.CON_DEF);
           case AyaPsiClassMember $ -> render(holder, id, SyntaxHighlight.FIELD_DEF);
           // note: no PrimDecl here because it does not use declNameOrInfix.
-          case default, null -> {}
+          case null, default -> {}
         }
       }
       case AyaPsiPrimName $ -> render(holder, element, SyntaxHighlight.PRIM_DEF);

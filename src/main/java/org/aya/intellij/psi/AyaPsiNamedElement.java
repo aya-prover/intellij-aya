@@ -19,7 +19,7 @@ public interface AyaPsiNamedElement extends AyaPsiStructureElement, PsiNameIdent
   /** @return qualified name for definitions and modules if possible, parameter name for local variables. */
   default @NotNull String canonicalName() {
     return AyaLsp.use(getProject(), this::nameOrEmpty, lsp -> {
-      var resolvedVar = lsp.resolveVarDefinedBy(this).firstOption();
+      var resolvedVar = lsp.resolveVarDefinedBy(this).getFirstOption();
       return switch (resolvedVar.map(WithPos::data).getOrNull()) {
         case DefVar<?, ?> defVar when defVar.module != null ->
           QualifiedID.join(defVar.module.module().module().appended(defVar.name()));

@@ -15,8 +15,6 @@ import kala.control.Option;
 import kala.tuple.Tuple;
 import kala.tuple.Tuple3;
 import kotlin.Unit;
-import org.aya.core.term.ErrorTerm;
-import org.aya.core.term.Term;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.intellij.actions.lsp.JB;
@@ -27,6 +25,8 @@ import org.aya.intellij.ui.AyaIcons;
 import org.aya.intellij.ui.AyaTreeView;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.tyck.error.Goal;
 import org.aya.util.error.SourceFile;
 import org.aya.util.prettier.PrettierOptions;
@@ -78,7 +78,7 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
     problems.forEach((p, ps) -> {
       var goals = ps.filterIsInstance(Goal.class);
       if (goals.isEmpty()) return;
-      builder.shift(new FileG(ps.first().sourcePos().file()));
+      builder.shift(new FileG(ps.getFirst().sourcePos().file()));
       goals.forEach(g -> updateView(builder, g));
       builder.reduce();
     });
@@ -88,8 +88,8 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
   private void updateView(@NotNull AyaTreeView.NodeBuilder<GoalNode> builder, @NotNull Goal goal) {
     var g = new GoalG(goal);
     builder.shift(g);
-    goal.hole().ref().fullTelescope()
-      .map(param -> new TeleG(goal, param))
+    goal.hole().args()
+      .zip(goal.scope(), (param, var) -> new TeleG(goal, var, param))
       .forEach(builder::append);
     builder.reduce();
   }
@@ -104,7 +104,7 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
 
   @Override public @Nullable Icon renderIcon(@NotNull GoalNode node) {
     return switch (node) {
-      case FileG $ -> AyaIcons.AYA_FILE;
+      case FileG _ -> AyaIcons.AYA_FILE;
       case GoalG g -> solved(g.goal) ? AyaIcons.GOAL_SOLVED : AyaIcons.GOAL;
       case TeleG c -> c.inScope() ? AyaIcons.GOAL_CONTEXT : AyaIcons.GOAL_CONTEXT_NOT_IN_SCOPE;
     };
@@ -112,7 +112,7 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
 
   @Override public @Nullable PsiElement findElement(@NotNull GoalNode node) {
     return switch (node) {
-      case FileG $ -> null;
+      case FileG _ -> null;
       case GoalG g -> JB.elementAt(project, g.goal.sourcePos(), AyaPsiHoleExpr.class);
       case TeleG c -> JB.elementAt(project, c.goal.sourcePos(), AyaPsiHoleExpr.class);
     };
@@ -120,10 +120,10 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
 
   @Override public @Nullable Tuple3<GoalNode, TreePath, Boolean> findNode(@NotNull AyaPsiFile file, int offset) {
     var goals = AyaLsp.use(project, SeqView::<Goal>empty, lsp -> lsp.goalsAt(file, offset));
-    var selected = goals.firstOption(this::solved).getOrElse(goals::firstOrNull);
+    var selected = goals.filter(this::solved).getFirstOption().getOrElse(goals::getFirstOrNull);
     return Option.ofNullable(selected)
       .mapNotNull(goal -> treeView.find(n -> switch (n) {
-        case FileG $ -> false;
+        case FileG _ -> false;
         case TeleG c -> goal == c.goal;
         case GoalG g -> goal == g.goal;
       }))
@@ -134,7 +134,7 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
   public boolean solved(@NotNull Goal goal) {
     var state = goal.state();
     var meta = goal.hole().ref();
-    return state.metas().containsKey(meta);
+    return state.solutions().containsKey(meta);
   }
 
   public sealed interface GoalNode extends AyaTreeView.Node<GoalNode> {
@@ -161,33 +161,35 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var meta = goal.hole().ref();
       var state = goal.state();
-      var nullableResult = meta.info.result();
-      var result = nullableResult != null ? nullableResult.freezeHoles(state)
-        : new ErrorTerm(Doc.plain("???"), false);
-      var resultDoc = result.toDoc(options);
-      var name = Doc.plain(meta.name);
-      return Doc.cat(name, Doc.spaced(Doc.plain(":")), resultDoc);
+      return Doc.plain("TODO");
+      // var nullableResult = meta.req().result();
+      // var result = nullableResult != null ? nullableResult.freezeHoles(state)
+      //   : new ErrorTerm(Doc.plain("???"), false);
+      // var resultDoc = result.toDoc(options);
+      // var name = Doc.plain(meta.name);
+      // return Doc.cat(name, Doc.spaced(Doc.plain(":")), resultDoc);
     }
   }
 
   record TeleG(
     @NotNull Goal goal,
-    @NotNull Term.Param param,
+    @NotNull Term arg,
+    @NotNull LocalVar var,
     @NotNull MutableList<GoalNode> children
   ) implements GoalNode {
-    public TeleG(@NotNull Goal goal, @NotNull Term.Param param) {
-      this(goal, param, MutableList.create());
+    public TeleG(@NotNull Goal goal, @NotNull LocalVar var, @NotNull Term arg) {
+      this(goal, arg, var, MutableList.create());
     }
 
     /** Rewrite of {@link Goal#describe(PrettierOptions)} */
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
-      var paramDoc = param.toDoc(options);
+      var paramDoc = arg.toDoc(options);
       return inScope() ? paramDoc : Doc.sep(paramDoc, Doc.parened(
         Doc.english(AyaBundle.INSTANCE.message("aya.ui.goals.not.in.scope"))));
     }
 
     public boolean inScope() {
-      return goal.scope().contains(param.ref());
+      return goal.scope().contains(var);
     }
   }
 }

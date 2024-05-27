@@ -19,7 +19,7 @@ plugins {
   // Java support
   java
   // Kotlin support
-  kotlin("jvm") version "2.0.0"
+  kotlin("jvm") version "1.9.24"
   // https://github.com/JetBrains/gradle-intellij-plugin
   id("org.jetbrains.intellij") version "1.17.3"
   // https://github.com/JetBrains/gradle-changelog-plugin
@@ -101,6 +101,13 @@ val genAyaPsiParser = tasks.register<GenerateParserTask>("genAyaParser") {
 }
 
 tasks {
+  compileJava.configure {
+    dependsOn(genAyaPsiParser)
+  }
+  named("sourcesJar").configure {
+    dependsOn(genAyaPsiParser)
+  }
+
   withType<JavaCompile>().configureEach {
     modularity.inferModulePath.set(true)
     options.apply {
@@ -189,7 +196,10 @@ tasks {
 }
 
 dependencies {
-  implementation("org.aya-prover", "producer", ayaVersion)
+  implementation("org.aya-prover", "producer", ayaVersion) {
+    exclude("org.aya-prover.upstream", "ij-parsing-core")
+    exclude("org.aya-prover.upstream", "ij-util-text")
+  }
   implementation("org.aya-prover", "ide-lsp", ayaVersion) {
     exclude("org.aya-prover.upstream", "ij-parsing-core")
     exclude("org.aya-prover.upstream", "ij-util-text")
