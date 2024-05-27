@@ -22,8 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AyaParserDefinition extends AyaParserDefinitionBase {
-  public AyaParserDefinition(@NotNull IFileElementType file) {
-    super(file);
+  private static final @NotNull IFileElementType FILE = new IFileElementType(AyaLanguage.INSTANCE);
+  public AyaParserDefinition() {
+    super(FILE);
   }
 
   public static @NotNull Lexer createIJLexer() {
@@ -36,7 +37,6 @@ public class AyaParserDefinition extends AyaParserDefinitionBase {
       return new SyntaxHighlight();
     }
   }
-  private final @NotNull IFileElementType FILE = new IFileElementType(AyaLanguage.INSTANCE);
 
   @Override public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
     return new AyaPsiFile(viewProvider);
