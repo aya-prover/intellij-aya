@@ -38,7 +38,7 @@ public class AyaRunLineMarkerContributor extends RunLineMarkerContributor {
     final var actions = ExecutorAction.getActions(Integer.MAX_VALUE);
     return new Info(AyaIcons.GUTTER_RUN, actions,
       element -> ImmutableSeq.of(actions)
-        .mapNotNull(action -> getText(action, element))
+        .mapNotNull(action -> getText(action, createActionEvent(element)))
         .joinToString("\n"));
   }
 }

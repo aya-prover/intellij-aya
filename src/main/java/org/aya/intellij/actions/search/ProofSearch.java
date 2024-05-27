@@ -76,7 +76,7 @@ public interface ProofSearch {
 
   static @NotNull String compile(int nested, @NotNull ProofShape ps) {
     return switch (ps) {
-      case ProofShape.App app when app.terms.sizeEquals(1) -> compile(nested, app.terms.first().shape);
+      case ProofShape.App app when app.terms.sizeEquals(1) -> compile(nested, app.terms.getFirst().shape);
       case ProofShape.App app -> paren(nested, app.terms.map(arg ->
         braced(arg.explicit(), compile(nested + 1, arg.shape))));
       case ProofShape.AnyId $ -> "((?![ (){}:]).)+";

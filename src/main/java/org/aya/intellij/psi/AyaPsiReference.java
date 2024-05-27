@@ -29,7 +29,7 @@ public class AyaPsiReference extends PsiReferenceBase<AyaPsiElement> {
   @Override public @Nullable AyaPsiNamedElement resolve() {
     return AyaLsp.use(myElement.getProject(),
       () -> null,
-      lsp -> lsp.gotoDefinition(myElement).firstOrNull());
+      lsp -> lsp.gotoDefinition(myElement).getFirstOrNull());
   }
 
   @Override public PsiElement handleElementRename(@NotNull String newName) throws IncorrectOperationException {
