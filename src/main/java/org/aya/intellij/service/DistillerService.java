@@ -3,8 +3,8 @@ package org.aya.intellij.service;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.xml.util.XmlStringUtil;
-import org.aya.core.term.Term;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.syntax.core.term.Term;
 import org.aya.util.reporter.Problem;
 import org.jetbrains.annotations.NotNull;
 

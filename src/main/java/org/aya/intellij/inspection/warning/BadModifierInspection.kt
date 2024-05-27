@@ -2,11 +2,11 @@ package org.aya.intellij.inspection.warning
 
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
-import org.aya.concrete.error.BadModifierWarn
 import org.aya.intellij.AyaBundle
 import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.psi.concrete.AyaPsiDeclModifiers
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
+import org.aya.producer.error.BadModifierWarn
 
 class BadModifierInspection : WarningInspection() {
   companion object {

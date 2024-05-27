@@ -19,7 +19,7 @@ import org.aya.intellij.language.AyaFileType;
 import org.aya.intellij.psi.AyaNavItem;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.AyaPsiGenericDecl;
-import org.aya.ref.DefVar;
+import org.aya.syntax.ref.DefVar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,7 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       .map(manager::findFile)
       .filterIsInstance(AyaPsiFile.class)
       .map(file -> Tuple.of(file, lsp.symbolsInFile(file)))
-      .map(tup -> Tuple.of(tup.component1(), tup.component2().filter(s -> s.concrete != null))));
+      .map(tup -> Tuple.of(tup.component1(), tup.component2())));
   }
 
   static @NotNull SeqView<Tuple2<DefVar<?, ?>, AyaPsiGenericDecl>> searchGenericDecl(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {

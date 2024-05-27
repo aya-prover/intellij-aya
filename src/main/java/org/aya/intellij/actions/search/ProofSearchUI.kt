@@ -75,6 +75,9 @@ class ProofSearchContributor(initEvent: AnActionEvent) : WeightedSearchEverywher
 class ProofResultRenderer : ListCellRenderer<ProofSearch.Proof> {
   private val definition = SimpleColoredComponent()
   private val signature = SimpleColoredComponent()
+  private val sideGap = JBUIScale.scale(UIUtil.getListCellHPadding())
+  private val separator = " :" + " ".repeat(sideGap / 2)
+
   private val where = SimpleColoredComponent().apply {
     isIconOnTheRight = true
   }
@@ -84,9 +87,6 @@ class ProofResultRenderer : ListCellRenderer<ProofSearch.Proof> {
     add(where, BorderLayout.EAST)
     border = JBUI.Borders.empty(1, sideGap)
   }
-
-  private val sideGap = if (UIUtil.isUnderWin10LookAndFeel()) 0 else JBUIScale.scale(UIUtil.getListCellHPadding())
-  private val separator = " :" + " ".repeat(sideGap / 2)
 
   override fun getListCellRendererComponent(
     list: JList<out ProofSearch.Proof>,

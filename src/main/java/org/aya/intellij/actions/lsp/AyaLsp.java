@@ -22,10 +22,6 @@ import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibrarySource;
-import org.aya.concrete.GenericAyaParser;
-import org.aya.concrete.stmt.Command;
-import org.aya.concrete.stmt.Stmt;
-import org.aya.concrete.stmt.decl.Decl;
 import org.aya.generic.Constants;
 import org.aya.ide.Resolver;
 import org.aya.ide.action.GotoDefinition;
@@ -39,8 +35,12 @@ import org.aya.intellij.service.ProblemService;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
-import org.aya.ref.AnyVar;
-import org.aya.ref.DefVar;
+import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.concrete.stmt.Command;
+import org.aya.syntax.concrete.stmt.Stmt;
+import org.aya.syntax.concrete.stmt.decl.Decl;
+import org.aya.syntax.ref.AnyVar;
+import org.aya.syntax.ref.DefVar;
 import org.aya.tyck.error.Goal;
 import org.aya.util.error.WithPos;
 import org.aya.util.prettier.PrettierOptions;
@@ -149,7 +149,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
         case FileChangeType.Created -> "Created";
         case FileChangeType.Changed -> "Modified";
         case FileChangeType.Deleted -> "Deleted";
-        case default -> "Unknown";
+        default -> "Unknown";
       }, shouldRecompile ? "+" : "-", lspFileEvent.uri);
     }
   }
@@ -184,14 +184,14 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     Log.d("[intellij-aya] (%s) VFS event: %s", before ? "Before" : "After", event);
     var after = !before;
     return switch (event) {
-      case VFileContentChangeEvent e && after -> fileModifiedEvent(true, e.getFile());
-      case VFileCreateEvent e && after -> fileCreatedEvent(true, e.getFile());
-      case VFileDeleteEvent e && before -> fileDeletedEvent(true, e.getFile());
-      case VFileCopyEvent e && after -> fileCreatedEvent(true, e.findCreatedFile());
+      case VFileContentChangeEvent e when after -> fileModifiedEvent(true, e.getFile());
+      case VFileCreateEvent e when after -> fileCreatedEvent(true, e.getFile());
+      case VFileDeleteEvent e when before -> fileDeletedEvent(true, e.getFile());
+      case VFileCopyEvent e when after -> fileCreatedEvent(true, e.findCreatedFile());
       // do not trigger recompilation before moving files, do it after the move.
-      case VFileMoveEvent e && before -> fileDeletedEvent(false, e.getFile());
-      case VFileMoveEvent e && after -> fileCreatedEvent(true, e.getFile());
-      case default, null -> ImmutableSeq.empty();
+      case VFileMoveEvent e when before -> fileDeletedEvent(false, e.getFile());
+      case VFileMoveEvent e when after -> fileCreatedEvent(true, e.getFile());
+      case null, default -> ImmutableSeq.empty();
     };
   }
 

@@ -9,9 +9,9 @@ import org.aya.intellij.psi.concrete.AyaPsiBareClause
 import org.aya.intellij.psi.concrete.AyaPsiBarredClause
 import org.aya.intellij.psi.concrete.AyaPsiClause
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
-import org.aya.tyck.pat.ClausesProblem
-import org.aya.tyck.pat.ClausesProblem.Domination
-import org.aya.tyck.pat.ClausesProblem.FMDomination
+import org.aya.tyck.error.ClausesProblem
+import org.aya.tyck.error.ClausesProblem.Domination
+import org.aya.tyck.error.ClausesProblem.FMDomination
 
 class DominationInspection : WarningInspection() {
   companion object {

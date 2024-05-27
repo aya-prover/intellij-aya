@@ -1,11 +1,11 @@
 package org.aya.intellij.psi;
 
 import com.intellij.psi.PsiNameIdentifierOwner;
-import org.aya.concrete.stmt.QualifiedID;
 import org.aya.ide.util.ModuleVar;
 import org.aya.intellij.actions.lsp.AyaLsp;
-import org.aya.ref.DefVar;
-import org.aya.ref.LocalVar;
+import org.aya.syntax.concrete.stmt.QualifiedID;
+import org.aya.syntax.ref.DefVar;
+import org.aya.syntax.ref.LocalVar;
 import org.aya.util.error.WithPos;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,10 +21,11 @@ public interface AyaPsiNamedElement extends AyaPsiStructureElement, PsiNameIdent
     return AyaLsp.use(getProject(), this::nameOrEmpty, lsp -> {
       var resolvedVar = lsp.resolveVarDefinedBy(this).firstOption();
       return switch (resolvedVar.map(WithPos::data).getOrNull()) {
-        case DefVar<?, ?> defVar && defVar.module != null -> QualifiedID.join(defVar.module.appended(defVar.name()));
+        case DefVar<?, ?> defVar when defVar.module != null ->
+          QualifiedID.join(defVar.module.module().module().appended(defVar.name()));
         case LocalVar localVar -> localVar.name();
         case ModuleVar moduleVar -> moduleVar.name();
-        case default, null -> nameOrEmpty();
+        case null, default -> nameOrEmpty();
       };
     });
   }

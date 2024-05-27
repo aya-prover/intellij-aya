@@ -39,7 +39,7 @@ class GoalInspection : AyaInspection() {
   }
 
   private fun candidate(goal: Goal): String? {
-    val metas = goal.state().metas()
+    val metas = goal.state().solutions
     val meta = goal.hole().ref()
     return if (metas.containsKey(meta)) DistillerService.solution(metas[meta]) else null
   }

@@ -6,19 +6,19 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
-import org.aya.concrete.Expr;
-import org.aya.concrete.stmt.QualifiedID;
-import org.aya.concrete.stmt.decl.TeleDecl;
-import org.aya.core.def.Def;
-import org.aya.core.term.Term;
-import org.aya.generic.util.InterruptException;
+import org.aya.generic.InterruptException;
 import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.service.DistillerService;
 import org.aya.intellij.ui.AyaIcons;
 import org.aya.prettier.AyaPrettierOptions;
-import org.aya.ref.DefVar;
+import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.concrete.stmt.QualifiedID;
+import org.aya.syntax.core.def.TyckDef;
+import org.aya.syntax.core.term.Term;
+import org.aya.syntax.ref.DefVar;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.aya.util.reporter.BufferReporter;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,9 +34,7 @@ public interface ProofSearch {
         case Err err -> new PresentationData(err.message, null, AyaIcons.PROOF_SEARCH_ERROR, null);
         case Yes yes -> {
           var pre = yes.element.ayaPresentation(true);
-          // TODO: class decl
-          pre.setTooltip(DistillerService.solution(
-            Def.defResult((DefVar<? extends Def, ? extends TeleDecl<? extends Term>>) yes.defVar)));
+          // pre.setTooltip(DistillerService.solution(TyckDef.defResult((DefVar<?, ?>) yes.defVar)));
           yield pre;
         }
       };
@@ -65,9 +63,7 @@ public interface ProofSearch {
 
   private static boolean matches(@NotNull ProofShape ps, @NotNull DefVar<?, ?> defVar) {
     if (defVar.core == null) return false;
-    if (defVar.concrete instanceof TeleDecl<?> teleDecl)
-      return matches(ps, Def.defResult(teleDecl.ref()));
-    // TODO: class decl
+    //return matches(ps, TyckDef.defType(teleDecl.ref()));
     return false;
   }
 
@@ -80,12 +76,12 @@ public interface ProofSearch {
 
   static @NotNull String compile(int nested, @NotNull ProofShape ps) {
     return switch (ps) {
-      case ProofShape.App app && app.terms.sizeEquals(1) -> compile(nested, app.terms.first().shape);
+      case ProofShape.App app when app.terms.sizeEquals(1) -> compile(nested, app.terms.first().shape);
       case ProofShape.App app -> paren(nested, app.terms.map(arg ->
         braced(arg.explicit(), compile(nested + 1, arg.shape))));
       case ProofShape.AnyId $ -> "((?![ (){}:]).)+";
       case ProofShape.CalmFace $ -> "(.+)";
-      case ProofShape.Ref ref -> Pattern.quote(ref.name.name());
+      case ProofShape.Ref ref -> Pattern.quote(ref.name.toString());
     };
   }
 
@@ -112,8 +108,8 @@ public interface ProofSearch {
     }
   }
 
-  static @NotNull ProofShape parse(@NotNull Expr expr) {
-    return switch (expr) {
+  static @NotNull ProofShape parse(@NotNull WithPos<Expr> expr) {
+    return switch (expr.data()) {
       case Expr.Hole hole -> new ProofShape.CalmFace();
       case Expr.Unresolved e -> e.name().join().equals("?") ? new ProofShape.AnyId() : new ProofShape.Ref(e.name());
       case Expr.BinOpSeq seq -> new ProofShape.App(seq.seq().view()

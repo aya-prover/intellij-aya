@@ -2,6 +2,7 @@ import org.aya.gradle.BuildUtil
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.grammarkit.tasks.GenerateParserTask
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 
@@ -32,6 +33,7 @@ version = deps.getProperty("version.project")
 
 // Configure project's dependencies
 repositories {
+  mavenLocal()
   mavenCentral()
   if (ayaVersion.endsWith("SNAPSHOT")) {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
@@ -53,14 +55,6 @@ changelog {
   groups.set(emptyList())
 }
 
-// Configure Gradle Qodana Plugin - read more: https://github.com/JetBrains/gradle-qodana-plugin
-qodana {
-  cachePath.set(projectDir.resolve(".qodana").canonicalPath)
-  reportPath.set(projectDir.resolve("build/reports/inspections").canonicalPath)
-  saveReport.set(true)
-  showReport.set(System.getenv("QODANA_SHOW_REPORT")?.toBoolean() ?: false)
-}
-
 java {
   withSourcesJar()
   if (hasProperty("release")) withJavadocJar()
@@ -78,7 +72,7 @@ sourceSets.main {
 val genAyaPsiParser = tasks.register<GenerateParserTask>("genAyaParser") {
   group = "build setup"
   sourceFile.set(file("src/main/grammar/AyaPsiParser.bnf"))
-  targetRoot.set("src/main/gen")
+  targetRootOutputDir.set(file("src/main/gen"))
   pathToParser.set("org/aya/parser/AyaPsiParser.java")
   pathToPsiRoot.set("org/aya/intellij/psi")
   purgeOldFiles.set(true)
@@ -120,16 +114,14 @@ tasks {
       val tree = fileTree(destinationDirectory)
       tree.include("**/*.class")
       tree.exclude("module-info.class")
-      val root = project.buildDir.toPath().resolve("classes/java/main")
+      val root = project.layout.buildDirectory.asFile.get().toPath().resolve("classes/java/main")
       tree.forEach { BuildUtil.stripPreview(root, it.toPath()) }
     }
     dependsOn(genAyaPsiParser)
   }
 
   withType<KotlinCompile>().configureEach {
-    kotlinOptions {
-      jvmTarget = javaVersion.toString()
-    }
+    compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
     dependsOn(genAyaPsiParser)
   }
 
@@ -194,18 +186,10 @@ tasks {
     privateKey.set(System.getenv("PRIVATE_KEY"))
     password.set(System.getenv("PRIVATE_KEY_PASSWORD"))
   }
-
-  publishPlugin {
-    dependsOn("patchChangelog")
-    token.set(System.getenv("PUBLISH_TOKEN"))
-    // pluginVersion is based on the SemVer (https://semver.org) and supports pre-release labels, like 2.1.7-alpha.3
-    // Specify pre-release label to publish the plugin in a custom Release Channel automatically. Read more:
-    // https://plugins.jetbrains.com/docs/intellij/deployment.html#specifying-a-release-channel
-    channels.set(listOf(properties("pluginVersion").split('-').getOrElse(1) { "default" }.split('.').first()))
-  }
 }
 
 dependencies {
+  implementation("org.aya-prover", "producer", ayaVersion)
   implementation("org.aya-prover", "ide-lsp", ayaVersion) {
     exclude("org.aya-prover.upstream", "ij-parsing-core")
     exclude("org.aya-prover.upstream", "ij-util-text")

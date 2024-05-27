@@ -1,19 +1,20 @@
 package org.aya.intellij.psi;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
-import org.aya.concrete.stmt.QualifiedID;
 import org.aya.intellij.psi.concrete.*;
 import org.aya.intellij.ui.AyaIcons;
+import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public interface AyaPsiElement extends NavigatablePsiElement {
+public interface AyaPsiElement extends NavigatablePsiElement, Navigatable {
   default @Override Icon getIcon(int flags) {
     return ayaIcon();
   }
@@ -45,8 +46,11 @@ public interface AyaPsiElement extends NavigatablePsiElement {
   }
 
   default @NotNull ImmutableSeq<String> containingFileModule() {
-    var file = (AyaPsiFile) getContainingFile();
-    return file.containingFileModule();
+    if (getContainingFile() instanceof AyaPsiFile file) {
+      return file.containingFileModule();
+    } else {
+      return ImmutableSeq.empty();
+    }
   }
 
   default @NotNull ImmutableSeq<String> containingSubModule() {

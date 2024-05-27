@@ -42,7 +42,7 @@ public class SemanticHighlight implements Annotator {
             case AyaPsiClassDecl $ -> render(holder, element, SyntaxHighlight.STRUCT_CALL);
             case AyaPsiDataBody $ -> render(holder, element, SyntaxHighlight.CON_CALL);
             // note: no ClassMember here because it can be highlighted without knowing the definition.
-            case default, null -> {}
+            case null, default -> {}
           }
         }
       }

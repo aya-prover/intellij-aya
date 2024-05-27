@@ -11,24 +11,25 @@ import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.text.StringSlice;
-import org.aya.cli.parse.AyaProducer;
-import org.aya.concrete.Expr;
-import org.aya.concrete.GenericAyaParser;
-import org.aya.concrete.stmt.Stmt;
+import org.aya.intellij.GenericNode;
 import org.aya.intellij.actions.lsp.JB;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.utils.AyaPsiFactory;
-import org.aya.parser.GenericNode;
+import org.aya.producer.AyaProducer;
+import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.concrete.Expr;
+import org.aya.syntax.concrete.stmt.Stmt;
 import org.aya.util.error.SourceFile;
 import org.aya.util.error.SourcePos;
+import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
 public record AyaIJParserImpl(@NotNull Project project, @NotNull Reporter reporter) implements GenericAyaParser {
-  @Override public @NotNull Expr expr(@NotNull String code, @NotNull SourcePos overridingSourcePos) {
+  @Override public @NotNull WithPos<Expr> expr(@NotNull String code, @NotNull SourcePos overridingSourcePos) {
     var producer = new AyaProducer(Either.right(overridingSourcePos), reporter);
     var expr = (AyaPsiElement) AyaPsiFactory.expr(project, code);
     return producer.expr(new ASTGenericNode(expr.getNode()));
@@ -59,10 +60,6 @@ public record AyaIJParserImpl(@NotNull Project project, @NotNull Reporter report
 
     @Override public @NotNull TextRange range() {
       return node.getTextRange();
-    }
-
-    @Override public boolean isTerminalNode() {
-      return false;
     }
 
     @Override public @NotNull SeqView<ASTGenericNode> childrenView() {
