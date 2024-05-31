@@ -11,7 +11,7 @@ public interface AyaIcons {
   @NotNull Icon AYA_FN = IconLoader.getIcon("/icons/fn.svg", AyaIcons.class);
   @NotNull Icon AYA_PRIM = IconLoader.getIcon("/icons/prim.svg", AyaIcons.class);
   @NotNull Icon AYA_DATA = IconLoader.getIcon("/icons/data.svg", AyaIcons.class);
-  @NotNull Icon AYA_CTOR = IconLoader.getIcon("/icons/dataCtor.svg", AyaIcons.class);
+  @NotNull Icon AYA_CTOR = IconLoader.getIcon("/icons/dataCon.svg", AyaIcons.class);
   @NotNull Icon AYA_STRUCT = IconLoader.getIcon("/icons/struct.svg", AyaIcons.class);
   @NotNull Icon AYA_FIELD = IconLoader.getIcon("/icons/structField.svg", AyaIcons.class);
   @NotNull Icon GOAL = IconLoader.getIcon("/icons/goal.svg", AyaIcons.class);
