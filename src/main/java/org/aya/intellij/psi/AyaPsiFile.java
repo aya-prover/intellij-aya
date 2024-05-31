@@ -33,7 +33,7 @@ public class AyaPsiFile extends PsiFileBase implements AyaPsiElement {
     if (sourceRoot == null) return fileModule.toImmutableSeq();
 
     var relativePath = VfsUtilCore.getRelativePath(virtualFile, sourceRoot, VfsUtilCore.VFS_SEPARATOR_CHAR);
-    assert relativePath != null;
+    if (relativePath == null) return fileModule.toImmutableSeq();
     return ImmutableSeq.of(relativePath.split(VfsUtilCore.VFS_SEPARATOR)).view()
       .dropLast(1)
       .concat(fileModule)
