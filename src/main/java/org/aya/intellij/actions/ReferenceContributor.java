@@ -15,13 +15,13 @@ import org.aya.intellij.psi.concrete.AyaPsiRefExpr;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Traverse referring terms and collect references to {@link org.aya.ref.AnyVar}s.
+ * Traverse referring terms and collect references to {@link org.aya.syntax.ref.AnyVar}s.
  *
- * @see org.aya.concrete.visitor.StmtFolder
+ * @see org.aya.syntax.concrete.stmt.StmtVisitor
  * @see AyaPsiReference#resolve()
  */
 public class ReferenceContributor extends PsiReferenceContributor {
-  /** @implSpec Keep sync with {@link org.aya.concrete.visitor.StmtFolder} */
+  /** @implSpec Keep sync with {@link org.aya.syntax.concrete.stmt.StmtVisitor} */
   public static final ElementPattern<AyaPsiElement> REFERRING_TERMS = StandardPatterns.or(
     PlatformPatterns.psiElement(AyaPsiProjFixId.class),
     PlatformPatterns.psiElement(AyaPsiNewArgField.class),

@@ -26,7 +26,7 @@ import java.nio.file.Path;
  * @implNote ALWAYS CONVERT BEFORE USE data across the boundary even though they are directly available.
  */
 public interface JB {
-  /** @return the return value will be converted to {@link org.aya.lsp.utils.XY} in LSP. */
+  /** @return the return value will be converted to {@link XY} in LSP. */
   static @NotNull XY toXY(@NotNull PsiElement element) {
     var doc = element.getContainingFile().getViewProvider().getDocument();
     var lineCol = LineCol.fromOffset(doc, element.getTextOffset());

@@ -32,21 +32,21 @@ public class FindUsages implements FindUsagesProvider {
   public @Nls @NotNull String getType(@NotNull PsiElement element) {
     if (!(element instanceof AyaPsiNamedElement named)) return "";
     return switch (named) {
-      case AyaPsiFnDecl $ -> "Function";
-      case AyaPsiDataDecl $ -> "Data";
-      case AyaPsiClassDecl $ -> "Class";
-      case AyaPsiPrimDecl $ -> "Primitive";
-      case AyaPsiDataBody $ -> "Data constructor";
-      case AyaPsiClassMember $ -> "Class member";
-      case AyaPsiTeleParamName $ -> "Parameter";
+      case AyaPsiFnDecl _ -> "Function";
+      case AyaPsiDataDecl _ -> "Data";
+      case AyaPsiClassDecl _ -> "Class";
+      case AyaPsiPrimDecl _ -> "Primitive";
+      case AyaPsiDataBody _ -> "Data constructor";
+      case AyaPsiClassMember _ -> "Class member";
+      case AyaPsiTeleParamName _ -> "Parameter";
       // The PSI parser does not distinguish between a bind pattern and a constructor pattern.
       // But the following match case does not cause constructor patterns to be described as "Pattern Binding"
       // because this method is always called with the resolved results returned by `AyaPsiReference#resolve()`
       // which calls the Aya compiler who knows the truth. So constructor patterns will be described
       // by former cases like `AyaPsiFnDecl`, `AyaPsiDataDecl`, etc.
-      case AyaPsiAtomBindPattern $ -> "Pattern binding";
-      case AyaPsiDoBinding $ -> "do-binding";
-      case AyaPsiLetBind $ -> "let-binding";
+      case AyaPsiAtomBindPattern _ -> "Pattern binding";
+      case AyaPsiDoBinding _ -> "do-binding";
+      case AyaPsiLetBind _ -> "let-binding";
       default -> "";
     };
   }

@@ -14,6 +14,7 @@ import org.aya.intellij.ui.AyaIcons;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.concrete.Expr;
 import org.aya.syntax.concrete.stmt.QualifiedID;
+import org.aya.syntax.core.def.TyckAnyDef;
 import org.aya.syntax.core.def.TyckDef;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.DefVar;
@@ -34,7 +35,8 @@ public interface ProofSearch {
         case Err err -> new PresentationData(err.message, null, AyaIcons.PROOF_SEARCH_ERROR, null);
         case Yes yes -> {
           var pre = yes.element.ayaPresentation(true);
-          // pre.setTooltip(DistillerService.solution(TyckDef.defResult((DefVar<?, ?>) yes.defVar)));
+          var solution = TyckDef.defType(new TyckAnyDef<>(yes.defVar));
+          if (solution != null) pre.setTooltip(DistillerService.solution(solution));
           yield pre;
         }
       };
@@ -63,7 +65,8 @@ public interface ProofSearch {
 
   private static boolean matches(@NotNull ProofShape ps, @NotNull DefVar<?, ?> defVar) {
     if (defVar.core == null) return false;
-    //return matches(ps, TyckDef.defType(teleDecl.ref()));
+    Term term = TyckDef.defType(new TyckAnyDef<>(defVar));
+    if (term != null) return matches(ps, term);
     return false;
   }
 
