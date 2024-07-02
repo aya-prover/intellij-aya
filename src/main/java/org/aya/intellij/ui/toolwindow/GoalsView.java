@@ -23,10 +23,13 @@ import org.aya.intellij.psi.concrete.AyaPsiHoleExpr;
 import org.aya.intellij.service.ProblemService;
 import org.aya.intellij.ui.AyaIcons;
 import org.aya.intellij.ui.AyaTreeView;
+import org.aya.normalize.Finalizer;
 import org.aya.prettier.AyaPrettierOptions;
 import org.aya.pretty.doc.Doc;
+import org.aya.syntax.core.term.ErrorTerm;
 import org.aya.syntax.core.term.Term;
 import org.aya.syntax.ref.LocalVar;
+import org.aya.syntax.ref.MetaVar;
 import org.aya.tyck.error.Goal;
 import org.aya.util.error.SourceFile;
 import org.aya.util.prettier.PrettierOptions;
@@ -134,7 +137,7 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
   public boolean solved(@NotNull Goal goal) {
     var state = goal.state();
     var meta = goal.hole().ref();
-    return state.solutions().containsKey(meta);
+    return state.solutions.containsKey(meta);
   }
 
   public sealed interface GoalNode extends AyaTreeView.Node<GoalNode> {
@@ -161,13 +164,13 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
     public @NotNull Doc describe(@NotNull PrettierOptions options) {
       var meta = goal.hole().ref();
       var state = goal.state();
-      return Doc.plain("TODO");
-      // var nullableResult = meta.req().result();
-      // var result = nullableResult != null ? nullableResult.freezeHoles(state)
-      //   : new ErrorTerm(Doc.plain("???"), false);
-      // var resultDoc = result.toDoc(options);
-      // var name = Doc.plain(meta.name);
-      // return Doc.cat(name, Doc.spaced(Doc.plain(":")), resultDoc);
+      var result = switch (meta.req()) {
+        case MetaVar.OfType (var type) -> new Finalizer.Freeze(() -> state).zonk(type);
+        case MetaVar.Misc _, MetaVar.PiDom _ -> new ErrorTerm(Doc.plain("???"), false);
+      };
+      var resultDoc = result.toDoc(options);
+      var name = Doc.plain(meta.name());
+      return Doc.cat(name, Doc.spaced(Doc.plain(":")), resultDoc);
     }
   }
 
