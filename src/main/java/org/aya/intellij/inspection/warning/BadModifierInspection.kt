@@ -4,7 +4,7 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import org.aya.intellij.AyaBundle
 import org.aya.intellij.actions.lsp.AyaLsp
-import org.aya.intellij.psi.concrete.AyaPsiDeclModifiers
+import org.aya.intellij.psi.concrete.AyaPsiDeclModifier
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
 import org.aya.producer.error.BadModifierWarn
 
@@ -19,7 +19,7 @@ class BadModifierInspection : WarningInspection() {
 
   override fun buildVisitor(lsp: AyaLsp, holder: ProblemsHolder, isOnTheFly: Boolean) = object : AyaPsiVisitor() {
     // TODO: also ModifierProblem::class.java
-    override fun visitDeclModifiers(mod: AyaPsiDeclModifiers) = lsp.warningsAt(mod, BadModifierWarn::class.java).forEach { _ ->
+    override fun visitDeclModifier(mod: AyaPsiDeclModifier) = lsp.warningsAt(mod, BadModifierWarn::class.java).forEach { _ ->
       holder.registerProblem(
         holder.manager.createProblemDescriptor(
           mod, mod,
