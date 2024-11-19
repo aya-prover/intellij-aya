@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import kala.collection.SeqLike;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
@@ -35,10 +34,8 @@ import org.aya.intellij.service.ProblemService;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
+import org.aya.resolve.context.Candidate;
 import org.aya.syntax.GenericAyaParser;
-import org.aya.syntax.concrete.stmt.Command;
-import org.aya.syntax.concrete.stmt.Stmt;
-import org.aya.syntax.concrete.stmt.decl.Decl;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.tyck.error.Goal;
@@ -310,15 +307,13 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   public @NotNull SeqView<DefVar<?, ?>> symbolsInFile(@NotNull AyaPsiFile file) {
     var source = sourceFileOf(file);
     if (source == null) return SeqView.empty();
-    // TODO: consider the following code
-    // return source.resolveInfo().get().thisModule().definitions()
-    //   .valuesView()
-    //   .flatMap(MapLike::valuesView)
-    //   .filterIsInstance(DefVar.class)
-    //   .toImmutableSeq();
-    var collector = new DeclCollector(MutableList.create());
-    collector.visit(source.program().get());
-    return collector.decls.view().flatMap(Resolver::withChildren);
+    var list = MutableList.<DefVar<?, ?>>create();
+    source.resolveInfo().get().thisModule().symbols()
+      .view()
+      .valuesView()
+      .flatMap(Candidate::getAll)
+      .filterIsInstanceTo(list, DefVar.class);
+    return list.view();
   }
 
   @Override public void publishAyaProblems(
@@ -347,20 +342,5 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   @Override public @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {
     return new AyaIJParserImpl(project, reporter);
-  }
-
-  private record DeclCollector(@NotNull MutableList<Decl> decls) {
-    public void visit(@Nullable SeqLike<Stmt> stmts) {
-      if (stmts == null) return;
-      stmts.forEach(this::visit);
-    }
-
-    public void visit(@NotNull Stmt stmt) {
-      switch (stmt) {
-        case Command.Module mod -> visit(mod.contents());
-        case Decl decl -> decls.append(decl);
-        default -> {}
-      }
-    }
   }
 }

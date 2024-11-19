@@ -19,11 +19,11 @@ plugins {
   // Java support
   java
   // Kotlin support
-  kotlin("jvm") version "2.0.0"
+  kotlin("jvm") version "2.0.21"
   // https://github.com/JetBrains/gradle-intellij-plugin
   id("org.jetbrains.intellij") version "1.17.3"
   // https://github.com/JetBrains/gradle-changelog-plugin
-  id("org.jetbrains.changelog") version "2.2.0"
+  id("org.jetbrains.changelog") version "2.2.1"
   // https://github.com/JetBrains/gradle-grammar-kit-plugin
   id("org.jetbrains.grammarkit") version "2022.3.2.2"
 }
@@ -199,10 +199,12 @@ dependencies {
   implementation("org.aya-prover", "producer", ayaVersion) {
     exclude("org.aya-prover.upstream", "ij-parsing-core")
     exclude("org.aya-prover.upstream", "ij-util-text")
+    exclude("org.aya-prover.upstream", "lang-syntax")
   }
   implementation("org.aya-prover", "ide-lsp", ayaVersion) {
     exclude("org.aya-prover.upstream", "ij-parsing-core")
     exclude("org.aya-prover.upstream", "ij-util-text")
+    exclude("org.aya-prover.upstream", "lang-syntax")
   }
   testImplementation(kotlin("test-junit"))
 }
