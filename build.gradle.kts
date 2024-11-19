@@ -207,4 +207,5 @@ dependencies {
     exclude("org.aya-prover.upstream", "lang-syntax")
   }
   testImplementation(kotlin("test-junit"))
+  testImplementation(group = "org.opentest4j", name = "opentest4j", version = "1.2.0")
 }
