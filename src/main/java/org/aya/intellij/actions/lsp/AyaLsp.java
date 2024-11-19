@@ -312,7 +312,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       .view()
       .valuesView()
       .flatMap(Candidate::getAll)
-      .filterIsInstanceTo(list, DefVar.class);
+      .mapNotNullTo(list, c -> c instanceof DefVar<?,?> d ? d : null);
     return list.view();
   }
 
