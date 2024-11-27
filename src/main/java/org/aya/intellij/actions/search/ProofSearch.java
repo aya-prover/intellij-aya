@@ -115,9 +115,8 @@ public interface ProofSearch {
     return switch (expr.data()) {
       case Expr.Hole hole -> new ProofShape.CalmFace();
       case Expr.Unresolved e -> e.name().join().equals("?") ? new ProofShape.AnyId() : new ProofShape.Ref(e.name());
-      case Expr.BinOpSeq seq -> new ProofShape.App(seq.seq().view()
-        .map(arg -> new ProofShape.Arg(parse(arg.term()), arg.explicit()))
-        .toImmutableSeq());
+      case Expr.BinOpSeq (var seq) -> new ProofShape.App(seq
+        .map(arg -> new ProofShape.Arg(parse(arg.term()), arg.explicit())));
       // TODO: more?
       case Expr misc -> throw new PatternNotSupported(misc);
     };
