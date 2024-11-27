@@ -82,9 +82,9 @@ public interface ProofSearch {
       case ProofShape.App app when app.terms.sizeEquals(1) -> compile(nested, app.terms.getFirst().shape);
       case ProofShape.App app -> paren(nested, app.terms.map(arg ->
         braced(arg.explicit(), compile(nested + 1, arg.shape))));
-      case ProofShape.AnyId $ -> "((?![ (){}:]).)+";
-      case ProofShape.CalmFace $ -> "(.+)";
-      case ProofShape.Ref ref -> Pattern.quote(ref.name.toString());
+      case ProofShape.AnyId _ -> "((?![ (){}:]).)+";
+      case ProofShape.CalmFace _ -> "(.+)";
+      case ProofShape.Ref ref -> Pattern.quote(ref.name.name());
     };
   }
 
@@ -113,7 +113,7 @@ public interface ProofSearch {
 
   static @NotNull ProofShape parse(@NotNull WithPos<Expr> expr) {
     return switch (expr.data()) {
-      case Expr.Hole hole -> new ProofShape.CalmFace();
+      case Expr.Hole _ -> new ProofShape.CalmFace();
       case Expr.Unresolved e -> e.name().join().equals("?") ? new ProofShape.AnyId() : new ProofShape.Ref(e.name());
       case Expr.BinOpSeq (var seq) -> new ProofShape.App(seq
         .map(arg -> new ProofShape.Arg(parse(arg.term()), arg.explicit())));
