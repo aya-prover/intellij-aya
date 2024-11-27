@@ -19,7 +19,7 @@ plugins {
   // Java support
   java
   // Kotlin support
-  kotlin("jvm") version "2.0.21"
+  kotlin("jvm") version "2.1.0"
   // https://github.com/JetBrains/gradle-intellij-plugin
   id("org.jetbrains.intellij") version "1.17.3"
   // https://github.com/JetBrains/gradle-changelog-plugin
@@ -57,7 +57,6 @@ changelog {
 
 java {
   withSourcesJar()
-  if (hasProperty("release")) withJavadocJar()
   toolchain {
     languageVersion.set(JavaLanguageVersion.of(javaVersion))
   }
