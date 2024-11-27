@@ -8,7 +8,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.aya.intellij.actions.ReferenceContributor;
 import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.intellij.psi.concrete.AyaPsiAtomBindPattern;
-import org.aya.intellij.psi.concrete.AyaPsiNewArgField;
 import org.aya.intellij.psi.concrete.AyaPsiProjFixId;
 import org.aya.intellij.psi.concrete.AyaPsiRefExpr;
 import org.aya.intellij.psi.utils.AyaPsiFactory;
@@ -39,7 +38,6 @@ public class AyaPsiReference extends PsiReferenceBase<AyaPsiElement> {
     var project = myElement.getProject();
     return switch (myElement) {
       case AyaPsiProjFixId fix -> fix.getQualifiedId().replace(AyaPsiFactory.qualifiedId(project, newName));
-      case AyaPsiNewArgField field -> field.getWeakId().replace(AyaPsiFactory.weakId(project, newName));
       case AyaPsiRefExpr ref -> ref.getQualifiedId().replace(AyaPsiFactory.qualifiedId(project, newName));
       case AyaPsiAtomBindPattern pat -> pat.setName(newName);
       default -> throw new IllegalStateException("unreachable");

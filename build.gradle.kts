@@ -2,6 +2,7 @@ import org.aya.gradle.BuildUtil
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.grammarkit.tasks.GenerateParserTask
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
@@ -185,6 +186,8 @@ dependencies {
   intellijPlatform {
     intellijIdeaCommunity("2024.3")
     bundledPlugin("com.intellij.java")
+    instrumentationTools()
+    testFramework(TestFrameworkType.Platform)
   }
 
   implementation("org.aya-prover", "producer", ayaVersion) {

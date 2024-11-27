@@ -1,16 +1,17 @@
 package org.aya.intellij.language;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.tree.util.AstUtilKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.tree.IElementType;
-import kala.collection.Seq;
-import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableSeq;
 import kala.control.Either;
 import kala.text.StringSlice;
+import kotlin.sequences.Sequence;
+import kotlin.sequences.SequencesKt;
 import org.aya.intellij.GenericNode;
 import org.aya.intellij.actions.lsp.JB;
 import org.aya.intellij.psi.AyaPsiElement;
@@ -25,8 +26,6 @@ import org.aya.util.error.SourcePos;
 import org.aya.util.error.WithPos;
 import org.aya.util.reporter.Reporter;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 public record AyaIJParserImpl(@NotNull Project project, @NotNull Reporter reporter) implements GenericAyaParser {
   @Override public @NotNull WithPos<Expr> expr(@NotNull String code, @NotNull SourcePos overridingSourcePos) {
@@ -62,8 +61,8 @@ public record AyaIJParserImpl(@NotNull Project project, @NotNull Reporter report
       return node.getTextRange();
     }
 
-    @Override public @NotNull SeqView<ASTGenericNode> childrenView() {
-      return Seq.wrapJava(Arrays.asList(node.getChildren(null))).view().map(ASTGenericNode::new);
+    @Override public @NotNull Sequence<ASTGenericNode> childrenSequence() {
+      return SequencesKt.map(AstUtilKt.children(node), ASTGenericNode::new);
     }
   }
 }

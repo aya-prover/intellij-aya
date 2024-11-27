@@ -17,30 +17,29 @@ public class SemanticHighlight implements Annotator {
       case AyaPsiDeclNameOrInfix name -> {
         var id = name.getWeakId();
         switch (PsiTreeUtil.getParentOfType(name, AyaPsiGenericDecl.class)) {
-          case AyaPsiFnDecl $ -> render(holder, id, SyntaxHighlight.FN_DEF);
-          case AyaPsiDataDecl $ -> render(holder, id, SyntaxHighlight.DATA_DEF);
-          case AyaPsiClassDecl $ -> render(holder, id, SyntaxHighlight.STRUCT_DEF);
-          case AyaPsiDataBody $ -> render(holder, id, SyntaxHighlight.CON_DEF);
-          case AyaPsiClassMember $ -> render(holder, id, SyntaxHighlight.FIELD_DEF);
+          case AyaPsiFnDecl _ -> render(holder, id, SyntaxHighlight.FN_DEF);
+          case AyaPsiDataDecl _ -> render(holder, id, SyntaxHighlight.DATA_DEF);
+          case AyaPsiClassDecl _ -> render(holder, id, SyntaxHighlight.STRUCT_DEF);
+          case AyaPsiDataBody _ -> render(holder, id, SyntaxHighlight.CON_DEF);
+          case AyaPsiClassMember _ -> render(holder, id, SyntaxHighlight.FIELD_DEF);
           // note: no PrimDecl here because it does not use declNameOrInfix.
           case null, default -> {}
         }
       }
-      case AyaPsiPrimName $ -> render(holder, element, SyntaxHighlight.PRIM_DEF);
-      case AyaPsiProjFixId $ -> render(holder, element, SyntaxHighlight.FIELD_CALL);
-      case AyaPsiNewArgField $ -> render(holder, element, SyntaxHighlight.FIELD_CALL);
-      case AyaPsiGeneralizeParamName $ -> render(holder, element, SyntaxHighlight.GENERALIZE);
+      case AyaPsiPrimName _ -> render(holder, element, SyntaxHighlight.PRIM_DEF);
+      case AyaPsiProjFixId _ -> render(holder, element, SyntaxHighlight.FIELD_CALL);
+      case AyaPsiGeneralizeParamName _ -> render(holder, element, SyntaxHighlight.GENERALIZE);
       default -> {
         // If it is a reference, highlight it by its definition kind.
         if (ReferenceContributor.REFERRING_TERMS.accepts(element)) {
           var def = element.getReferences();
           // this will call AyaPsiReference.resolve()
           if (def.length != 0) switch (def[0].resolve()) {
-            case AyaPsiFnDecl $ -> render(holder, element, SyntaxHighlight.FN_CALL);
-            case AyaPsiPrimDecl $ -> render(holder, element, SyntaxHighlight.PRIM_CALL);
-            case AyaPsiDataDecl $ -> render(holder, element, SyntaxHighlight.DATA_CALL);
-            case AyaPsiClassDecl $ -> render(holder, element, SyntaxHighlight.STRUCT_CALL);
-            case AyaPsiDataBody $ -> render(holder, element, SyntaxHighlight.CON_CALL);
+            case AyaPsiFnDecl _ -> render(holder, element, SyntaxHighlight.FN_CALL);
+            case AyaPsiPrimDecl _ -> render(holder, element, SyntaxHighlight.PRIM_CALL);
+            case AyaPsiDataDecl _ -> render(holder, element, SyntaxHighlight.DATA_CALL);
+            case AyaPsiClassDecl _ -> render(holder, element, SyntaxHighlight.STRUCT_CALL);
+            case AyaPsiDataBody _ -> render(holder, element, SyntaxHighlight.CON_CALL);
             // note: no ClassMember here because it can be highlighted without knowing the definition.
             case null, default -> {}
           }

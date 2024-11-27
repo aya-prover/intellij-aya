@@ -9,7 +9,6 @@ import com.intellij.util.ProcessingContext;
 import org.aya.intellij.psi.AyaPsiElement;
 import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.psi.concrete.AyaPsiAtomBindPattern;
-import org.aya.intellij.psi.concrete.AyaPsiNewArgField;
 import org.aya.intellij.psi.concrete.AyaPsiProjFixId;
 import org.aya.intellij.psi.concrete.AyaPsiRefExpr;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,6 @@ public class ReferenceContributor extends PsiReferenceContributor {
   /** @implSpec Keep sync with {@link org.aya.syntax.concrete.stmt.StmtVisitor} */
   public static final ElementPattern<AyaPsiElement> REFERRING_TERMS = StandardPatterns.or(
     PlatformPatterns.psiElement(AyaPsiProjFixId.class),
-    PlatformPatterns.psiElement(AyaPsiNewArgField.class),
     PlatformPatterns.psiElement(AyaPsiRefExpr.class),
     PlatformPatterns.psiElement(AyaPsiAtomBindPattern.class) // If the bind resolves to a constructor.
   );
