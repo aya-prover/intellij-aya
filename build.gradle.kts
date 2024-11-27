@@ -6,13 +6,13 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.*
 
-fun properties(key: String) = project.findProperty(key).toString()
+fun properties(key: String) = providers.gradleProperty(key)
 var deps: Properties by rootProject.ext
 
 deps = Properties()
 file("gradle/deps.properties").reader().use(deps::load)
 
-val javaVersion = properties("javaVersion").toInt()
+val javaVersion = properties("javaVersion").get().toInt()
 val ayaVersion = deps.getProperty("version.aya").toString()
 
 plugins {
@@ -21,7 +21,7 @@ plugins {
   // Kotlin support
   kotlin("jvm") version "2.1.0"
   // https://github.com/JetBrains/gradle-intellij-plugin
-  id("org.jetbrains.intellij") version "1.17.3"
+  id("org.jetbrains.intellij.platform") version "2.1.0"
   // https://github.com/JetBrains/gradle-changelog-plugin
   id("org.jetbrains.changelog") version "2.2.1"
   // https://github.com/JetBrains/gradle-grammar-kit-plugin
@@ -38,16 +38,12 @@ repositories {
   if (ayaVersion.endsWith("SNAPSHOT")) {
     maven("https://s01.oss.sonatype.org/content/repositories/snapshots/")
   }
+
+  intellijPlatform.defaultRepositories()
 }
 
-// Configure Gradle IntelliJ Plugin - read more: https://github.com/JetBrains/gradle-intellij-plugin
-intellij {
-  pluginName.set(properties("pluginName"))
-  version.set(properties("platformVersion"))
-  type.set(properties("platformType"))
-
-  // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-  plugins.set(properties("platformPlugins").split(',').map(String::trim).filter(String::isNotEmpty))
+intellijPlatform.pluginConfiguration {
+  name = properties("pluginName")
 }
 
 // Configure Gradle Changelog Plugin - read more: https://github.com/JetBrains/gradle-changelog-plugin
@@ -146,7 +142,7 @@ tasks {
   }
 
   patchPluginXml {
-    version.set(project.version.toString())
+    version = project.version.toString()
     sinceBuild.set(properties("pluginSinceBuild"))
     untilBuild.set(properties("pluginUntilBuild"))
 
@@ -178,15 +174,6 @@ tasks {
     )
   }
 
-  // Configure UI tests plugin
-  // Read more: https://github.com/JetBrains/intellij-ui-test-robot
-  runIdeForUiTests {
-    systemProperty("robot-server.port", "8082")
-    systemProperty("ide.mac.message.dialogs.as.sheets", "false")
-    systemProperty("jb.privacy.policy.text", "<!--999.999-->")
-    systemProperty("jb.consents.confirmation.enabled", "false")
-  }
-
   signPlugin {
     certificateChain.set(System.getenv("CERTIFICATE_CHAIN"))
     privateKey.set(System.getenv("PRIVATE_KEY"))
@@ -195,6 +182,11 @@ tasks {
 }
 
 dependencies {
+  intellijPlatform {
+    intellijIdeaCommunity("2024.3")
+    bundledPlugin("com.intellij.java")
+  }
+
   implementation("org.aya-prover", "producer", ayaVersion) {
     exclude("org.aya-prover.upstream", "ij-parsing-core")
     exclude("org.aya-prover.upstream", "ij-util-text")
