@@ -6,7 +6,7 @@ import org.aya.intellij.AyaBundle
 import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.psi.concrete.AyaPsiDeclModifier
 import org.aya.intellij.psi.concrete.AyaPsiVisitor
-import org.aya.producer.error.BadModifierWarn
+import org.aya.producer.error.BadXWarn.BadModifierWarn
 
 class BadModifierInspection : WarningInspection() {
   companion object {
