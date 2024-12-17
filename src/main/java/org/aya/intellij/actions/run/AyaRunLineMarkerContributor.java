@@ -7,7 +7,6 @@ import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import kala.collection.immutable.ImmutableSeq;
 import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.concrete.AyaPsiDecl;
 import org.aya.intellij.psi.concrete.AyaPsiDeclNameOrInfix;
@@ -36,9 +35,6 @@ public class AyaRunLineMarkerContributor extends RunLineMarkerContributor {
   @Override public @Nullable Info getInfo(@NotNull PsiElement psi) {
     if (!TOP_LEVEL_DECL_ID.accepts(psi)) return null;
     final var actions = ExecutorAction.getActions(Integer.MAX_VALUE);
-    return new Info(AyaIcons.GUTTER_RUN, actions,
-      element -> ImmutableSeq.of(actions)
-        .mapNotNull(action -> getText(action, createActionEvent(element)))
-        .joinToString("\n"));
+    return new Info(AyaIcons.GUTTER_RUN, actions);
   }
 }
