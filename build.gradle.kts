@@ -22,7 +22,7 @@ plugins {
   // Kotlin support
   kotlin("jvm") version "2.1.0"
   // https://github.com/JetBrains/gradle-intellij-plugin
-  id("org.jetbrains.intellij.platform") version "2.1.1"
+  id("org.jetbrains.intellij.platform") version "2.2.1"
   // https://github.com/JetBrains/gradle-changelog-plugin
   id("org.jetbrains.changelog") version "2.2.1"
   // https://github.com/JetBrains/gradle-grammar-kit-plugin
