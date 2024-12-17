@@ -44,7 +44,7 @@ import java.nio.file.Path;
 public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
   private final @NotNull AyaTreeView<GoalNode> treeView;
   // TODO: user-defined distiller options
-  private final @NotNull PrettierOptions options = AyaPrettierOptions.informative();
+  private final @NotNull PrettierOptions options = AyaPrettierOptions.debug();
   private final @NotNull Project project;
 
   public GoalsView(@NotNull Project project, @NotNull ToolWindow toolWindow) {
