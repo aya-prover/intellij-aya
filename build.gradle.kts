@@ -124,8 +124,15 @@ tasks {
   }
 
   withType<KotlinCompile>().configureEach {
-    compilerOptions.jvmTarget.set(JvmTarget.JVM_21)
+    compilerOptions.jvmTarget.set(JvmTarget.JVM_22)
     dependsOn(genAyaPsiParser)
+
+    doLast {
+      val tree = fileTree(destinationDirectory)
+      tree.include("**/*.class")
+      val root = project.layout.buildDirectory.asFile.get().toPath().resolve("classes/kotlin/main")
+      tree.forEach { BuildUtil.stripPreview(root, it.toPath()) }
+    }
   }
 
   withType<Test>().configureEach {
