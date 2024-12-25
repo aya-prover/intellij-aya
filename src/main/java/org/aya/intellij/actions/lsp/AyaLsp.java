@@ -187,7 +187,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       case VFileCopyEvent e when after -> fileCreatedEvent(true, e.findCreatedFile());
       // do not trigger recompilation before moving files, do it after the move.
       case VFileMoveEvent e when before -> fileDeletedEvent(false, e.getFile());
-      case VFileMoveEvent e when after -> fileCreatedEvent(true, e.getFile());
+      case VFileMoveEvent e /*when after*/ -> fileCreatedEvent(true, e.getFile());
       case null, default -> ImmutableSeq.empty();
     };
   }
@@ -217,10 +217,10 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   public void registerLibrary(@NotNull VirtualFile library) {
     if (JB.fileSupported(library)) {
       var root = JB.canonicalize(library);
-      server.registerLibrary(root).forEach(registeredLibrary ->
+      var paths = server.registerLibrary(root).flatMap(registeredLibrary ->
         registeredLibrary.modulePath()
-          .mapNotNull(path -> library.findFileByRelativePath(root.relativize(path).toString()))
-          .forEach(librarySrcPathCache::add));
+          .mapNotNull(path -> library.findFileByRelativePath(root.relativize(path).toString())));
+      librarySrcPathCache.addAll(paths);
     }
   }
 
