@@ -3,14 +3,15 @@
  * Use of this source code is governed by the MIT license that can be found in the LICENSE.md file.
  */
 
+//noinspection BnfResolveForFile
 {
   // only for the compiler, not the IDE
   generate=[
     java='11'
-//    psi-factory='no'
-//    visitor='no'
+    psi-factory='yes'
+    visitor='yes'
   ]
-//  generatePsi=false
+  generatePsi=true
 
   // we only need the parser and element types.
   parserClass='org.aya.parser.AyaPsiParser'

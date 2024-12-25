@@ -1,10 +1,14 @@
 import org.aya.gradle.BuildUtil
+import org.aya.grammarkit.GkParser
+import org.aya.grammarkit.GkPatcher
+import org.aya.intellij.MarkerNodeWrapper
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.changelog.markdownToHTML
 import org.jetbrains.grammarkit.tasks.GenerateParserTask
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.net.URI
 import java.util.*
 
 fun properties(key: String) = providers.gradleProperty(key)
@@ -65,9 +69,11 @@ sourceSets.main {
   java.srcDirs(genDir)
 }
 
+val ayaPsiParserFile = file("src/main/grammar/AyaPsiParser.bnf")
+
 val genAyaPsiParser = tasks.register<GenerateParserTask>("genAyaParser") {
   group = "build setup"
-  sourceFile.set(file("src/main/grammar/AyaPsiParser.bnf"))
+  sourceFile.set(ayaPsiParserFile)
   targetRootOutputDir.set(file("src/main/gen"))
   pathToParser.set("org/aya/parser/AyaPsiParser.java")
   pathToPsiRoot.set("org/aya/intellij/psi")
@@ -102,6 +108,18 @@ tasks {
   }
   named("sourcesJar").configure {
     dependsOn(genAyaPsiParser)
+  }
+
+  register("updateAyaParser") {
+    group = "build setup"
+    doLast {
+      val fileName = ayaPsiParserFile.name
+      val url = URI("https://raw.githubusercontent.com/aya-prover/aya-dev/refs/heads/main/parser/src/main/grammar/$fileName").toURL()
+      val text = url.openStream().use { it.reader().readText() }
+      val syntaxNode = object : GkParser() {}.parse(text)
+      val patchedBNF = GkPatcher.forPlugin(MarkerNodeWrapper(text, syntaxNode))
+      ayaPsiParserFile.writeText(patchedBNF.toString())
+    }
   }
 
   withType<JavaCompile>().configureEach {
@@ -193,7 +211,6 @@ dependencies {
   intellijPlatform {
     intellijIdeaCommunity("2024.3")
     bundledPlugin("com.intellij.java")
-    instrumentationTools()
     testFramework(TestFrameworkType.Platform)
   }
 
