@@ -25,7 +25,7 @@ public class AyaPsiFactory {
 
   public static @NotNull PsiElement expr(@NotNull Project project, @NotNull String text) {
     var fn = (AyaPsiFnDecl) file(project, "def a : " + text).getFirstChild();
-    return Objects.requireNonNull(Objects.requireNonNull(fn.getType()).getExpr());
+    return Objects.requireNonNull(Objects.requireNonNull(fn.getType()).getExpr(), text);
   }
 
   public static @NotNull AyaPsiQualifiedId qualifiedId(@NotNull Project project, @NotNull String text) {

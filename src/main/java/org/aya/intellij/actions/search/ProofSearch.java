@@ -98,6 +98,7 @@ public interface ProofSearch {
   }
 
   static @NotNull Either<String, ProofShape> parse(@NotNull Project project, @NotNull String pattern) {
+    if (pattern.isBlank()) return Either.left("Pattern is empty");
     var reporter = new BufferReporter();
     try {
       var parser = new AyaIJParserImpl(project, reporter);
