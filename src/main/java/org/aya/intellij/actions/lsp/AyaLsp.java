@@ -66,7 +66,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
   private final @NotNull AyaLanguageServer server;
   private final @NotNull Project project;
-  private final @NotNull MutableSet<VirtualFile> libraryPathCache = MutableSet.create();
+  private final @NotNull MutableSet<VirtualFile> librarySrcPathCache = MutableSet.create();
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
@@ -216,14 +216,17 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   public void registerLibrary(@NotNull VirtualFile library) {
     if (JB.fileSupported(library)) {
-      libraryPathCache.add(library);
-      server.registerLibrary(JB.canonicalize(library));
+      var root = JB.canonicalize(library);
+      server.registerLibrary(root).forEach(registeredLibrary ->
+        registeredLibrary.modulePath()
+          .mapNotNull(path -> library.findFileByRelativePath(root.relativize(path).toString()))
+          .forEach(librarySrcPathCache::add));
     }
   }
 
   public boolean isInLibrary(@Nullable VirtualFile file) {
     while (file != null && file.isValid() && JB.fileSupported(file)) {
-      if (libraryPathCache.contains(file)) return true;
+      if (librarySrcPathCache.contains(file)) return true;
       file = file.getParent();
     }
     return false;

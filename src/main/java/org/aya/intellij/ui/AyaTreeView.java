@@ -28,7 +28,6 @@ import org.aya.intellij.psi.AyaPsiFile;
 import org.aya.intellij.psi.utils.AyaPsiUtils;
 import org.aya.intellij.service.AyaSettingService;
 import org.aya.intellij.ui.toolwindow.AyaToolWindow;
-import org.aya.util.TreeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
