@@ -116,8 +116,8 @@ tasks {
       val fileName = ayaPsiParserFile.name
       val url = URI("https://raw.githubusercontent.com/aya-prover/aya-dev/refs/heads/main/parser/src/main/grammar/$fileName").toURL()
       val text = url.openStream().use { it.reader().readText() }
-      val syntaxNode = object : GkParser() {}.parse(text)
-      val patchedBNF = GkPatcher.forPlugin(MarkerNodeWrapper(text, syntaxNode))
+      val syntaxNode = GkParser().parse(text)
+      val patchedBNF = GkPatcher.forPlugin(MarkerNodeWrapper(syntaxNode, text))
       ayaPsiParserFile.writeText(patchedBNF.toString())
     }
   }
