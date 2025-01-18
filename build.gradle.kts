@@ -214,15 +214,15 @@ dependencies {
     testFramework(TestFrameworkType.Platform)
   }
 
+  val toExclude = listOf(
+    "ij-parsing-core", "ij-util-text", "lang-syntax",
+    "jb-md", "jb-md-ext",
+  )
   implementation("org.aya-prover", "producer", ayaVersion) {
-    exclude("org.aya-prover.upstream", "ij-parsing-core")
-    exclude("org.aya-prover.upstream", "ij-util-text")
-    exclude("org.aya-prover.upstream", "lang-syntax")
+    toExclude.forEach { exclude("org.aya-prover.upstream", it) }
   }
   implementation("org.aya-prover", "ide-lsp", ayaVersion) {
-    exclude("org.aya-prover.upstream", "ij-parsing-core")
-    exclude("org.aya-prover.upstream", "ij-util-text")
-    exclude("org.aya-prover.upstream", "lang-syntax")
+    toExclude.forEach { exclude("org.aya-prover.upstream", it) }
   }
   testImplementation(kotlin("test-junit"))
   testImplementation(group = "org.opentest4j", name = "opentest4j", version = "1.2.0")
