@@ -65,7 +65,10 @@ jobs:
 
           ./gradlew printProductsReleases # prepare list of IDEs for Plugin Verifier
 
-      # Run tests
+      # Would be nice if we can make a PR of some kind from this change
+      - name: Update Aya Parser
+        run: ./gradlew updateAyaParser
+
       - name: Run Tests
         run: ./gradlew test
 
