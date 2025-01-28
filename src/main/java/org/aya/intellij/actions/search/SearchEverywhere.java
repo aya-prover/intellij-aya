@@ -57,14 +57,19 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       .map(tup -> Tuple.of(tup.component1(), tup.component2())));
   }
 
-  static @NotNull SeqView<Tuple2<DefVar<?, ?>, AyaPsiGenericDecl>> searchGenericDecl(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
+  record SearchItem(
+    DefVar<?, ?> defVar,
+    AyaPsiGenericDecl decl
+  ) {}
+
+  static @NotNull SeqView<SearchItem> searchGenericDecl(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
     return search(project, searchScope).flatMap(tup -> tup.component2().mapNotNull(defVar -> {
       var psi = JB.elementAt(tup.component1(), defVar.concrete.sourcePos(), AyaPsiGenericDecl.class);
-      return psi == null ? null : Tuple.of(defVar, psi);
+      return psi == null ? null : new SearchItem(defVar, psi);
     }));
   }
 
-  private static @NotNull SeqView<Tuple2<DefVar<?, ?>, AyaPsiGenericDecl>> searchGenericDecl(@NotNull FindSymbolParameters parameters) {
+  private static @NotNull SeqView<SearchItem> searchGenericDecl(@NotNull FindSymbolParameters parameters) {
     return searchGenericDecl(parameters.getProject(), parameters.getSearchScope());
   }
 
@@ -73,7 +78,7 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       @NotNull Processor<? super String> processor,
       @NotNull FindSymbolParameters parameters
     ) {
-      searchGenericDecl(parameters).forEach(psi -> processor.process(psi.component2().nameOrEmpty()));
+      searchGenericDecl(parameters).forEach(psi -> processor.process(psi.decl.nameOrEmpty()));
     }
 
     @Override public void processElementsWithName(
@@ -82,8 +87,8 @@ public interface SearchEverywhere extends ChooseByNameContributorEx2 {
       @NotNull FindSymbolParameters parameters
     ) {
       searchGenericDecl(parameters)
-        .filter(psi -> psi.component1().name().equals(name))
-        .map(t -> new AyaNavItem(t.component2(), true))
+        .filter(psi -> psi.defVar.name().equals(name))
+        .map(t -> new AyaNavItem(t.decl, true))
         .forEach(processor::process);
     }
   }

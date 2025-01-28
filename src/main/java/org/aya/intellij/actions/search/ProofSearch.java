@@ -57,8 +57,8 @@ public interface ProofSearch {
       ps -> {
         var scope = FindSymbolParameters.searchScopeFor(project, everywhere);
         return SearchEverywhere.searchGenericDecl(project, scope)
-          .filter(t -> matches(ps, t.component1()))
-          .map(t -> new Proof.Yes(t.component1(), t.component2()));
+          .filter(t -> matches(ps, t.defVar()))
+          .map(t -> new Proof.Yes(t.defVar(), t.decl()));
       }
     );
   }
