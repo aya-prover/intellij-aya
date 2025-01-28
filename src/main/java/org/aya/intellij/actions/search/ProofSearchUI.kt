@@ -26,7 +26,7 @@ class ProofSearchContributorFactory : SearchEverywhereContributorFactory<ProofSe
 
 /** highly inspired from [com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor] */
 class ProofSearchContributor(initEvent: AnActionEvent) : WeightedSearchEverywhereContributor<ProofSearch.Proof> {
-  private val project: Project = initEvent.getRequiredData(CommonDataKeys.PROJECT)
+  private val project: Project = initEvent.getData(CommonDataKeys.PROJECT)!!
 
   override fun getSearchProviderId(): String = javaClass.name
   override fun getGroupName() = AyaBundle.message("aya.search.proof.group.name")
@@ -39,7 +39,7 @@ class ProofSearchContributor(initEvent: AnActionEvent) : WeightedSearchEverywher
 
   override fun fetchWeightedElements(
     pattern: String,
-    prog: ProgressIndicator,
+    progressIndicator: ProgressIndicator,
     consumer: Processor<in FoundItemDescriptor<ProofSearch.Proof>>,
   ) {
     if (!isEmptyPatternSupported && pattern.isEmpty()) return
@@ -50,8 +50,11 @@ class ProofSearchContributor(initEvent: AnActionEvent) : WeightedSearchEverywher
     }
     if (app.isUnitTestMode || app.isDispatchThread) fetcher()
     else {
+      // https://github.com/JetBrains/intellij-community/blob/4ff88ae3126f6330cb8656ee6649851699c52fd3/platform/lang-impl/src/com/intellij/ide/actions/searcheverywhere/AbstractGotoSEContributor.kt#L327-L330
+      @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
       ProgressIndicatorUtils.yieldToPendingWriteActions()
-      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetcher, prog)
+      @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
+      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetcher, progressIndicator)
     }
   }
 
