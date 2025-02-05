@@ -268,7 +268,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   public @Nullable LibraryOwner getEntryLibrary() {
-    return server.libraries().firstOrNull();
+    return server.libraries().getFirstOrNull();
   }
 
   /// region LSP Actions

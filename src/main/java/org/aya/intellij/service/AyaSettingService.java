@@ -35,7 +35,7 @@ public class AyaSettingService implements PersistentStateComponent<AyaSettingSer
     }
   }
 
-  public AyaState ayaLspState = AyaState.Enable;
+  public AyaState ayaLspState = AyaState.UseIntegration;
   public boolean autoScrollToSource = true;
   public boolean autoScrollFromSource = true;
 

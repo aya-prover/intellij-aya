@@ -6,16 +6,9 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import org.aya.generic.Constants
-import org.aya.intellij.service.AyaSettingService
 
 class AyaStartup : ProjectActivity {
   override suspend fun execute(project: Project) {
-    if (!AyaSettingService.getInstance().useAyaLsp) return
-    val ayaJson = findAyaJson(project)
-    if (ayaJson != null) {
-      if (!JB.fileSupported(ayaJson)) return
-      AyaLsp.start(ayaJson, project)
-    }
   }
 
   private fun findAyaJson(project: Project): VirtualFile? {

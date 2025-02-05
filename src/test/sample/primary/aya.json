@@ -1,0 +1,11 @@
+{
+  "ayaVersion" : "0.38",
+  "group" : "com.example",
+  "name" : "primary",
+  "version" : "0.1.0",
+  "dependency" : {
+    "shared" : {
+      "file" : "../dependency"
+    }
+  }
+}

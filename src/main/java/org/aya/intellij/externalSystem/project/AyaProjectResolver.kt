@@ -1,6 +1,7 @@
 package org.aya.intellij.externalSystem.project
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
@@ -9,13 +10,13 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
-import com.intellij.openapi.module.ModuleTypeId
+import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.util.io.isDirectory
 import org.aya.intellij.AyaConstants
 import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
@@ -54,6 +55,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     projectPath: String,
     isPreviewMode: Boolean,
     settings: AyaExecutionSettings?,
+    policy: ProjectResolverPolicy?,
     listener: ExternalSystemTaskNotificationListener,
   ): DataNode<ProjectData>? {
     LOG.info("Resolving project $projectPath with isPreviewMode=$isPreviewMode")
@@ -73,14 +75,21 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
       ?: nioProjectPath.resolve(".idea").toString()
     val linkedProjectPath = settings.linkedProjectPath
 
+    // TODO: dont put this here
+    val moduleId = ModuleTypeManager.getInstance().defaultModuleType.id
+
     if (! isPreviewMode) {
       tryInitializeLsp(settings)
-      val moduleResolver = AyaModuleResolver(projectNode, ModuleTypeId.JAVA_MODULE, projectFileDir, linkedProjectPath.toString())
+      val moduleResolver = AyaModuleResolver(projectNode, moduleId, projectFileDir, linkedProjectPath.toString())
       doResolveModules(settings, moduleResolver)
     } else {
-      projectNode.createChild(ProjectKeys.MODULE, ModuleData(
-        projectData.externalName, AyaConstants.SYSTEM_ID, ModuleTypeId.JAVA_MODULE,
-        projectData.externalName, projectFileDir, linkedProjectPath.toString()))
+      projectNode.createChild(
+        ProjectKeys.MODULE,
+        ModuleData(
+          projectData.externalName, AyaConstants.SYSTEM_ID, moduleId,
+          projectData.externalName, projectFileDir, linkedProjectPath.toString(),
+        ),
+      )
         .createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPath))
     }
 

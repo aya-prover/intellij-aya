@@ -1,5 +1,7 @@
 package org.aya.intellij.externalSystem.project
 
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
@@ -25,30 +27,39 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
     return !file.isDirectory && AyaConstants.BUILD_FILE_NAME == file.name
   }
 
-  override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+  override suspend fun linkProject(projectFile: VirtualFile, project: Project) {
     LOG.info("Linking file '${projectFile.path}' to project '${project.name}'")
 
-    if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, AyaConstants.SYSTEM_ID)) {
-      val projectDir = getProjectDirectory(projectFile)
-      val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project) ?: return
+    val projectDir = getProjectDirectory(projectFile)
+    val projectPath = projectDir.toNioPath()
 
-      ExternalSystemApiUtil.getSettings(project, AyaConstants.SYSTEM_ID).linkProject(projectSettings)
+    if (!TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
+        projectPath, project,
+        // FIXME: this line copies from gralde plugin, need some abstract
+        IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectPath.fileName),
+      )) {
+      return
+    }
 
-      ExternalSystemUtil.refreshProject(
-        projectSettings.externalProjectPath.toString(),
-        ImportSpecBuilder(project, AyaConstants.SYSTEM_ID)
-          .usePreviewMode()
-          .use(ProgressExecutionMode.MODAL_SYNC),
-      )
+    val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project) ?: return
 
-      if (AyaSettingService.getInstance().ayaLspState == AyaSettingService.AyaState.UseIntegration) {
-        ExternalProjectsManager.getInstance(project).runWhenInitialized {
-          ExternalSystemUtil.refreshProject(
-            projectSettings.externalProjectPath.toString(),
-            ImportSpecBuilder(project, AyaConstants.SYSTEM_ID),
-          )
-        }
+    ExternalSystemApiUtil.getSettings(project, AyaConstants.SYSTEM_ID).linkProject(projectSettings)
+
+    ExternalSystemUtil.refreshProject(
+      projectSettings.externalProjectPath.toString(),
+      ImportSpecBuilder(project, AyaConstants.SYSTEM_ID)
+        .usePreviewMode()
+        .use(ProgressExecutionMode.MODAL_SYNC),
+    )
+
+    if (AyaSettingService.getInstance().ayaLspState == AyaSettingService.AyaState.UseIntegration) {
+      ExternalProjectsManager.getInstance(project).runWhenInitialized {
+        ExternalSystemUtil.refreshProject(
+          projectSettings.externalProjectPath.toString(),
+          ImportSpecBuilder(project, AyaConstants.SYSTEM_ID),
+        )
       }
     }
+    
   }
 }
