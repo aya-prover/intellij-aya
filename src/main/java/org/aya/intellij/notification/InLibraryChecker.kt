@@ -13,12 +13,17 @@ import java.util.function.Function
 import javax.swing.*
 
 class InLibraryChecker : EditorNotificationProvider {
-  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> = Function { editor ->
-    if (! isAya(file)) return@Function null
-    if (AyaSettingService.getInstance().ayaLspState != AyaSettingService.AyaState.UseIntegration) return@Function null;
-    if (! ProjectFileIndex.getInstance(project).isInSource(file)) {
+  companion object {
+    val CONST_NULL: Function<in FileEditor, out JComponent?> = Function { null }
+  }
+
+  override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
+    if (!isAya(file)) return CONST_NULL
+    if (AyaSettingService.getInstance().ayaLspState != AyaSettingService.AyaState.UseIntegration) return CONST_NULL
+    if (ProjectFileIndex.getInstance(project).isInSource(file)) return CONST_NULL
+    return Function { editor ->
       EditorNotificationPanel(editor, EditorNotificationPanel.Status.Error)
         .text(AyaBundle.message("aya.notification.lsp.untracked"))
-    } else null
+    }
   }
 }

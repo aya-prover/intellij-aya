@@ -52,7 +52,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
   fun resolveProjectFileDir(settings: AyaExecutionSettings): Path {
     return settings.projectFileDir?.toAbsolutePath()
-      ?: settings.linkedProjectPath.resolve(".idea")
+      ?: settings.linkedProjectPath.resolve(AyaConstants.IDEA_PROJECT_FILE_DIR)
   }
 
   fun createPreviewProjectInfo(projectNode: DataNode<ProjectData>, moduleFileDir: Path, projectPath: Path) {
