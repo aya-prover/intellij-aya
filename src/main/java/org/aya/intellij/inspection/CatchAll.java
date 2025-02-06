@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class CatchAll extends AyaInspection {
   private final @NotNull String displayName;
-  private final @NotNull ProblemHighlightType highlightType;
+  protected final @NotNull ProblemHighlightType highlightType;
 
   protected CatchAll(@NotNull String displayName, @NotNull ProblemHighlightType highlightType) {
     this.displayName = displayName;
@@ -30,6 +30,10 @@ public abstract class CatchAll extends AyaInspection {
     return displayName;
   }
 
+  protected void registerProblem(@NotNull AyaLsp lsp, @NotNull PsiFile file, @NotNull ProblemsHolder holder, @NotNull Problem problem) {
+    holder.registerProblem(file, DistillerService.plainBrief(problem), highlightType, JB.toRange(problem.sourcePos()));
+  }
+
   protected abstract @NotNull SeqView<Problem> catchAll(@NotNull AyaLsp lsp, @NotNull PsiFile file);
 
   @Override
@@ -37,10 +41,7 @@ public abstract class CatchAll extends AyaInspection {
     return new AyaPsiVisitor() {
       @Override
       public void visitFile(@NotNull PsiFile file) {
-        catchAll(lsp, file).forEach(problem -> holder.registerProblem(
-          file, DistillerService.plainBrief(problem),
-          highlightType, JB.toRange(problem.sourcePos())
-        ));
+        catchAll(lsp, file).forEach(problem -> registerProblem(lsp, file, holder, problem));
       }
     };
   }

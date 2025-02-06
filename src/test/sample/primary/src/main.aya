@@ -5,3 +5,8 @@ def const {A : Type} (B : Type) (a : A) : B -> A => fn _ => a
 def doId {A : Type}
   (a : A)
   (b : A) : A => id a
+
+inductive Nat | zro | suc Nat
+
+def badMatch (n : Nat) : Nat
+| zro => n

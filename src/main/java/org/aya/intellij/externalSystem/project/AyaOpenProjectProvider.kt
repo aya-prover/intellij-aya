@@ -26,7 +26,7 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   suspend fun doLinkProject(projectDir: VirtualFile, project: Project) {
-    val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project) ?: return
+    val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project)
 
     ExternalSystemApiUtil.getSettings(project, AyaConstants.SYSTEM_ID).linkProject(projectSettings)
 
