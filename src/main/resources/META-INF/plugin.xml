@@ -89,10 +89,6 @@
     <projectOpenProcessor
       id="Aya"
       implementation="org.aya.intellij.externalSystem.project.AyaProjectOpenProcessor" />
-    <projectService
-      serviceImplementation="org.aya.intellij.externalSystem.settings.AyaSettings" />
-    <projectService
-      serviceImplementation="org.aya.intellij.externalSystem.settings.AyaLocalSettings" />
     <externalSystemManager
       implementation="org.aya.intellij.externalSystem.AyaExternalSystemManager" />
 

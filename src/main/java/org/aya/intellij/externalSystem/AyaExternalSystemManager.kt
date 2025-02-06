@@ -1,6 +1,7 @@
 package org.aya.intellij.externalSystem
 
 import com.intellij.execution.configurations.SimpleJavaParameters
+import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
@@ -16,12 +17,21 @@ import org.aya.intellij.externalSystem.settings.*
 import org.aya.intellij.externalSystem.task.AyaTaskManager
 import java.nio.file.Path
 
+/**
+ * ## Terms
+ *
+ * * external project: a project of external system.
+ * * linked project: short for "linked external project"
+ * * externalProjectPath/linkedProjectPath: the path to the directory of external system project
+ */
 class AyaExternalSystemManager : ExternalSystemManager<
   AyaProjectSettings,
   AyaSettingsListener,
   AyaSettings,
   AyaLocalSettings,
-  AyaExecutionSettings> {
+  AyaExecutionSettings,
+  >,
+  ExternalSystemAutoImportAware {
   override fun enhanceRemoteProcessing(parameters: SimpleJavaParameters) {
     throw UnsupportedOperationException()
   }
@@ -50,6 +60,10 @@ class AyaExternalSystemManager : ExternalSystemManager<
 
   override fun getTaskManagerClass(): Class<out ExternalSystemTaskManager<AyaExecutionSettings>> {
     return AyaTaskManager::class.java
+  }
+
+  override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String? {
+    return null
   }
 
   override fun getExternalProjectDescriptor(): FileChooserDescriptor {

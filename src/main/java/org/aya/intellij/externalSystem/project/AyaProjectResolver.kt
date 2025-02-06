@@ -71,8 +71,6 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
   /**
    * Resolve aya project structure to idea project structure.
    * The idea project structure is exactly what you see in `Project Structure - Project Settings - Modules`
-   *
-   * @param isPreviewMode false if AyaSettingsService.AyaState.UseIntegration
    */
   override fun resolveProjectInfo(
     id: ExternalSystemTaskId,

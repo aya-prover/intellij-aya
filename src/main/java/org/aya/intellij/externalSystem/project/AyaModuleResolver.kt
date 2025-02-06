@@ -10,46 +10,6 @@ import org.jetbrains.annotations.Contract
 import java.nio.file.Path
 import kotlin.io.path.name
 
-/**
- * A project:
- *
- * ```
- * * A
- *   * C
- *     * D
- * * B
- *   * E
- * ```
- *
- * with the dependency graph:
- *
- * ```
- * A ---> B ---> C
- *        |      |
- *        v      v
- *        D ---> E
- * ```
- *
- * will be resolved to
- *
- * ```
- * + A
- *   + A.B
- *     + A.B.C
- *       + A.B.C.E
- *     + A.B.D
- * ```
- *
- * or
- *
- * ```
- * + A
- *   + A.B
- *     + A.B.D
- *       + A.B.D.E
- *     + A.B.C
- * ```
- */
 class AyaModuleResolver(
   val rootNode: DataNode<ProjectData>,
   val moduleTypeId: String,

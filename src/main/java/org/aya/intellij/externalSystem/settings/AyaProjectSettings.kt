@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
  */
 class AyaProjectSettings() : ExternalProjectSettings() {
   companion object {
-    fun createLinkSettings(projectDir: VirtualFile, project: Project): AyaProjectSettings? {
+    fun createLinkSettings(projectDir: VirtualFile, project: Project): AyaProjectSettings {
       return AyaProjectSettings(projectDir.toNioPath().toAbsolutePath().toCanonicalPath())
     }
   }
