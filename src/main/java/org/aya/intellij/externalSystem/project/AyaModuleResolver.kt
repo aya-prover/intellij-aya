@@ -72,13 +72,15 @@ class AyaModuleResolver(
 
     val libraryDirName = libraryDir.name
     val libraryName = config.name
-    val prefix = if (parent != null) "${parent.data.externalName}." else ""
-    val externalName = prefix + libraryName
+//    val prefix = if (parent != null) "${parent.data.externalName}." else ""
+    // TODO: deal with name conflict
+    val externalName = libraryName // prefix + libraryName
 
     val moduleData = ModuleData(libraryDirName, AyaConstants.SYSTEM_ID, moduleTypeId,
       externalName, moduleFileDirectoryPath, externalProjectPath)
     // Create modules on rootNode
-    // TODO: deal with out-of-scope modules
+    // ~~TODO: deal with out-of-scope modules~~
+    // no we needn't, idea will solve that
     val thisNode = rootNode.createChild(ProjectKeys.MODULE, moduleData).apply {
       val contentRoot = ContentRootData(AyaConstants.SYSTEM_ID, libraryDir.toString()).apply {
         storePath(ExternalSystemSourceType.SOURCE, config.librarySrcRoot.toAbsolutePath().toString())

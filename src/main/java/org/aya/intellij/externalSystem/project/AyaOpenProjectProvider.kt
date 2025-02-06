@@ -6,8 +6,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
@@ -27,6 +25,24 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
     return !file.isDirectory && AyaConstants.BUILD_FILE_NAME == file.name
   }
 
+  suspend fun doLinkProject(projectDir: VirtualFile, project: Project) {
+    val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project) ?: return
+
+    ExternalSystemApiUtil.getSettings(project, AyaConstants.SYSTEM_ID).linkProject(projectSettings)
+
+    val importSpec = ImportSpecBuilder(project, AyaConstants.SYSTEM_ID)
+    val shouldPreview = AyaSettingService.getInstance().ayaLspState != AyaSettingService.AyaState.UseIntegration
+
+    if (shouldPreview) {
+      importSpec.usePreviewMode()
+    }
+
+    ExternalSystemUtil.refreshProject(
+      projectSettings.externalProjectPath.toString(),
+      importSpec,
+    )
+  }
+
   override suspend fun linkProject(projectFile: VirtualFile, project: Project) {
     LOG.info("Linking file '${projectFile.path}' to project '${project.name}'")
 
@@ -41,25 +57,6 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
       return
     }
 
-    val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project) ?: return
-
-    ExternalSystemApiUtil.getSettings(project, AyaConstants.SYSTEM_ID).linkProject(projectSettings)
-
-    ExternalSystemUtil.refreshProject(
-      projectSettings.externalProjectPath.toString(),
-      ImportSpecBuilder(project, AyaConstants.SYSTEM_ID)
-        .usePreviewMode()
-        .use(ProgressExecutionMode.MODAL_SYNC),
-    )
-
-    if (AyaSettingService.getInstance().ayaLspState == AyaSettingService.AyaState.UseIntegration) {
-      ExternalProjectsManager.getInstance(project).runWhenInitialized {
-        ExternalSystemUtil.refreshProject(
-          projectSettings.externalProjectPath.toString(),
-          ImportSpecBuilder(project, AyaConstants.SYSTEM_ID),
-        )
-      }
-    }
-    
+    doLinkProject(projectDir, project)
   }
 }

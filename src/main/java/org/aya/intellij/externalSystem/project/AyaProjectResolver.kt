@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
+import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.vfs.VfsUtil
 import org.aya.intellij.AyaConstants
@@ -23,6 +24,8 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
   companion object {
     private val LOG = Logger.getInstance(AyaProjectResolver::class.java)
   }
+
+  val moduleType: ModuleType<*> = ModuleTypeManager.getInstance().defaultModuleType
 
   fun tryInitializeLsp(settings: AyaExecutionSettings) {
     LOG.info("Initializing Lsp")
@@ -47,7 +50,28 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     }
   }
 
+  fun resolveProjectFileDir(settings: AyaExecutionSettings): Path {
+    return settings.projectFileDir?.toAbsolutePath()
+      ?: settings.linkedProjectPath.resolve(".idea")
+  }
+
+  fun createPreviewProjectInfo(projectNode: DataNode<ProjectData>, moduleFileDir: Path, projectPath: Path) {
+    val projectData = projectNode.data
+    val moduleId = moduleType.id
+
+    projectNode.createChild(
+      ProjectKeys.MODULE,
+      ModuleData(
+        projectData.externalName, AyaConstants.SYSTEM_ID, moduleId,
+        projectData.externalName, moduleFileDir.toString(), projectPath.toString(),
+      ),
+    ).createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPath.toString()))
+  }
+
   /**
+   * Resolve aya project structure to idea project structure.
+   * The idea project structure is exactly what you see in `Project Structure - Project Settings - Modules`
+   *
    * @param isPreviewMode false if AyaSettingsService.AyaState.UseIntegration
    */
   override fun resolveProjectInfo(
@@ -66,32 +90,28 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     val nioProjectPath = Path.of(projectPath).toAbsolutePath()
     assert(nioProjectPath.isDirectory())      // We will solve other cases when assertion failed
 
+    // I am not sure if they are equal, so we need some experiment
+    if (nioProjectPath != settings.linkedProjectPath) {
+      LOG.error("Assumption Failed")
+    }
+
+    // FIXME: should the param `ideProjectFileDirectoryPath` be `projectFileDir`?
     val projectData = ProjectData(AyaConstants.SYSTEM_ID, nioProjectPath.name, projectPath, projectPath)
     val projectNode = DataNode(ProjectKeys.PROJECT, projectData, null).apply {
       createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPath))
     }
 
-    val projectFileDir = settings.projectFileDir?.toAbsolutePath()?.toString()
-      ?: nioProjectPath.resolve(".idea").toString()
+    val projectFileDir = resolveProjectFileDir(settings)
     val linkedProjectPath = settings.linkedProjectPath
 
-    // TODO: dont put this here
-    val moduleId = ModuleTypeManager.getInstance().defaultModuleType.id
-
-    if (! isPreviewMode) {
-      tryInitializeLsp(settings)
-      val moduleResolver = AyaModuleResolver(projectNode, moduleId, projectFileDir, linkedProjectPath.toString())
-      doResolveModules(settings, moduleResolver)
-    } else {
-      projectNode.createChild(
-        ProjectKeys.MODULE,
-        ModuleData(
-          projectData.externalName, AyaConstants.SYSTEM_ID, moduleId,
-          projectData.externalName, projectFileDir, linkedProjectPath.toString(),
-        ),
-      )
-        .createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPath))
+    if (isPreviewMode) {
+      createPreviewProjectInfo(projectNode, projectFileDir, linkedProjectPath)
+      return projectNode
     }
+
+    tryInitializeLsp(settings)
+    val moduleResolver = AyaModuleResolver(projectNode, moduleType.id, projectFileDir.toString(), linkedProjectPath.toString())
+    doResolveModules(settings, moduleResolver)
 
     return projectNode
   }
