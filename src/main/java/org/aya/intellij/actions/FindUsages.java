@@ -13,6 +13,26 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FindUsages implements FindUsagesProvider {
+  public enum Type {
+    Function("Function"),
+    Data("Data"),
+    Class("Class"),
+    Primitive("Primitive"),
+    DataCon("Data constructor"),
+    Member("Class member"),
+    Parameter("Parameter"),
+    PatternBind("Pattern binding"),
+    DoBind("Do binding"),
+    LetBind("Let binding"),
+    Unknown("");
+
+    public final @NotNull String displayName;
+
+    Type(@NotNull String displayName) {
+      this.displayName = displayName;
+    }
+  }
+
   @Override public @Nullable WordsScanner getWordsScanner() {
     return new AyaWordsScanner(AyaParserDefinition.createIJLexer(), AyaParserDefinition.IDENTIFIERS,
       AyaParserDefinition.COMMENTS, AyaParserDefinition.STRINGS);
@@ -30,25 +50,25 @@ public class FindUsages implements FindUsagesProvider {
 
   @Override
   public @Nls @NotNull String getType(@NotNull PsiElement element) {
-    if (!(element instanceof AyaPsiNamedElement named)) return "";
-    return switch (named) {
-      case AyaPsiFnDecl _ -> "Function";
-      case AyaPsiDataDecl _ -> "Data";
-      case AyaPsiClassDecl _ -> "Class";
-      case AyaPsiPrimDecl _ -> "Primitive";
-      case AyaPsiDataBody _ -> "Data constructor";
-      case AyaPsiClassMember _ -> "Class member";
-      case AyaPsiTeleParamName _ -> "Parameter";
+    if (!(element instanceof AyaPsiNamedElement named)) return Type.Unknown.displayName;
+    return (switch (named) {
+      case AyaPsiFnDecl _ -> Type.Function;
+      case AyaPsiDataDecl _ -> Type.Data;
+      case AyaPsiClassDecl _ -> Type.Class;
+      case AyaPsiPrimDecl _ -> Type.Primitive;
+      case AyaPsiDataBody _ -> Type.DataCon;
+      case AyaPsiClassMember _ -> Type.Member;
+      case AyaPsiTeleParamName _ -> Type.Parameter;
       // The PSI parser does not distinguish between a bind pattern and a constructor pattern.
       // But the following match case does not cause constructor patterns to be described as "Pattern Binding"
       // because this method is always called with the resolved results returned by `AyaPsiReference#resolve()`
       // which calls the Aya compiler who knows the truth. So constructor patterns will be described
       // by former cases like `AyaPsiFnDecl`, `AyaPsiDataDecl`, etc.
-      case AyaPsiAtomBindPattern _ -> "Pattern binding";
-      case AyaPsiDoBinding _ -> "do-binding";
-      case AyaPsiLetBind _ -> "let-binding";
-      default -> "";
-    };
+      case AyaPsiAtomBindPattern _ -> Type.PatternBind;
+      case AyaPsiDoBinding _ -> Type.DoBind;
+      case AyaPsiLetBind _ -> Type.LetBind;
+      default -> Type.Unknown;
+    }).displayName;
   }
 
   @Override
