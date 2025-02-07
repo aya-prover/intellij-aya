@@ -31,7 +31,7 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
     ExternalSystemApiUtil.getSettings(project, AyaConstants.SYSTEM_ID).linkProject(projectSettings)
 
     val importSpec = ImportSpecBuilder(project, AyaConstants.SYSTEM_ID)
-    val shouldPreview = AyaSettingService.getInstance().ayaLspState != AyaSettingService.AyaState.UseIntegration
+    val shouldPreview = !AyaSettingService.getInstance().lspEnable()
 
     if (shouldPreview) {
       importSpec.usePreviewMode()

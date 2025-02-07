@@ -32,9 +32,7 @@ public class AyaToolWindow extends AbstractExternalSystemToolWindowFactory {
   @Override
   public boolean shouldBeAvailable(@NotNull Project project) {
     var ayaSetting = AyaSettingService.getInstance();
-    return ayaSetting.ayaLspState == AyaSettingService.AyaState.UseIntegration
-      ? super.shouldBeAvailable(project)
-      : ayaSetting.ayaLspState == AyaSettingService.AyaState.Enable;
+    return ayaSetting.lspEnable() || super.shouldBeAvailable(project);
   }
 
   @Override public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
@@ -42,10 +40,7 @@ public class AyaToolWindow extends AbstractExternalSystemToolWindowFactory {
     toolWindow.setTitle(AyaConstants.AYA_PROVER_NAME);
 
     ExternalProjectsManager.getInstance(project).runWhenInitialized(() -> {
-      if (AyaSettingService.getInstance().ayaLspState == AyaSettingService.AyaState.UseIntegration) {
-        initExternalSystemToolWindow(project, toolWindow);
-      }
-
+      initExternalSystemToolWindow(project, toolWindow);
       initAyaToolWindow(project, toolWindow);
     });
   }

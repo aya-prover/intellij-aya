@@ -222,7 +222,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     };
   }
 
-  boolean isWatched(@Nullable VirtualFile file) {
+  public boolean isWatched(@Nullable VirtualFile file) {
     return isInLibrary(file) && file.getName().endsWith(Constants.AYA_POSTFIX);
   }
 

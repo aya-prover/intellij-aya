@@ -20,8 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public class AyaSettingService implements PersistentStateComponent<AyaSettingService> {
   public enum AyaState {
     Disable("Disable"),
-    Enable("Enable"),
-    UseIntegration("Use Integration");    // Enable external system integration
+    Enable("Enable");
 
     public final @NotNull String text;
 
@@ -35,12 +34,16 @@ public class AyaSettingService implements PersistentStateComponent<AyaSettingSer
     }
   }
 
-  public AyaState ayaLspState = AyaState.UseIntegration;
+  public AyaState ayaLspState = AyaState.Enable;
   public boolean autoScrollToSource = true;
   public boolean autoScrollFromSource = true;
 
   public static @NotNull AyaSettingService getInstance() {
     return ApplicationManager.getApplication().getService(AyaSettingService.class);
+  }
+
+  public boolean lspEnable() {
+    return ayaLspState == AyaState.Enable;
   }
 
   @Override public @Nullable AyaSettingService getState() {

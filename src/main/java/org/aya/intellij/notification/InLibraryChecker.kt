@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import org.aya.intellij.AyaBundle
+import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.language.isAya
 import org.aya.intellij.service.AyaSettingService
 import java.util.function.Function
@@ -19,8 +20,12 @@ class InLibraryChecker : EditorNotificationProvider {
 
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
     if (!isAya(file)) return CONST_NULL
-    if (AyaSettingService.getInstance().ayaLspState != AyaSettingService.AyaState.UseIntegration) return CONST_NULL
+    if (!AyaSettingService.getInstance().lspEnable()) return CONST_NULL
     if (ProjectFileIndex.getInstance(project).isInSource(file)) return CONST_NULL
+    // don't report if AyaLsp is not active
+    val isInLibrary = AyaLsp.useUnchecked(project, { true }) { it.isWatched(file) }
+    if (!isInLibrary) return CONST_NULL
+
     return Function { editor ->
       EditorNotificationPanel(editor, EditorNotificationPanel.Status.Error)
         .text(AyaBundle.message("aya.notification.lsp.untracked"))
