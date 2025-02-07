@@ -91,6 +91,8 @@
       implementation="org.aya.intellij.externalSystem.project.AyaProjectOpenProcessor" />
     <externalSystemManager
       implementation="org.aya.intellij.externalSystem.AyaExternalSystemManager" />
+    <projectImportProvider
+      implementation="org.aya.intellij.externalSystem.project.AyaProjectImportProvider"/>
 
     <!-- This registryKey solves 'class java.lang.Object' problem -->
     <registryKey

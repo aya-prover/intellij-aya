@@ -6,12 +6,13 @@ import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectOpenProcessor
 import org.aya.intellij.AyaConstants
+import org.aya.intellij.externalSystem.canOpenAyaProject
 
 class AyaProjectOpenProcessor : ProjectOpenProcessor() {
   override val name: String = AyaConstants.AYA_NAME
 
   override fun canOpenProject(file: VirtualFile): Boolean {
-    return AyaOpenProjectProvider().canOpenProject(file)
+    return canOpenAyaProject(file)
   }
 
   override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {

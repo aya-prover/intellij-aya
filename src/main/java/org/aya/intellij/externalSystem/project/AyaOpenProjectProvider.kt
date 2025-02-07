@@ -17,6 +17,10 @@ import org.aya.intellij.service.AyaSettingService
 class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
   companion object {
     private val LOG = Logger.getInstance(AyaOpenProjectProvider::class.java)
+
+    suspend fun linkAndSyncAyaProject(project: Project, projectFile: String) {
+      AyaOpenProjectProvider().linkToExistingProjectAsync(projectFile, project)
+    }
   }
 
   override val systemId: ProjectSystemId = AyaConstants.SYSTEM_ID
@@ -43,6 +47,10 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
     )
   }
 
+  /**
+   * @param projectFile a [VirtualFile] to a directory or file that represents an external system project,
+   *                    i.e. `build.gradle` or a directory contains it.
+   */
   override suspend fun linkProject(projectFile: VirtualFile, project: Project) {
     LOG.info("Linking file '${projectFile.path}' to project '${project.name}'")
 

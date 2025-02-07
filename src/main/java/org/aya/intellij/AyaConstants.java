@@ -12,4 +12,6 @@ public interface AyaConstants {
   @NotNull String AYA_ES_SETTINGS = "aya.xml";
 
   @NotNull String IDEA_PROJECT_FILE_DIR = ".idea";
+
+  @NotNull String AYA_BUILD_FILE_DESCRIPTION = AyaBundle.INSTANCE.message("aya.file.type.description", BUILD_FILE_NAME);
 }
