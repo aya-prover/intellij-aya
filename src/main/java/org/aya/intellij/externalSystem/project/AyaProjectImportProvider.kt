@@ -8,6 +8,9 @@ import org.aya.intellij.AyaConstants
 import org.aya.intellij.externalSystem.canOpenAyaProject
 import org.aya.intellij.service.AyaProjectImportBuilder
 
+/**
+ * This is used for manually linking aya project, i.e. the "+" button in aya tool window.
+ */
 class AyaProjectImportProvider : AbstractExternalProjectImportProvider(
   AyaProjectImportBuilder(),
   AyaConstants.SYSTEM_ID,

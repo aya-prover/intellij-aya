@@ -49,7 +49,10 @@ class AyaExternalSystemManager : ExternalSystemManager<
   override fun getExecutionSettingsProvider(): Function<Pair<Project, String>, AyaExecutionSettings> = Function { pair ->
     val project = pair.first
     val linkedProjectPath = Path.of(pair.second)
-    val projectFileDir = project.projectFile?.toNioPath()?.toAbsolutePath()
+    val projectFileDir = project.projectFile
+      ?.parent
+      ?.toNioPath()
+      ?.toAbsolutePath()
 
     AyaExecutionSettings(project, projectFileDir, linkedProjectPath.toAbsolutePath())
   }

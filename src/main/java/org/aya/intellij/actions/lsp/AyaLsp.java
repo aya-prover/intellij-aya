@@ -77,12 +77,16 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
-  public static void start(@NotNull VirtualFile ayaJson, @NotNull Project project) {
+  public static @NotNull AyaLsp start(@NotNull Project project, @NotNull VirtualFile projectOrFile) {
+    var lsp = start(project);
+    lsp.registerLibrary(projectOrFile);
+    return lsp;
+  }
+
+  public static @NotNull AyaLsp start(@NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
     var lsp = new AyaLsp(project);
     lsp.server.initialize(new InitializeParams());
-    lsp.registerLibrary(ayaJson.getParent());
-    lsp.recompile(null);
     project.putUserData(AYA_LSP, lsp);
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -93,6 +97,8 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
         lsp.fireVfsEvent(false, ImmutableSeq.from(events));
       }
     });
+
+    return lsp;
   }
 
   /**
@@ -244,13 +250,40 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     });
   }
 
-  public void registerLibrary(@NotNull VirtualFile library) {
-    if (JB.fileSupported(library)) {
-      var root = JB.canonicalize(library);
+  /// Returns the project directory of {@param file}
+  ///
+  /// @param file the aya project directory or "aya.json" file, this function will NOT validate the argument.
+  /// @see com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider#getProjectDirectory(VirtualFile)
+  public static @NotNull VirtualFile getProjectDirectory(@NotNull VirtualFile file) {
+    return file.isDirectory()
+      ? file
+      : file.getParent();     // never null, as [file] is a file, it must belong to some directory.
+  }
+
+  public boolean isLibraryLoaded(@NotNull VirtualFile projectOrFile) {
+    return getLoadedLibrary(projectOrFile) != null;
+  }
+
+  public @Nullable LibraryOwner getLoadedLibrary(@NotNull VirtualFile projectOrFile) {
+    if (JB.fileSupported(projectOrFile)) {
+      var path = JB.canonicalize(getProjectDirectory(projectOrFile));
+      return server.libraries().findFirst(t -> t.underlyingLibrary().libraryRoot().equals(path)).getOrNull();
+    }
+
+    return null;
+  }
+
+  /// Register an aya project or a single aya file to lsp
+  ///
+  /// @param projectOrFile a aya project directory, "aya.json" file, or a single aya file
+  public void registerLibrary(@NotNull VirtualFile projectOrFile) {
+    if (JB.fileSupported(projectOrFile)) {
+      var root = JB.canonicalize(projectOrFile);
       var paths = server.registerLibrary(root).flatMap(registeredLibrary ->
         registeredLibrary.modulePath()
-          .mapNotNull(path -> library.findFileByRelativePath(root.relativize(path).toString())));
+          .mapNotNull(path -> projectOrFile.findFileByRelativePath(root.relativize(path).toString())));
       librarySrcPathCache.addAll(paths);
+      recompile(null);
     }
   }
 
@@ -267,6 +300,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return JB.fileSupported(vf) ? server.find(JB.canonicalize(vf)) : null;
   }
 
+  // TODO: should not use this
   public @Nullable LibraryOwner getEntryLibrary() {
     return server.libraries().getFirstOrNull();
   }

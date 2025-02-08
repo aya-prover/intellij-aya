@@ -19,7 +19,8 @@ class AyaStartup : ProjectActivity {
     val ayaJson = findAyaJson(project)
     if (ayaJson != null) {
       if (!JB.fileSupported(ayaJson)) return
-      AyaLsp.start(ayaJson, project)
+      val lsp = AyaLsp.start(project)
+      lsp.registerLibrary(ayaJson)
     }
   }
 

@@ -16,6 +16,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import org.aya.intellij.AyaConstants
 import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
+import org.aya.intellij.util.computeReadAction
+import org.aya.intellij.util.runReadAction
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
@@ -27,20 +29,43 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
   val moduleType: ModuleType<*> = ModuleTypeManager.getInstance().defaultModuleType
 
+  /**
+   * Initialize lsp and trying to register library for [settings]
+   */
   fun tryInitializeLsp(settings: AyaExecutionSettings) {
-    LOG.info("Initializing Lsp")
-    if (!AyaLsp.isActive(settings.project)) {
-      val ayaJson = VfsUtil.findFile(settings.buildFilePath, true)
-        ?: throw IllegalStateException("${AyaConstants.BUILD_FILE_NAME} not found")
-      AyaLsp.start(ayaJson, settings.project)
-    } else {
-      LOG.info("Lsp was initialized")
+    runReadAction {
+      val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true)
+      if (!AyaLsp.isActive(settings.project)) {
+        LOG.info("Initializing Lsp")
+        AyaLsp.start(settings.project)
+          .registerLibrary(ayaProjectDir ?: return@runReadAction)
+      } else {
+        ayaProjectDir ?: return@runReadAction
+
+        LOG.info("Lsp was initialized")
+        AyaLsp.useUnchecked(settings.project) { lsp ->
+          if (!lsp.isLibraryLoaded(ayaProjectDir)) {
+            LOG.info("Loading library: ${ayaProjectDir.toNioPath()}")
+            lsp.registerLibrary(ayaProjectDir)
+          } else {
+            LOG.info("Library was loaded: ${ayaProjectDir.toNioPath()}")
+          }
+        }
+      }
     }
   }
 
+  /**
+   * @return whether resolve success, [resolver] will not mutate the [AyaModuleResolver.rootNode] if failed.
+   */
   fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
     return AyaLsp.useUnchecked(settings.project, { false }) { lsp ->
-      val rootLibrary = lsp.entryLibrary
+      val rootLibrary = computeReadAction {
+        val file = VfsUtil.findFile(settings.linkedProjectPath, true)
+          ?: return@computeReadAction null
+        lsp.getLoadedLibrary(file)
+      }
+
       if (rootLibrary == null) {
         false
       } else {
@@ -87,30 +112,32 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
     val nioProjectPath = Path.of(projectPath).toAbsolutePath()
     assert(nioProjectPath.isDirectory())      // We will solve other cases when assertion failed
+    // TODO: ^what does this mean?
 
     // I am not sure if they are equal, so we need some experiment
     if (nioProjectPath != settings.linkedProjectPath) {
       LOG.error("Assumption Failed")
     }
 
-    // FIXME: should the param `ideProjectFileDirectoryPath` be `projectFileDir`?
-    val projectData = ProjectData(AyaConstants.SYSTEM_ID, nioProjectPath.name, projectPath, projectPath)
+    val projectFileDir = resolveProjectFileDir(settings)
+    val projectData = ProjectData(AyaConstants.SYSTEM_ID, nioProjectPath.name, projectFileDir.toString(), projectPath)
     val projectNode = DataNode(ProjectKeys.PROJECT, projectData, null).apply {
       createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPath))
     }
 
-    val projectFileDir = resolveProjectFileDir(settings)
     val linkedProjectPath = settings.linkedProjectPath
 
-    if (isPreviewMode) {
-      createPreviewProjectInfo(projectNode, projectFileDir, linkedProjectPath)
-      return projectNode
+    if (!isPreviewMode) {
+      tryInitializeLsp(settings)
+      val moduleResolver = AyaModuleResolver(projectNode, moduleType.id, projectFileDir.toString(), linkedProjectPath.toString())
+      val success = doResolveModules(settings, moduleResolver)
+      if (success) return projectNode
+      // failed, use preview project info
     }
 
-    tryInitializeLsp(settings)
-    val moduleResolver = AyaModuleResolver(projectNode, moduleType.id, projectFileDir.toString(), linkedProjectPath.toString())
-    doResolveModules(settings, moduleResolver)
+    // now: isPreviewMode or ! success
 
+    createPreviewProjectInfo(projectNode, projectFileDir, linkedProjectPath)
     return projectNode
   }
 

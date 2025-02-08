@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.aya.intellij.AyaConstants
+import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.externalSystem.settings.AyaProjectSettings
 import org.aya.intellij.service.AyaSettingService
 
@@ -24,6 +25,10 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
   }
 
   override val systemId: ProjectSystemId = AyaConstants.SYSTEM_ID
+
+  override fun getProjectDirectory(file: VirtualFile): VirtualFile {
+    return AyaLsp.getProjectDirectory(file);
+  }
 
   override fun isProjectFile(file: VirtualFile): Boolean {
     return !file.isDirectory && AyaConstants.BUILD_FILE_NAME == file.name
