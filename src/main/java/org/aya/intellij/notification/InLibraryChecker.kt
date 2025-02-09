@@ -1,6 +1,5 @@
 package org.aya.intellij.notification
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -23,7 +22,7 @@ class InLibraryChecker : EditorNotificationProvider {
     if (ProjectFileIndex.getInstance(project).isInSource(file)) return CONST_NULL
     // don't report if AyaLsp is not active
     val isInLibrary = AyaLsp.useUnchecked(project, { true }) { it.isWatched(file) }
-    if (!isInLibrary) return CONST_NULL
+    if (isInLibrary) return CONST_NULL
 
     return Function { editor ->
       EditorNotificationPanel(editor, EditorNotificationPanel.Status.Error)
@@ -38,11 +37,8 @@ class InLibraryChecker : EditorNotificationProvider {
   private fun addSingleFileToLsp(project: Project, file: VirtualFile) {
     val coroutineScope = ProjectCoroutineScope.getCoroutineScope(project)
     coroutineScope.launch {
-      readAction {
-        if (!file.isValid) return@readAction
-        AyaLsp.useUnchecked(project) { lsp ->
-          lsp.registerLibrary(file)
-        }
+      AyaLsp.useUnchecked(project) { lsp ->
+        lsp.registerLibrary(file)
       }
     }
   }

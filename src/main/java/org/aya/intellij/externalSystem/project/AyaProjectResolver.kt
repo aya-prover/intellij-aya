@@ -96,6 +96,8 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
   /**
    * Resolve aya project structure to idea project structure.
    * The idea project structure is exactly what you see in `Project Structure - Project Settings - Modules`
+   *
+   * TODO: [projectPath] is documented as the path to the config file of external system, but we got a directory
    */
   override fun resolveProjectInfo(
     id: ExternalSystemTaskId,
