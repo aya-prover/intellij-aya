@@ -6,7 +6,14 @@ def doId {A : Type}
   (a : A)
   (b : A) : A => id a
 
-inductive Nat | zro | suc Nat
 
 def badMatch (n : Nat) : Nat
 | zro => n
+
+inductive Nat | zro | suc Nat
+
+def GoodNat : Nat => Nat::zro
+def +-comm : Nat => Nat::zro
+def + : Nat => Nat::zro
+
+def good : Nat => const Nat +-comm +

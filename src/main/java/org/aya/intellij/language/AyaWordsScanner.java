@@ -15,7 +15,7 @@
  */
 package org.aya.intellij.language;
 
-import com.intellij.lang.cacheBuilder.VersionedWordsScanner;
+import com.intellij.lang.cacheBuilder.DefaultWordsScanner;
 import com.intellij.lang.cacheBuilder.WordOccurrence;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.tree.IElementType;
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * Adapted from {@link com.intellij.lang.cacheBuilder.DefaultWordsScanner}
  * for supporting identifier rules in Aya.
  */
-public class AyaWordsScanner extends VersionedWordsScanner {
+public class AyaWordsScanner extends DefaultWordsScanner {
   private final @NotNull Lexer myLexer;
   private final @NotNull TokenSet myIdentifierTokenSet;
   private final @NotNull TokenSet myCommentTokenSet;
@@ -42,6 +42,7 @@ public class AyaWordsScanner extends VersionedWordsScanner {
    * @param literal the set of token types which represent literals.
    */
   public AyaWordsScanner(@NotNull Lexer lexer, @NotNull TokenSet id, @NotNull TokenSet comment, @NotNull TokenSet literal) {
+    super(lexer, id, comment, literal);
     myLexer = lexer;
     myIdentifierTokenSet = id;
     myCommentTokenSet = comment;
@@ -55,7 +56,10 @@ public class AyaWordsScanner extends VersionedWordsScanner {
 
     IElementType type;
     while ((type = myLexer.getTokenType()) != null) {
+
       if (myIdentifierTokenSet.contains(type)) {
+        occurrence.init(fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE);
+        if (!processor.process(occurrence)) return;
         if (!stripWords(processor, fileText, myLexer.getTokenStart(), myLexer.getTokenEnd(), WordOccurrence.Kind.CODE, occurrence))
           return;
       } else if (myCommentTokenSet.contains(type)) {
@@ -75,29 +79,6 @@ public class AyaWordsScanner extends VersionedWordsScanner {
     @NotNull WordOccurrence.Kind kind,
     @NotNull WordOccurrence occur
   ) {
-    int index = from;
-
-    ScanWordsLoop:
-    while (true) {
-      while (true) {
-        if (index == to) break ScanWordsLoop;
-        char c = text.charAt(index);
-        if (AyaNamesValidator.isAyaIdentifierPart(c) || AyaNamesValidator.isAyaIdentifierStart(c)) {
-          break;
-        }
-        index++;
-      }
-      int wordStart = index;
-      while (true) {
-        index++;
-        if (index == to) break;
-        char c = text.charAt(index);
-        if (!AyaNamesValidator.isAyaIdentifierPart(c)) break;
-      }
-      int wordEnd = index;
-      occur.init(text, wordStart, wordEnd, kind);
-      if (!processor.process(occur)) return false;
-    }
-    return true;
+    return stripWords(processor, text, from, to, kind, occur, false);
   }
 }
