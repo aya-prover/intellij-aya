@@ -32,7 +32,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
   /**
    * Initialize lsp and trying to register library for [settings]
    */
-  fun tryInitializeLsp(settings: AyaExecutionSettings) {
+  private fun tryInitializeLsp(settings: AyaExecutionSettings) {
     runReadAction {
       val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true)
       if (!AyaLsp.isActive(settings.project)) {
@@ -58,7 +58,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
   /**
    * @return whether resolve success, [resolver] will not mutate the [AyaModuleResolver.rootNode] if failed.
    */
-  fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
+  private fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
     return AyaLsp.useUnchecked(settings.project, { false }) { lsp ->
       val rootLibrary = computeReadAction {
         val file = VfsUtil.findFile(settings.linkedProjectPath, true)
@@ -75,12 +75,12 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     }
   }
 
-  fun resolveProjectFileDir(settings: AyaExecutionSettings): Path {
+  private fun resolveProjectFileDir(settings: AyaExecutionSettings): Path {
     return settings.projectFileDir?.toAbsolutePath()
       ?: settings.linkedProjectPath.resolve(AyaConstants.IDEA_PROJECT_FILE_DIR)
   }
 
-  fun createPreviewProjectInfo(projectNode: DataNode<ProjectData>, moduleFileDir: Path, projectPath: Path) {
+  private fun createPreviewProjectInfo(projectNode: DataNode<ProjectData>, moduleFileDir: Path, projectPath: Path) {
     val projectData = projectNode.data
     val moduleId = moduleType.id
 
@@ -91,6 +91,15 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
         projectData.externalName, moduleFileDir.toString(), projectPath.toString(),
       ),
     ).createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPath.toString()))
+  }
+
+  private fun makeProjectNode(projectFileDir: Path, projectPath: Path): DataNode<ProjectData> {
+    val projectName = projectPath.name
+    val projectPathString = projectPath.toString()
+    val projectData = ProjectData(AyaConstants.SYSTEM_ID, projectName, projectFileDir.toString(), projectPathString)
+    return DataNode(ProjectKeys.PROJECT, projectData, null).apply {
+      createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPathString))
+    }
   }
 
   /**
@@ -116,18 +125,14 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     assert(nioProjectPath.isDirectory())      // We will solve other cases when assertion failed
     // TODO: ^what does this mean?
 
+    val linkedProjectPath = settings.linkedProjectPath
     // I am not sure if they are equal, so we need some experiment
-    if (nioProjectPath != settings.linkedProjectPath) {
+    if (nioProjectPath != linkedProjectPath) {
       LOG.error("Assumption Failed")
     }
 
     val projectFileDir = resolveProjectFileDir(settings)
-    val projectData = ProjectData(AyaConstants.SYSTEM_ID, nioProjectPath.name, projectFileDir.toString(), projectPath)
-    val projectNode = DataNode(ProjectKeys.PROJECT, projectData, null).apply {
-      createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPath))
-    }
-
-    val linkedProjectPath = settings.linkedProjectPath
+    val projectNode = makeProjectNode(projectFileDir, nioProjectPath)
 
     if (!isPreviewMode) {
       tryInitializeLsp(settings)
