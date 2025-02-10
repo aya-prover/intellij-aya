@@ -14,6 +14,7 @@ import org.aya.intellij.AyaConstants
 import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.externalSystem.settings.AyaProjectSettings
 import org.aya.intellij.service.AyaSettingService
+import java.nio.file.Path
 
 class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
   companion object {
@@ -52,6 +53,13 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
     )
   }
 
+  private suspend fun confirmUntrustedProject(projectPath: Path, project: Project): Boolean {
+    return TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
+      projectPath, project,
+      IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectPath.fileName),
+    )
+  }
+
   /**
    * @param projectFile a [VirtualFile] to a directory or file that represents an external system project,
    *                    i.e. `build.gradle` or a directory contains it.
@@ -61,12 +69,9 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
 
     val projectDir = getProjectDirectory(projectFile)
     val projectPath = projectDir.toNioPath()
+    val isTrusted = confirmUntrustedProject(projectPath, project)
 
-    if (!TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject(
-        projectPath, project,
-        // FIXME: this line copies from gralde plugin, need some abstract
-        IdeBundle.message("untrusted.project.link.dialog.title", systemId.readableName, projectPath.fileName),
-      )) {
+    if (!isTrusted) {
       return
     }
 
