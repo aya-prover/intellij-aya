@@ -22,7 +22,8 @@ import java.nio.file.Path
  *
  * * external project: a project of external system.
  * * linked project: short for "linked external project"
- * * externalProjectPath/linkedProjectPath: the path to the directory of external system project
+ * * project file: the file that stores all information of an idea project (such as *.iml *.ipr)
+ * * project file directory: the directory that stores project file, it is usually ".idea"
  */
 class AyaExternalSystemManager : ExternalSystemManager<
   AyaProjectSettings,
@@ -65,10 +66,15 @@ class AyaExternalSystemManager : ExternalSystemManager<
     return AyaTaskManager::class.java
   }
 
+  // TODO
+  // https://plugins.jetbrains.com/docs/intellij/external-system-integration.html#auto-import
   override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String? {
     return null
   }
 
+  /**
+   * Used for selecting aya project file (aya.json) in order to linking a project as an aya project
+   */
   override fun getExternalProjectDescriptor(): FileChooserDescriptor {
     return FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
   }

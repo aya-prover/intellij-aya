@@ -6,6 +6,8 @@ import org.aya.intellij.AyaConstants
 import java.nio.file.Path
 
 /**
+ * [AyaExecutionSettings] is used for... execution, see [org.aya.intellij.externalSystem.project.AyaProjectResolver]
+ *
  * All [Path]s are assumed to be absolute
  * @param projectFileDir the path to the directory which stores the project file (such as *.iml or *.ipr), null when creating/importing a project
  */
