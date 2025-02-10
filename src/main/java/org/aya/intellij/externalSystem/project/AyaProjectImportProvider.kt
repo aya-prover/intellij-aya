@@ -4,6 +4,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider
 import com.intellij.openapi.vfs.VirtualFile
+import org.aya.intellij.AyaBundle.message
 import org.aya.intellij.AyaConstants
 import org.aya.intellij.externalSystem.canOpenAyaProject
 import org.aya.intellij.service.AyaProjectImportBuilder
@@ -29,6 +30,6 @@ class AyaProjectImportProvider : AbstractExternalProjectImportProvider(
   }
 
   override fun getFileSample(): String {
-    return AyaConstants.AYA_BUILD_FILE_DESCRIPTION
+    return message("aya.file.type.description", AyaConstants.BUILD_FILE_NAME)
   }
 }
