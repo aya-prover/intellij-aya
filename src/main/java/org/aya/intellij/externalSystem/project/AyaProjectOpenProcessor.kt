@@ -5,11 +5,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.projectImport.ProjectOpenProcessor
-import org.aya.intellij.AyaConstants
 import org.aya.intellij.externalSystem.canOpenAyaProject
 
 class AyaProjectOpenProcessor : ProjectOpenProcessor() {
-  override val name: String = AyaConstants.AYA_NAME
+  override val name: String = AyaBundle.message("aya.name")
 
   override fun canOpenProject(file: VirtualFile): Boolean {
     return canOpenAyaProject(file)

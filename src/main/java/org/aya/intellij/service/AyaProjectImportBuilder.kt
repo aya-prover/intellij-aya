@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.packaging.artifacts.ModifiableArtifactModel
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.projectImport.ProjectImportBuilder
-import org.aya.intellij.AyaConstants
+import org.aya.intellij.AyaBundle
 import org.aya.intellij.externalSystem.ProjectCoroutineScope
 import org.aya.intellij.externalSystem.project.AyaOpenProjectProvider
 import org.aya.intellij.ui.AyaIcons
@@ -34,7 +34,7 @@ class AyaProjectImportBuilder : ProjectImportBuilder<Any>() {
     return mutableListOf()
   }
 
-  override fun getName(): String = AyaConstants.AYA_NAME
+  override fun getName(): String = AyaBundle.message("aya.name")
 
   // TODO: better icon
   override fun getIcon(): Icon = AyaIcons.AYA_FILE
