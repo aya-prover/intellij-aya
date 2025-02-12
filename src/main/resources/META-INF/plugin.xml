@@ -110,17 +110,4 @@
     <notificationGroup displayType="TOOL_WINDOW" id="org.aya.intellij.notification.AyaNotification.TOOL_WINDOW"/>
     <editorNotificationProvider implementation="org.aya.intellij.notification.InLibraryChecker"/>
   </extensions>
-
-  <actions>
-    <!-- Debugging Actions: Tools - Internal Actions - Aya -->
-    <group
-      id="org.aya.intellij.debug.DebugActionGroup"
-      text="Aya"
-      popup="true">
-      <add-to-group group-id="Internal" anchor="last"/>
-    </group>
-    <action class="org.aya.intellij.actions.internal.RefreshAllAyaAction">
-      <add-to-group group-id="org.aya.intellij.debug.DebugActionGroup" anchor="last" />
-    </action>
-  </actions>
 </idea-plugin>

@@ -17,7 +17,6 @@ import org.aya.intellij.AyaConstants
 import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
 import org.aya.intellij.util.computeReadAction
-import org.aya.intellij.util.runReadAction
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
@@ -33,23 +32,21 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    * Initialize lsp and trying to register library for [settings]
    */
   private fun tryInitializeLsp(settings: AyaExecutionSettings) {
-    runReadAction {
-      val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true)
-      if (!AyaLsp.isActive(settings.project)) {
-        LOG.info("Initializing Lsp")
-        AyaLsp.start(settings.project)
-          .registerLibrary(ayaProjectDir ?: return@runReadAction)
-      } else {
-        ayaProjectDir ?: return@runReadAction
+    val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true)
+    if (!AyaLsp.isActive(settings.project)) {
+      LOG.info("Initializing Lsp")
+      AyaLsp.start(settings.project)
+        .registerLibrary(ayaProjectDir ?: return)
+    } else {
+      ayaProjectDir ?: return
 
-        LOG.info("Lsp was initialized")
-        AyaLsp.useUnchecked(settings.project) { lsp ->
-          if (!lsp.isLibraryLoaded(ayaProjectDir)) {
-            LOG.info("Loading library: ${ayaProjectDir.toNioPath()}")
-            lsp.registerLibrary(ayaProjectDir)
-          } else {
-            LOG.info("Library was loaded: ${ayaProjectDir.toNioPath()}")
-          }
+      LOG.info("Lsp was initialized")
+      AyaLsp.useUnchecked(settings.project) { lsp ->
+        if (!lsp.isLibraryLoaded(ayaProjectDir)) {
+          LOG.info("Loading library: ${ayaProjectDir.toNioPath()}")
+          lsp.registerLibrary(ayaProjectDir)
+        } else {
+          LOG.info("Library was loaded: ${ayaProjectDir.toNioPath()}")
         }
       }
     }

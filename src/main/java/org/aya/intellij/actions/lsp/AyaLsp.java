@@ -35,6 +35,7 @@ import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.service.DistillerService;
 import org.aya.intellij.service.ProblemService;
+import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
@@ -43,8 +44,8 @@ import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.tyck.error.Goal;
-import org.aya.util.error.WithPos;
-import org.aya.util.prettier.PrettierOptions;
+import org.aya.util.PrettierOptions;
+import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Problem;
 import org.aya.util.reporter.Reporter;
 import org.intellij.lang.annotations.MagicConstant;
@@ -250,24 +251,15 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     });
   }
 
-  /// Returns the project directory of {@param file}
-  ///
-  /// @param file the aya project directory or "aya.json" file, this function will NOT validate the argument.
-  /// @see com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider#getProjectDirectory(VirtualFile)
-  public static @NotNull VirtualFile getProjectDirectory(@NotNull VirtualFile file) {
-    return file.isDirectory()
-      ? file
-      : file.getParent();     // never null, as [file] is a file, it must belong to some directory.
-  }
-
   public boolean isLibraryLoaded(@NotNull VirtualFile projectOrFile) {
     return getLoadedLibrary(projectOrFile) != null;
   }
 
   public @Nullable LibraryOwner getLoadedLibrary(@NotNull VirtualFile projectOrFile) {
     if (JB.fileSupported(projectOrFile)) {
-      var path = JB.canonicalize(getProjectDirectory(projectOrFile));
-      return server.libraries().findFirst(t -> t.underlyingLibrary().libraryRoot().equals(path)).getOrNull();
+      var path = ProjectPath.resolve(projectOrFile.toNioPath());
+      if (path == null) return null;
+      return server.getRegisteredLibrary(path);
     }
 
     return null;
@@ -298,11 +290,6 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   public @Nullable LibrarySource sourceFileOf(@NotNull AyaPsiElement element) {
     var vf = element.getContainingFile().getVirtualFile();
     return JB.fileSupported(vf) ? server.find(JB.canonicalize(vf)) : null;
-  }
-
-  // TODO: should not use this
-  public @Nullable LibraryOwner getEntryLibrary() {
-    return server.libraries().getFirstOrNull();
   }
 
   /// region LSP Actions

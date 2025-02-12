@@ -12,8 +12,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import kala.control.Option;
 import org.aya.ide.util.XY;
 import org.aya.util.FileUtil;
-import org.aya.util.error.SourceFile;
-import org.aya.util.error.SourcePos;
+import org.aya.util.position.SourceFile;
+import org.aya.util.position.SourcePos;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
