@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import org.aya.intellij.AyaConstants
 import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
-import org.aya.intellij.util.computeReadAction
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
@@ -57,12 +56,8 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    */
   private fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
     return AyaLsp.useUnchecked(settings.project, { false }) { lsp ->
-      val rootLibrary = computeReadAction {
-        val file = VfsUtil.findFile(settings.linkedProjectPath, true)
-          ?: return@computeReadAction null
-        lsp.getLoadedLibrary(file)
-      }
-
+      val file = VfsUtil.findFile(settings.linkedProjectPath, true)
+      val rootLibrary = file?.let(lsp::getLoadedLibrary)
       if (rootLibrary == null) {
         false
       } else {
@@ -101,7 +96,9 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
   /**
    * Resolve aya project structure to idea project structure.
-   * The idea project structure is exactly what you see in `Project Structure - Project Settings - Modules`
+   * The idea project structure is exactly what you see in `Project Structure - Project Settings - Modules`.
+   *
+   * This method must be thread-safe.
    *
    * TODO: [projectPath] is documented as the path to the config file of external system, but we got a directory
    */
@@ -125,7 +122,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     val linkedProjectPath = settings.linkedProjectPath
     // I am not sure if they are equal, so we need some experiment
     if (nioProjectPath != linkedProjectPath) {
-      LOG.error("Assumption Failed")
+      throw IllegalStateException("projectPath=$nioProjectPath but linkedProjectPath=$linkedProjectPath")
     }
 
     val projectFileDir = resolveProjectFileDir(settings)
