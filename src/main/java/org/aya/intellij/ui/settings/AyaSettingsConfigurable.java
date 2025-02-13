@@ -24,19 +24,19 @@ public class AyaSettingsConfigurable implements Configurable {
   @Override public boolean isModified() {
     if (ui == null) return false;
     var state = AyaSettingService.getInstance();
-    return state.useAyaLsp != ui.useAyaLsp.isSelected();
+    return state.ayaLspState != ui.comboBoxUseAyaLsp.getSelectedItem();
   }
 
   @Override public void apply() {
     if (ui == null) return;
     var state = AyaSettingService.getInstance();
-    state.useAyaLsp = ui.useAyaLsp.isSelected();
+    state.ayaLspState = (AyaSettingService.AyaState) ui.comboBoxUseAyaLsp.getSelectedItem();
   }
 
   @Override public void reset() {
     if (ui == null) return;
     var state = AyaSettingService.getInstance();
-    ui.useAyaLsp.setSelected(state.useAyaLsp);
+    ui.comboBoxUseAyaLsp.setSelectedItem(state.ayaLspState);
   }
 
   @Override public void disposeUIResources() {

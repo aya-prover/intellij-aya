@@ -1,0 +1,5 @@
+def  id {A : Type} (a : A) : A => a
+
+def const {A : Type} (B : Type) (a : A) : B -> A => fn _ => a
+
+def doId {A : Type} (a : A) : A => id a

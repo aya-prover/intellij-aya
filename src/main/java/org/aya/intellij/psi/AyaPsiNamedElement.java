@@ -6,7 +6,7 @@ import org.aya.intellij.actions.lsp.AyaLsp;
 import org.aya.syntax.concrete.stmt.QualifiedID;
 import org.aya.syntax.ref.DefVar;
 import org.aya.syntax.ref.LocalVar;
-import org.aya.util.error.WithPos;
+import org.aya.util.position.WithPos;
 import org.jetbrains.annotations.NotNull;
 
 /** elements that introduce a referable name */
