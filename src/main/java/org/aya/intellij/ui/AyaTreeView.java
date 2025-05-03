@@ -247,7 +247,7 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
       AyaSettingService.getInstance().autoScrollToSource = state;
     }
 
-    @Override protected void scrollToSource(Component tree) {
+    @Override protected void scrollToSource(@NotNull Component tree) {
       AyaTreeView.this.scrollToEditor(false);
     }
   }
