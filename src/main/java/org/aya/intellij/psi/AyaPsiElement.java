@@ -58,7 +58,7 @@ public interface AyaPsiElement extends NavigatablePsiElement, Navigatable {
     var subModule = modulePsi != null
       ? SeqView.of(modulePsi.getWeakId().getText())
       : SeqView.<String>empty();
-    return subModule.toImmutableSeq();
+    return subModule.toSeq();
   }
 
   default @NotNull ImmutableSeq<String> containingModule() {

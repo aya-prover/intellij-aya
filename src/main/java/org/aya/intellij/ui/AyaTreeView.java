@@ -62,7 +62,7 @@ public class AyaTreeView<T extends AyaTreeView.Node<T>> extends Tree {
     }
 
     public void commit() {
-      treeView.updateNode(root().toImmutableSeq());
+      treeView.updateNode(root().toSeq());
     }
   }
 

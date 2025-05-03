@@ -158,7 +158,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   void fireVfsEvent(boolean before, @NotNull ImmutableSeq<? extends VFileEvent> events) {
     var lspEvents = events.view()
       .flatMap(e -> processVfsEvent(before, e))
-      .toImmutableSeq();
+      .toSeq();
     Log.d("[intellij-aya] =================== FILE EVENTS ====================");
     if (lspEvents.isNotEmpty()) {
       Log.d("[intellij-aya] Sending these file change events to LSP:");

@@ -25,18 +25,18 @@ public class AyaPsiFile extends PsiFileBase implements AyaPsiElement {
 
     // If the file only exists in memory, the file name represents the module name.
     var virtualFile = getVirtualFile();
-    if (virtualFile == null) return fileModule.toImmutableSeq();
+    if (virtualFile == null) return fileModule.toSeq();
 
     // Otherwise, find the relative path to source root
     var indexer = ProjectFileIndex.getInstance(getProject());
     var sourceRoot = indexer.getSourceRootForFile(virtualFile);
-    if (sourceRoot == null) return fileModule.toImmutableSeq();
+    if (sourceRoot == null) return fileModule.toSeq();
 
     var relativePath = VfsUtilCore.getRelativePath(virtualFile, sourceRoot, VfsUtilCore.VFS_SEPARATOR_CHAR);
-    if (relativePath == null) return fileModule.toImmutableSeq();
+    if (relativePath == null) return fileModule.toSeq();
     return ImmutableSeq.of(relativePath.split(VfsUtilCore.VFS_SEPARATOR)).view()
       .dropLast(1)
       .concat(fileModule)
-      .toImmutableSeq();
+      .toSeq();
   }
 }
