@@ -36,7 +36,6 @@ plugins {
 group = properties("pluginGroup")
 version = deps.getProperty("version.project")
 
-// Configure project's dependencies
 repositories {
   mavenLocal()
   mavenCentral()
