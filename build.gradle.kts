@@ -17,14 +17,14 @@ var deps: Properties by rootProject.ext
 deps = Properties()
 file("gradle/deps.properties").reader().use(deps::load)
 
-val javaVersion = properties("javaVersion").get().toInt()
+val javaVersion = properties("javaVersion").get()
 val ayaVersion = deps.getProperty("version.aya").toString()
 
 plugins {
   // Java support
   java
   // Kotlin support
-  kotlin("jvm") version "2.1.0"
+  kotlin("jvm") version "2.2.0-Beta2"
   // https://github.com/JetBrains/gradle-intellij-plugin
   id("org.jetbrains.intellij.platform") version "2.5.0"
   // https://github.com/JetBrains/gradle-changelog-plugin
@@ -126,7 +126,7 @@ tasks {
     options.apply {
       encoding = "UTF-8"
       isDeprecation = true
-      release.set(javaVersion)
+      release.set(javaVersion.toInt())
       compilerArgs.addAll(listOf("-Xlint:unchecked", "--enable-preview"))
     }
 
@@ -141,7 +141,7 @@ tasks {
   }
 
   withType<KotlinCompile>().configureEach {
-    compilerOptions.jvmTarget.set(JvmTarget.JVM_22)
+    compilerOptions.jvmTarget.set(JvmTarget.fromTarget(javaVersion))
     dependsOn(genAyaPsiParser)
 
     doLast {
