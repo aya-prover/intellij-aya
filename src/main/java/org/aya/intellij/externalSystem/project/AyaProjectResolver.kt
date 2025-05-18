@@ -29,9 +29,12 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
   /**
    * Initialize lsp and trying to register library for [settings]
+   *
+   * @implNote this method should be thread-safe
    */
   private fun tryInitializeLsp(settings: AyaExecutionSettings) {
     val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true)
+    // FIXME: double initialization when multi-threading
     if (!AyaLsp.isActive(settings.project)) {
       LOG.info("Initializing Lsp")
       AyaLsp.start(settings.project)
