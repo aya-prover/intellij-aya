@@ -20,6 +20,10 @@ import kala.collection.mutable.MutableSet;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.CoroutineDispatcher;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.ThreadPoolDispatcherKt;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
@@ -55,6 +59,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -69,7 +74,7 @@ import java.util.function.Supplier;
  * for example, which makes use of {@link AyaPsiReference#resolve()}
  * instead of querying the LSP for highlight results.
  */
-public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguageClient {
+public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguageClient, CoroutineScope {
   private static final @NotNull Key<AyaLsp> AYA_LSP = Key.create("intellij.aya.lsp");
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
   private final @NotNull AyaLanguageServer server;
@@ -106,7 +111,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
    * A fallback behavior when LSP is not available is required.
    * Use {@link #use(Project, CheckedSupplier, CheckedFunction)} instead.
    */
-  private static @Nullable AyaLsp of(@NotNull Project project) {
+  static @Nullable AyaLsp of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
   }
 
@@ -425,4 +430,15 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   @Override public @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {
     return new AyaIJParserImpl(project, reporter);
   }
+
+  // region Coroutine
+
+  private final @NotNull CoroutineDispatcher dispatcher = ThreadPoolDispatcherKt.newSingleThreadContext(Objects.toIdentityString(this));
+
+  @Override
+  public @NotNull CoroutineContext getCoroutineContext() {
+    return dispatcher;
+  }
+
+  // endreigon Coroutine
 }
