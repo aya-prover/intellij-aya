@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import org.aya.intellij.externalSystem.project.AyaOpenProjectProvider
 
 // copied from gradle plugin
+// https://plugins.jetbrains.com/docs/intellij/coroutine-scopes.html
 @Service(Service.Level.PROJECT)
 class ProjectCoroutineScope(val coroutineScope: CoroutineScope) {
   companion object {

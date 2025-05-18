@@ -89,6 +89,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return lsp;
   }
 
+  /// Start [AyaLsp] for {@param project}, note that this method is NOT thread-safe, see {@link AyaStartupKt#startLsp}
   public static @NotNull AyaLsp start(@NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
     var lsp = new AyaLsp(project);

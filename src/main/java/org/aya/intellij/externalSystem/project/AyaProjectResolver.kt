@@ -13,8 +13,12 @@ import com.intellij.openapi.externalSystem.service.project.ExternalSystemProject
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.vfs.VfsUtil
+import kotlinx.coroutines.async
+import kotlinx.coroutines.runBlocking
 import org.aya.intellij.AyaConstants
-import org.aya.intellij.actions.lsp.AyaLsp
+import org.aya.intellij.actions.lsp.startLsp
+import org.aya.intellij.actions.lsp.useLsp
+import org.aya.intellij.externalSystem.ProjectCoroutineScope
 import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
@@ -32,24 +36,16 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    *
    * @implNote this method should be thread-safe
    */
-  private fun tryInitializeLsp(settings: AyaExecutionSettings) {
-    val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true)
-    // FIXME: double initialization when multi-threading
-    if (!AyaLsp.isActive(settings.project)) {
-      LOG.info("Initializing Lsp")
-      AyaLsp.start(settings.project)
-        .registerLibrary(ayaProjectDir ?: return)
-    } else {
-      ayaProjectDir ?: return
-
-      LOG.info("Lsp was initialized")
-      AyaLsp.useUnchecked(settings.project) { lsp ->
-        if (!lsp.isLibraryLoaded(ayaProjectDir)) {
-          LOG.info("Loading library: ${ayaProjectDir.toNioPath()}")
-          lsp.registerLibrary(ayaProjectDir)
-        } else {
-          LOG.info("Library was loaded: ${ayaProjectDir.toNioPath()}")
-        }
+  private suspend fun tryInitializeLsp(settings: AyaExecutionSettings) {
+    val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true) ?: return
+    LOG.info("Initializing Lsp")
+    startLsp(settings.project)
+    settings.project.useLsp { lsp ->
+      if (!lsp.isLibraryLoaded(ayaProjectDir)) {
+        LOG.info("Loading library: ${ayaProjectDir.toNioPath()}")
+        lsp.registerLibrary(ayaProjectDir)
+      } else {
+        LOG.info("Library was loaded: ${ayaProjectDir.toNioPath()}")
       }
     }
   }
@@ -57,17 +53,15 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
   /**
    * @return whether resolve success, [resolver] will not mutate the [AyaModuleResolver.rootNode] if failed.
    */
-  private fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
-    return AyaLsp.useUnchecked(settings.project, { false }) { lsp ->
-      val file = VfsUtil.findFile(settings.linkedProjectPath, true)
-      val rootLibrary = file?.let(lsp::getLoadedLibrary)
-      if (rootLibrary == null) {
-        false
-      } else {
-        resolver.resolve(null, rootLibrary)
-        true
-      }
+  private suspend fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
+    val file = VfsUtil.findFile(settings.linkedProjectPath, true) ?: return false
+    val rootLibrary = settings.project.useLsp({ null }) { lsp ->
+      lsp.getLoadedLibrary(file)
     }
+
+    assert(rootLibrary != null)
+    resolver.resolve(null, rootLibrary!!)
+    return true
   }
 
   private fun resolveProjectFileDir(settings: AyaExecutionSettings): Path {
@@ -132,10 +126,15 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     val projectNode = makeProjectNode(projectFileDir, nioProjectPath)
 
     if (!isPreviewMode) {
-      tryInitializeLsp(settings)
-      val moduleResolver = AyaModuleResolver(projectNode, moduleType.id, projectFileDir.toString(), linkedProjectPath.toString())
-      val success = doResolveModules(settings, moduleResolver)
-      if (success) return projectNode
+      val job = ProjectCoroutineScope.getCoroutineScope(settings.project).async {
+        tryInitializeLsp(settings)
+        val moduleResolver = AyaModuleResolver(projectNode, moduleType.id, projectFileDir.toString(), linkedProjectPath.toString())
+        val success = doResolveModules(settings, moduleResolver)
+        projectNode.takeIf { success }
+      }
+
+      val result = runBlocking { job.await() }
+      if (result != null) return result
       // failed, use preview project info
     }
 
