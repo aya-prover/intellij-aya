@@ -16,11 +16,12 @@ import com.intellij.openapi.vfs.VfsUtil
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.aya.intellij.AyaConstants
-import org.aya.intellij.actions.lsp.startLsp
+import org.aya.intellij.actions.lsp.AyaLsp
 import org.aya.intellij.actions.lsp.useLsp
 import org.aya.intellij.externalSystem.ProjectCoroutineScope
 import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
 import java.nio.file.Path
+import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
@@ -39,7 +40,10 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
   private suspend fun tryInitializeLsp(settings: AyaExecutionSettings) {
     val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true) ?: return
     LOG.info("Initializing Lsp")
-    startLsp(settings.project)
+    if (!AyaLsp.isActive(settings.project)) {
+      AyaLsp.start(settings.project)
+    }
+
     settings.project.useLsp { lsp ->
       if (!lsp.isLibraryLoaded(ayaProjectDir)) {
         LOG.info("Loading library: ${ayaProjectDir.toNioPath()}")
@@ -98,6 +102,10 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    * This method must be thread-safe.
    *
    * TODO: [projectPath] is documented as the path to the config file of external system, but we got a directory
+   * @param projectPath the project path to the external system project.
+   *                    Note that the path may not exists, for example, the project is deleted externally
+   *                    and idea is trying to resolve that project
+   *                    according to the module data stored in `.idea`.
    */
   override fun resolveProjectInfo(
     id: ExternalSystemTaskId,
@@ -113,8 +121,9 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     if (settings == null) return null
 
     val nioProjectPath = Path.of(projectPath).toAbsolutePath()
+    if (!nioProjectPath.exists()) return null
+
     assert(nioProjectPath.isDirectory())      // We will solve other cases when assertion failed
-    // TODO: ^what does this mean?
 
     val linkedProjectPath = settings.linkedProjectPath
     // I am not sure if they are equal, so we need some experiment
