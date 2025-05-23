@@ -123,7 +123,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     assert(nioProjectPath.isDirectory())      // We will solve other cases when assertion failed
 
     val linkedProjectPath = settings.linkedProjectPath
-    // I am not sure if they are equal, so we need some experiment
+    // I am not sure if they are equal, so we need some testing
     if (nioProjectPath != linkedProjectPath) {
       throw IllegalStateException("projectPath=$nioProjectPath but linkedProjectPath=$linkedProjectPath")
     }

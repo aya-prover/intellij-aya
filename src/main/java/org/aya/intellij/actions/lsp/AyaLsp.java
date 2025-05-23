@@ -81,6 +81,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private final @NotNull Project project;
   private final @NotNull MutableSet<VirtualFile> librarySrcPathCache = MutableSet.create();
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
+  /// TODO: reuse [AyaLsp#dispatcher]?
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
   public static @NotNull AyaLsp start(@NotNull Project project, @NotNull VirtualFile projectOrFile) {
