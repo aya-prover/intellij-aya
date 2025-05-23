@@ -24,7 +24,7 @@ plugins {
   // Java support
   java
   // Kotlin support
-  kotlin("jvm") version "2.1.0"
+  kotlin("jvm") version "2.1.21"
   // https://github.com/JetBrains/gradle-intellij-plugin
   id("org.jetbrains.intellij.platform") version "2.5.0"
   // https://github.com/JetBrains/gradle-changelog-plugin
@@ -141,7 +141,8 @@ tasks {
   }
 
   withType<KotlinCompile>().configureEach {
-    compilerOptions.jvmTarget.set(JvmTarget.JVM_22)
+    val target = JvmTarget.fromTarget(javaVersion.toString())
+    compilerOptions.jvmTarget.set(target)
     dependsOn(genAyaPsiParser)
 
     doLast {

@@ -21,8 +21,8 @@ import java.nio.file.Path
  * ## Terms
  *
  * * external project: a project of external system.
- * * linked project: short for "linked external project"
- * * project file: the file that stores all information of an idea project (such as *.iml *.ipr)
+ * * linked project: short for "linked external project" (linked- means imported to intellij)
+ * * project file: the file that stores all information of an idea project (such as *.iml or *.ipr)
  * * project file directory: the directory that stores project file, it is usually ".idea"
  */
 class AyaExternalSystemManager : ExternalSystemManager<

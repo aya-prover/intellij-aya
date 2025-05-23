@@ -30,6 +30,7 @@ public class AyaSettingsConfigurable implements Configurable {
   @Override public void apply() {
     if (ui == null) return;
     var state = AyaSettingService.getInstance();
+    // TODO: enable or disable lsp according to the settings?
     state.ayaLspState = (AyaSettingService.AyaState) ui.comboBoxUseAyaLsp.getSelectedItem();
   }
 

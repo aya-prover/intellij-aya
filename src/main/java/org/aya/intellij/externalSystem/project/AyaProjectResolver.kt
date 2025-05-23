@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import kotlinx.coroutines.async
 import kotlinx.coroutines.runBlocking
 import org.aya.intellij.AyaConstants
-import org.aya.intellij.actions.lsp.AyaLsp
+import org.aya.intellij.actions.lsp.startLsp
 import org.aya.intellij.actions.lsp.useLsp
 import org.aya.intellij.externalSystem.ProjectCoroutineScope
 import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
@@ -40,10 +40,8 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
   private suspend fun tryInitializeLsp(settings: AyaExecutionSettings) {
     val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true) ?: return
     LOG.info("Initializing Lsp")
-    if (!AyaLsp.isActive(settings.project)) {
-      AyaLsp.start(settings.project)
-    }
 
+    startLsp(settings.project)
     settings.project.useLsp { lsp ->
       if (!lsp.isLibraryLoaded(ayaProjectDir)) {
         LOG.info("Loading library: ${ayaProjectDir.toNioPath()}")
@@ -59,13 +57,12 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    */
   private suspend fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
     val file = VfsUtil.findFile(settings.linkedProjectPath, true) ?: return false
-    val rootLibrary = settings.project.useLsp({ null }) { lsp ->
-      lsp.getLoadedLibrary(file)
+    // failed if: 1) lsp is inactivate 2) library not found
+    return settings.project.useLsp({ false }) { lsp ->
+      val rootLibrary = lsp.getLoadedLibrary(file) ?: return@useLsp false
+      resolver.resolve(null, rootLibrary)
+      true
     }
-
-    assert(rootLibrary != null)
-    resolver.resolve(null, rootLibrary!!)
-    return true
   }
 
   private fun resolveProjectFileDir(settings: AyaExecutionSettings): Path {
