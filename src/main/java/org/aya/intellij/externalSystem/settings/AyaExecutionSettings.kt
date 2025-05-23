@@ -10,11 +10,12 @@ import java.nio.file.Path
  *
  * All [Path]s are assumed to be absolute
  * @param projectFileDir the path to the directory which stores the project file (such as *.iml or *.ipr), null when creating/importing a project
+ * @param linkedExternalProjectPath the path to the external project, the file may not exist.
  */
 class AyaExecutionSettings(
-  var project: Project,
-  var projectFileDir: Path?,
-  var linkedProjectPath: Path
+  val project: Project,
+  val projectFileDir: Path?,
+  val linkedExternalProjectPath: Path,
 ) : ExternalSystemExecutionSettings() {
-  val buildFilePath: Path get() = linkedProjectPath.resolve(AyaConstants.BUILD_FILE_NAME)
+  val buildFilePath: Path get() = linkedExternalProjectPath.resolve(AyaConstants.BUILD_FILE_NAME)
 }

@@ -1,7 +1,6 @@
 package org.aya.intellij.externalSystem.project
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
@@ -38,7 +37,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    * @implNote this method should be thread-safe
    */
   private suspend fun tryInitializeLsp(settings: AyaExecutionSettings) {
-    val ayaProjectDir = VfsUtil.findFile(settings.linkedProjectPath, true) ?: return
+    val ayaProjectDir = VfsUtil.findFile(settings.linkedExternalProjectPath, true) ?: return
     LOG.info("Initializing Lsp")
 
     startLsp(settings.project)
@@ -56,7 +55,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    * @return whether resolve success, [resolver] will not mutate the [AyaModuleResolver.rootNode] if failed.
    */
   private suspend fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
-    val file = VfsUtil.findFile(settings.linkedProjectPath, true) ?: return false
+    val file = VfsUtil.findFile(settings.linkedExternalProjectPath, true) ?: return false
     // failed if: 1) lsp is inactivate 2) library not found
     return settings.project.useLsp({ false }) { lsp ->
       val rootLibrary = lsp.getLoadedLibrary(file) ?: return@useLsp false
@@ -67,7 +66,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
   private fun resolveProjectFileDir(settings: AyaExecutionSettings): Path {
     return settings.projectFileDir?.toAbsolutePath()
-      ?: settings.linkedProjectPath.resolve(AyaConstants.IDEA_PROJECT_FILE_DIR)
+      ?: settings.linkedExternalProjectPath.resolve(AyaConstants.IDEA_PROJECT_FILE_DIR)
   }
 
   private fun createPreviewProjectInfo(projectNode: DataNode<ProjectData>, moduleFileDir: Path, projectPath: Path) {
@@ -98,7 +97,8 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    *
    * This method must be thread-safe.
    *
-   * TODO: [projectPath] is documented as the path to the config file of external system, but we got a directory
+   * TODO: [projectPath] is documented as the path to the config file of external system, but we got a directory.
+   *       ^ [projectPath] may comes from [AyaOpenProjectProvider.linkProject] which provides a directory.
    * @param projectPath the project path to the external system project.
    *                    Note that the path may not exists, for example, the project is deleted externally
    *                    and idea is trying to resolve that project
@@ -109,7 +109,6 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     projectPath: String,
     isPreviewMode: Boolean,
     settings: AyaExecutionSettings?,
-    policy: ProjectResolverPolicy?,
     listener: ExternalSystemTaskNotificationListener,
   ): DataNode<ProjectData>? {
     LOG.info("Resolving project $projectPath with isPreviewMode=$isPreviewMode")
@@ -122,7 +121,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
     assert(nioProjectPath.isDirectory())      // We will solve other cases when assertion failed
 
-    val linkedProjectPath = settings.linkedProjectPath
+    val linkedProjectPath = settings.linkedExternalProjectPath
     // I am not sure if they are equal, so we need some testing
     if (nioProjectPath != linkedProjectPath) {
       throw IllegalStateException("projectPath=$nioProjectPath but linkedProjectPath=$linkedProjectPath")
