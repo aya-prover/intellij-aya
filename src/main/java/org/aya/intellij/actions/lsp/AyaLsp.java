@@ -1,12 +1,14 @@
 package org.aya.intellij.actions.lsp;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.PsiElement;
@@ -17,6 +19,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
+import kala.control.Option;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
@@ -29,8 +32,10 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.Constants;
 import org.aya.ide.Resolver;
+import org.aya.ide.action.Completion;
 import org.aya.ide.action.GotoDefinition;
 import org.aya.intellij.AyaBundle;
+import org.aya.intellij.actions.completion.CompletionsKt;
 import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.notification.AyaNotification;
 import org.aya.intellij.psi.AyaPsiElement;
@@ -296,6 +301,12 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   public @Nullable LibrarySource sourceFileOf(@NotNull AyaPsiElement element) {
     var vf = element.getContainingFile().getVirtualFile();
+    // may exists in memory, try originalFile
+    if (vf == null) {
+      vf = VirtualFileUtil.originalFile(element.getContainingFile().getViewProvider().getVirtualFile());
+    }
+
+    if (vf == null) return null;
     return JB.fileSupported(vf) ? server.find(JB.canonicalize(vf)) : null;
   }
 
@@ -380,7 +391,26 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       .valuesView()
       .flatMap(Candidate::getAll)
       .mapNotNullTo(list, c -> c instanceof DefVar<?,?> d ? d : null);
+
     return list.view();
+  }
+
+  public @NotNull LookupElement[] collectCompletionItem(@NotNull AyaPsiElement element) {
+    var file = sourceFileOf(element);
+    if (file == null) return LookupElement.EMPTY_ARRAY;
+
+    var xy = JB.toXY(element);
+    var completion = new Completion(file, xy, ImmutableSeq.empty(), true)
+      .compute();
+
+    var local = Option.ofNullable(completion.localContext())
+      .map(it -> it.view().mapIndexed((idx, item) -> CompletionsKt.toLookupElement(item, idx)))
+      .getOrDefault(SeqView.empty());
+    var top = Option.ofNullable(completion.topLevelContext())
+      .map(it -> it.view().map(item -> CompletionsKt.toLookupElement(item, -1)))
+      .getOrDefault(SeqView.empty());
+
+    return local.concat(top).toArray(LookupElement.class);
   }
 
   /// endregion LSP Actions
