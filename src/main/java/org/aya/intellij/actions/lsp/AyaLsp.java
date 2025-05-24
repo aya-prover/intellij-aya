@@ -19,7 +19,6 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
 import kala.collection.mutable.MutableSet;
-import kala.control.Option;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
@@ -32,7 +31,6 @@ import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.Constants;
 import org.aya.ide.Resolver;
-import org.aya.ide.action.Completion;
 import org.aya.ide.action.GotoDefinition;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.actions.completion.CompletionsKt;
@@ -44,6 +42,7 @@ import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.service.DistillerService;
 import org.aya.intellij.service.ProblemService;
+import org.aya.lsp.actions.CompletionProvider;
 import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
@@ -400,17 +399,8 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     if (file == null) return LookupElement.EMPTY_ARRAY;
 
     var xy = JB.toXY(element);
-    var completion = new Completion(file, xy, ImmutableSeq.empty(), true)
-      .compute();
-
-    var local = Option.ofNullable(completion.localContext())
-      .map(it -> it.view().mapIndexed((idx, item) -> CompletionsKt.toLookupElement(item, idx)))
-      .getOrDefault(SeqView.empty());
-    var top = Option.ofNullable(completion.topLevelContext())
-      .map(it -> it.view().map(item -> CompletionsKt.toLookupElement(item, -1)))
-      .getOrDefault(SeqView.empty());
-
-    return local.concat(top).toArray(LookupElement.class);
+    var result = CompletionProvider.completion(file, xy, doc -> doc.easyToString());
+    return CompletionsKt.toLookupElements(result);
   }
 
   /// endregion LSP Actions
