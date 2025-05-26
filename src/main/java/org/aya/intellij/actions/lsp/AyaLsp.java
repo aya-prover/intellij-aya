@@ -394,9 +394,9 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return list.view();
   }
 
-  public @NotNull LookupElement[] collectCompletionItem(@NotNull AyaPsiElement element) {
+  public @NotNull ImmutableSeq<LookupElement> collectCompletionItem(@NotNull AyaPsiElement element) {
     var file = sourceFileOf(element);
-    if (file == null) return LookupElement.EMPTY_ARRAY;
+    if (file == null) return ImmutableSeq.empty();
 
     var xy = JB.toXY(element);
     var result = CompletionProvider.completion(file, xy, doc -> doc.easyToString());
