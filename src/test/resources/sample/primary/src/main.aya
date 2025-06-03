@@ -6,7 +6,6 @@ def doId {A : Type}
   (a : A)
   (b : A) : A => id a
 
-
 def badMatch (n : Nat) : Nat
 | zro => n
 
@@ -17,3 +16,7 @@ def +-comm : Nat => Nat::zro
 def + : Nat => Nat::zro
 
 def good : Nat => const Nat +-comm +
+
+def add Nat Nat : Nat
+| Nat::zro, b => b
+| Nat::suc a, b => Nat::suc (add a b)

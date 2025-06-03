@@ -7,8 +7,10 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.icons.AllIcons
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.patterns.PlatformPatterns
+import com.intellij.patterns.StandardPatterns
 import kala.collection.immutable.ImmutableSeq
+import org.aya.parser.AyaPsiElementTypes
 import org.intellij.lang.annotations.MagicConstant
 import org.javacs.lsp.CompletionItem
 import org.javacs.lsp.CompletionItemKind
@@ -67,13 +69,36 @@ fun CompletionItem.toLookupElement(priority: Double): LookupElement {
   }
 }
 
+/**
+ * Also see the constants in [com.intellij.codeInsight.lookup.Lookup]
+ */
 object WhitespaceInsertHandler : InsertHandler<LookupElement> {
-  override fun handleInsert(ctx: InsertionContext, item: LookupElement) {
-    // the completion already insert item, we need to insert a whitespace if necessary
-    val nextToken = ctx.file.findElementAt(ctx.tailOffset)
+  /**
+   * Includes only the end part of delimiters and whitespace
+   *
+   * @see org.aya.parser.AyaParserDefinitionBase.DELIMITERS
+   */
+  val DELIMITERS = StandardPatterns.or(
+    PlatformPatterns.psiElement(AyaPsiElementTypes.RPAREN),
+    PlatformPatterns.psiElement(AyaPsiElementTypes.RBRACE),
+    PlatformPatterns.psiElement().whitespace(),
+  )
 
-    if (!(nextToken == null || nextToken is PsiWhiteSpace)) {
-      ctx.document.insertString(ctx.tailOffset, " ")
+  override fun handleInsert(ctx: InsertionContext, item: LookupElement) {
+    val document = ctx.document
+    val file = ctx.file
+    val editor = ctx.editor
+    val tailOffset = ctx.tailOffset
+
+    // ctx.completionChar
+    // Completion Character means which character triggers a completion (not providing completion list, but inserting string)
+
+    // the completion already insert item, we need to insert a whitespace if necessary
+    val nextToken = file.findElementAt(tailOffset)
+
+    if (!DELIMITERS.accepts(nextToken)) {
+      document.insertString(tailOffset, " ")
+      editor.caretModel.moveToOffset(tailOffset + 1)
     }
   }
 }
