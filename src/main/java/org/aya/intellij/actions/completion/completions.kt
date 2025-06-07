@@ -29,8 +29,9 @@ fun CompletionList.toLookupElements(): ImmutableSeq<LookupElement> {
  * @see PrioritizedLookupElement
  */
 fun CompletionItem.toLookupElement(priority: Double): LookupElement {
-  // only detail, kind, label are set
-  val tailText: String? = detail
+  // only labelDetails, kind, label are set
+  val tailText: String? = labelDetails?.detail
+  val typeText: String? = labelDetails?.description
 
   @MagicConstant(valuesFromClass = CompletionItemKind::class)
   val kind: Int = kind
@@ -38,8 +39,6 @@ fun CompletionItem.toLookupElement(priority: Double): LookupElement {
 
   var builder = LookupElementBuilder.create(name)
     .withInsertHandler(WhitespaceInsertHandler)
-
-  // TODO: data info for constructors
 
   // https://intellij-icons.jetbrains.design/
   val icon: Icon? = when (kind) {
@@ -58,15 +57,11 @@ fun CompletionItem.toLookupElement(priority: Double): LookupElement {
   }
 
   if (tailText != null) builder = builder.withTailText(tailText)
+  if (typeText != null) builder = builder.withTypeText(typeText)
   if (kind != CompletionItemKind.Module) builder = builder.withBoldness(true)
 
   val element = builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE)
-  return when (kind) {
-    CompletionItemKind.Module -> PrioritizedLookupElement.withPriority(element, priority)
-    CompletionItemKind.Variable -> PrioritizedLookupElement.withPriority(element, priority)
-    // top decl
-    else -> PrioritizedLookupElement.withPriority(element, priority)
-  }
+  return PrioritizedLookupElement.withPriority(element, priority)
 }
 
 /**
