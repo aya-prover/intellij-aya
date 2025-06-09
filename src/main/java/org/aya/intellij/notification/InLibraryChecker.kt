@@ -21,6 +21,8 @@ class InLibraryChecker : EditorNotificationProvider {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
     if (!isAya(file)) return null
     if (!AyaSettingService.getInstance().lspEnable()) return null
+    // fast path
+    // TODO: not sound, aya file in other kind of source (such as java resource) will not be notified.
     if (ProjectFileIndex.getInstance(project).isInSource(file)) return null
 
     // don't report if AyaLsp is not active
