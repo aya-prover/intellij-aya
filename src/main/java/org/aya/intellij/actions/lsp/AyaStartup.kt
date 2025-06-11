@@ -17,8 +17,6 @@ class AyaStartup : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    if (AyaLsp.isActive(project)) return
-
     val settings = AyaSettingService.getInstance()
     if (!settings.lspEnable()) return
     val externalSystemSettings = AyaSettings.getInstance(project)
