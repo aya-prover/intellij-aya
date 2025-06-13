@@ -40,6 +40,7 @@ fun refreshAllAyaProjects(project: Project) {
 }
 
 suspend fun startLsp(project: Project) {
+  if (AyaLsp.isActive(project)) return
   initLock.withLock {
     if (!AyaLsp.isActive(project)) {
       AyaLsp.start(project)
