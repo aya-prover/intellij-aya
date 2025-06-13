@@ -1,3 +1,5 @@
+open import dep
+
 def  id {A : Type} (a : A) : A => a
 
 def const {A : Type} (B : Type) (a : A) : B -> A => fn _ => a
@@ -6,14 +8,19 @@ def doId {A : Type}
   (a : A)
   (b : A) : A => id a
 
-
 def badMatch (n : Nat) : Nat
 | zro => n
 
 inductive Nat | zro | suc Nat
+
+open inductive Bool | true | false
 
 def GoodNat : Nat => Nat::zro
 def +-comm : Nat => Nat::zro
 def + : Nat => Nat::zro
 
 def good : Nat => const Nat +-comm +
+
+def add Nat Nat : Nat
+| Nat::zro, b => b
+| Nat::suc a, b => Nat::suc (add a b)

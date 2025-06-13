@@ -1,6 +1,9 @@
 package org.aya.intellij.ui.settings;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.ProjectManager;
+import org.aya.intellij.actions.lsp.AyaStartupKt;
 import org.aya.intellij.service.AyaSettingService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +33,19 @@ public class AyaSettingsConfigurable implements Configurable {
   @Override public void apply() {
     if (ui == null) return;
     var state = AyaSettingService.getInstance();
-    state.ayaLspState = (AyaSettingService.AyaState) ui.comboBoxUseAyaLsp.getSelectedItem();
+    var lspState = (AyaSettingService.AyaState) ui.comboBoxUseAyaLsp.getSelectedItem();
+    state.ayaLspState = lspState;
+
+    if (lspState == AyaSettingService.AyaState.Enable) {
+      ApplicationManager.getApplication().runReadAction(() -> {
+        var projects = ProjectManager.getInstance().getOpenProjects();
+        for (var project : projects) {
+          if (!project.isDisposed()) AyaStartupKt.refreshAllAyaProjects(project);
+        }
+      });
+    }
+
+    // TODO: notify user that disabling lsp requires restarting
   }
 
   @Override public void reset() {

@@ -1,5 +1,6 @@
 package org.aya.intellij.psi;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -29,6 +30,13 @@ public class AyaPsiReference extends PsiReferenceBase<AyaPsiElement> {
     return AyaLsp.use(myElement.getProject(),
       () -> null,
       lsp -> lsp.gotoDefinition(myElement).getFirstOrNull());
+  }
+
+  @Override
+  public Object @NotNull [] getVariants() {
+    // TODO: thread-safe
+    return AyaLsp.use(myElement.getProject(), super::getVariants, lsp ->
+      lsp.collectCompletionItem(myElement).toArray(LookupElement.class));
   }
 
   @Override public PsiElement handleElementRename(@NotNull String newName) throws IncorrectOperationException {

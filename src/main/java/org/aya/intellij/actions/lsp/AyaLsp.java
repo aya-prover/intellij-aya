@@ -1,12 +1,14 @@
 package org.aya.intellij.actions.lsp;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.PsiElement;
@@ -20,6 +22,10 @@ import kala.collection.mutable.MutableSet;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
+import kotlin.coroutines.CoroutineContext;
+import kotlinx.coroutines.CoroutineDispatcher;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.ThreadPoolDispatcherKt;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
@@ -27,6 +33,7 @@ import org.aya.generic.Constants;
 import org.aya.ide.Resolver;
 import org.aya.ide.action.GotoDefinition;
 import org.aya.intellij.AyaBundle;
+import org.aya.intellij.actions.completion.CompletionsKt;
 import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.notification.AyaNotification;
 import org.aya.intellij.psi.AyaPsiElement;
@@ -35,6 +42,7 @@ import org.aya.intellij.psi.AyaPsiNamedElement;
 import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.service.DistillerService;
 import org.aya.intellij.service.ProblemService;
+import org.aya.lsp.actions.CompletionProvider;
 import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
@@ -55,6 +63,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Consumer;
@@ -69,13 +78,14 @@ import java.util.function.Supplier;
  * for example, which makes use of {@link AyaPsiReference#resolve()}
  * instead of querying the LSP for highlight results.
  */
-public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguageClient {
+public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguageClient, CoroutineScope {
   private static final @NotNull Key<AyaLsp> AYA_LSP = Key.create("intellij.aya.lsp");
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
   private final @NotNull AyaLanguageServer server;
   private final @NotNull Project project;
   private final @NotNull MutableSet<VirtualFile> librarySrcPathCache = MutableSet.create();
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
+  /// TODO: reuse [AyaLsp#dispatcher]?
   private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
   public static @NotNull AyaLsp start(@NotNull Project project, @NotNull VirtualFile projectOrFile) {
@@ -84,12 +94,14 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return lsp;
   }
 
+  /// Start [AyaLsp] for {@param project}, note that this method is NOT thread-safe, see {@link AyaStartupKt#startLsp}
   public static @NotNull AyaLsp start(@NotNull Project project) {
     Log.i("[intellij-aya] Hello, this is Aya Language Server inside intellij-aya.");
     var lsp = new AyaLsp(project);
     lsp.server.initialize(new InitializeParams());
     project.putUserData(AYA_LSP, lsp);
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      /// TODO: don't directly invoke fireVfsEvent, execute it in [AyaLsp#dispatcher]
       @Override public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         lsp.fireVfsEvent(true, ImmutableSeq.from(events));
       }
@@ -106,7 +118,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
    * A fallback behavior when LSP is not available is required.
    * Use {@link #use(Project, CheckedSupplier, CheckedFunction)} instead.
    */
-  private static @Nullable AyaLsp of(@NotNull Project project) {
+  static @Nullable AyaLsp of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
   }
 
@@ -289,6 +301,12 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   public @Nullable LibrarySource sourceFileOf(@NotNull AyaPsiElement element) {
     var vf = element.getContainingFile().getVirtualFile();
+    // may exists in memory, try originalFile
+    if (vf == null) {
+      vf = VirtualFileUtil.originalFile(element.getContainingFile().getViewProvider().getVirtualFile());
+    }
+
+    if (vf == null) return null;
     return JB.fileSupported(vf) ? server.find(JB.canonicalize(vf)) : null;
   }
 
@@ -373,7 +391,17 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       .valuesView()
       .flatMap(Candidate::getAll)
       .mapNotNullTo(list, c -> c instanceof DefVar<?,?> d ? d : null);
+
     return list.view();
+  }
+
+  public @NotNull ImmutableSeq<LookupElement> collectCompletionItem(@NotNull AyaPsiElement element) {
+    var file = sourceFileOf(element);
+    if (file == null) return ImmutableSeq.empty();
+
+    var xy = JB.toXY(element);
+    var result = CompletionProvider.completion(file, xy, doc -> doc.easyToString());
+    return CompletionsKt.toLookupElements(result);
   }
 
   /// endregion LSP Actions
@@ -425,4 +453,15 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   @Override public @NotNull GenericAyaParser createParser(@NotNull Reporter reporter) {
     return new AyaIJParserImpl(project, reporter);
   }
+
+  // region Coroutine
+
+  private final @NotNull CoroutineDispatcher dispatcher = ThreadPoolDispatcherKt.newSingleThreadContext(Objects.toIdentityString(this));
+
+  @Override
+  public @NotNull CoroutineContext getCoroutineContext() {
+    return dispatcher;
+  }
+
+  // endreigon Coroutine
 }
