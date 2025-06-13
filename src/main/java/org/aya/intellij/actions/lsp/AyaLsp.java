@@ -101,6 +101,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     lsp.server.initialize(new InitializeParams());
     project.putUserData(AYA_LSP, lsp);
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      /// TODO: don't directly invoke fireVfsEvent, execute it in [AyaLsp#dispatcher]
       @Override public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
         lsp.fireVfsEvent(true, ImmutableSeq.from(events));
       }
