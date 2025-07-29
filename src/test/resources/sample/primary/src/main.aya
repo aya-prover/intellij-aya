@@ -28,3 +28,17 @@ def add Nat Nat : Nat
 module Foo {
   def bar Nat => 0
 }
+
+module AmbiA {
+  def ambi => 0
+}
+
+module AmbiB {
+  def ambi => 1
+}
+
+open AmbiA
+open AmbiB
+
+// you should see `AmbiA::ambi` and `AmbiB::ambi` instead of just one `ambi` here.
+def useAmbi => AmbiA::ambi
