@@ -29,6 +29,7 @@ import kotlinx.coroutines.ThreadPoolDispatcherKt;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.ide.Resolver;
 import org.aya.ide.action.GotoDefinition;
@@ -47,8 +48,8 @@ import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
-import org.aya.resolve.context.Candidate;
 import org.aya.syntax.GenericAyaParser;
+import org.aya.syntax.context.Candidate;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.tyck.error.Goal;
@@ -61,6 +62,7 @@ import org.javacs.lsp.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -400,8 +402,13 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     if (file == null) return ImmutableSeq.empty();
 
     var xy = JB.toXY(element);
-    var result = CompletionProvider.completion(file, xy, doc -> doc.easyToString());
-    return CompletionsKt.toLookupElements(result);
+    try {
+      var result = CompletionProvider.completion(file, xy, AyaDocile::easyToString);
+      return CompletionsKt.toLookupElements(result);
+    } catch (IOException e) {
+      Log.stackTrace(e);
+      return ImmutableSeq.empty();
+    }
   }
 
   /// endregion LSP Actions
