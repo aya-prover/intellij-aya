@@ -388,7 +388,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     var source = sourceFileOf(file);
     if (source == null) return SeqView.empty();
     var list = MutableList.<DefVar<?, ?>>create();
-    source.resolveInfo().get().thisModule().symbols()
+    source.resolveInfo().thisModule().symbols()
       .view()
       .valuesView()
       .flatMap(Candidate::getAll)
