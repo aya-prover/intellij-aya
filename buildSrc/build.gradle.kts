@@ -1,7 +1,10 @@
 import java.util.*
 
 plugins { java }
-repositories { mavenCentral() }
+repositories {
+  mavenLocal()
+  mavenCentral()
+}
 
 val rootDir = projectDir.parentFile!!
 

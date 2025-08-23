@@ -11,7 +11,7 @@ def doId {A : Type}
 def badMatch (n : Nat) : Nat
 | zro => n
 
-inductive Nat | zro | suc Nat
+inductive Nat | zro | suc (n : Nat)
 
 open inductive Bool | true | false
 
@@ -24,3 +24,21 @@ def good : Nat => const Nat +-comm +
 def add Nat Nat : Nat
 | Nat::zro, b => b
 | Nat::suc a, b => Nat::suc (add a b)
+
+module Foo {
+  def bar Nat => 0
+}
+
+module AmbiA {
+  def ambi => 0
+}
+
+module AmbiB {
+  def ambi => 1
+}
+
+open AmbiA
+open AmbiB
+
+// you should see `AmbiA::ambi` and `AmbiB::ambi` instead of just one `ambi` here.
+def useAmbi => AmbiA::ambi

@@ -18,17 +18,15 @@ import org.javacs.lsp.CompletionList
 import javax.swing.*
 
 fun CompletionList.toLookupElements(): ImmutableSeq<LookupElement> {
-  val length = this.items.size
   return ImmutableSeq.from(this.items)
-    .mapIndexed { idx, it -> it.toLookupElement((length - idx).toDouble()) }
+    .mapIndexed { idx, it -> it.toLookupElement() }
 }
 
 /**
- * @param priority used if this item is [CompletionItemKind.Variable]
  * @see org.aya.lsp.actions.CompletionProvider
  * @see PrioritizedLookupElement
  */
-fun CompletionItem.toLookupElement(priority: Double): LookupElement {
+fun CompletionItem.toLookupElement(): LookupElement {
   // only labelDetails, kind, label are set
   val tailText: String? = labelDetails?.detail
   val typeText: String? = labelDetails?.description
@@ -39,6 +37,12 @@ fun CompletionItem.toLookupElement(priority: Double): LookupElement {
 
   var builder = LookupElementBuilder.create(name)
     .withInsertHandler(WhitespaceInsertHandler)
+
+  val grouping = when (kind) {
+    CompletionItemKind.Keyword -> 0
+    CompletionItemKind.Module -> 1
+    else -> 2
+  }
 
   // https://intellij-icons.jetbrains.design/
   val icon: Icon? = when (kind) {
@@ -52,16 +56,13 @@ fun CompletionItem.toLookupElement(priority: Double): LookupElement {
     else -> null
   }
 
-  if (icon != null) {
-    builder = builder.withIcon(icon)
-  }
-
+  if (icon != null) builder = builder.withIcon(icon)
   if (tailText != null) builder = builder.withTailText(tailText)
   if (typeText != null) builder = builder.withTypeText(typeText)
   if (kind != CompletionItemKind.Module) builder = builder.withBoldness(true)
 
   val element = builder.withAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE)
-  return PrioritizedLookupElement.withPriority(element, priority)
+  return PrioritizedLookupElement.withGrouping(element, grouping)
 }
 
 /**
