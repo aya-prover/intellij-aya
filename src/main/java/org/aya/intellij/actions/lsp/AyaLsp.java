@@ -27,14 +27,20 @@ import kotlinx.coroutines.CoroutineDispatcher;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.ThreadPoolDispatcherKt;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
+import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.ide.Resolver;
 import org.aya.ide.action.GotoDefinition;
+import org.aya.ide.action.InlayHints;
+import org.aya.ide.util.XY;
+import org.aya.ide.util.XYXY;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.actions.completion.CompletionsKt;
+import org.aya.intellij.actions.lsp.library.IJLibraryOwner;
+import org.aya.intellij.actions.lsp.library.IJLibrarySource;
 import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.notification.AyaNotification;
 import org.aya.intellij.psi.AyaPsiElement;
@@ -44,10 +50,12 @@ import org.aya.intellij.psi.AyaPsiReference;
 import org.aya.intellij.service.DistillerService;
 import org.aya.intellij.service.ProblemService;
 import org.aya.lsp.actions.CompletionProvider;
+import org.aya.lsp.library.LibraryOwnerFactory;
 import org.aya.lsp.models.ProjectPath;
 import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
+import org.aya.prettier.AyaPrettierOptions;
 import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.context.Candidate;
 import org.aya.syntax.ref.AnyVar;
@@ -80,7 +88,7 @@ import java.util.function.Supplier;
  * for example, which makes use of {@link AyaPsiReference#resolve()}
  * instead of querying the LSP for highlight results.
  */
-public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguageClient, CoroutineScope {
+public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguageClient, LibraryOwnerFactory, CoroutineScope {
   private static final @NotNull Key<AyaLsp> AYA_LSP = Key.create("intellij.aya.lsp");
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
   private final @NotNull AyaLanguageServer server;
@@ -105,11 +113,11 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       /// TODO: don't directly invoke fireVfsEvent, execute it in [AyaLsp#dispatcher]
       @Override public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-        lsp.fireVfsEvent(true, ImmutableSeq.from(events));
+        UtilsKt.useLspAsync(project, l -> l.fireVfsEvent(true, ImmutableSeq.from(events)));
       }
 
       @Override public void after(@NotNull List<? extends VFileEvent> events) {
-        lsp.fireVfsEvent(false, ImmutableSeq.from(events));
+        UtilsKt.useLspAsync(project, l -> l.fireVfsEvent(false, ImmutableSeq.from(events)));
       }
     });
 
@@ -166,7 +174,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   public AyaLsp(@NotNull Project project) {
     this.project = project;
-    this.server = new AyaLanguageServer(this, this);
+    this.server = new AyaLanguageServer(this, this, this);
   }
 
   void fireVfsEvent(boolean before, @NotNull ImmutableSeq<? extends VFileEvent> events) {
@@ -252,17 +260,15 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   }
 
   void recompile(@NotNull Runnable compile, @Nullable Runnable callback) {
-    compilerPool.execute(() -> {
-      Log.d("[intellij-aya] =================== COMPILATION ====================");
-      Log.i("[intellij-aya] Compilation started.");
-      var service = project.getService(ProblemService.class);
-      compile.run();
-      service.allProblems.set(ImmutableMap.from(problemCache));
-      Log.i("[intellij-aya] Compilation finished.");
-      if (callback != null) callback.run();
-      Log.i("[intellij-aya] Compilation finishing notified.");
-      Log.d("[intellij-aya] =================== COMPILATION ====================");
-    });
+    Log.d("[intellij-aya] =================== COMPILATION ====================");
+    Log.i("[intellij-aya] Compilation started.");
+    var service = project.getService(ProblemService.class);
+    compile.run();
+    service.allProblems.set(ImmutableMap.from(problemCache));
+    Log.i("[intellij-aya] Compilation finished.");
+    if (callback != null) callback.run();
+    Log.i("[intellij-aya] Compilation finishing notified.");
+    Log.d("[intellij-aya] =================== COMPILATION ====================");
   }
 
   public boolean isLibraryLoaded(@NotNull VirtualFile projectOrFile) {
@@ -285,7 +291,8 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   public void registerLibrary(@NotNull VirtualFile projectOrFile) {
     if (JB.fileSupported(projectOrFile)) {
       var root = JB.canonicalize(projectOrFile);
-      var paths = server.registerLibrary(root).flatMap(registeredLibrary ->
+      var owners = server.registerLibrary(root);
+      var paths = owners.flatMap(registeredLibrary ->
         registeredLibrary.modulePath()
           .mapNotNull(path -> projectOrFile.findFileByRelativePath(root.relativize(path).toString())));
       librarySrcPathCache.addAll(paths);
@@ -312,7 +319,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return JB.fileSupported(vf) ? server.find(JB.canonicalize(vf)) : null;
   }
 
-  /// region LSP Actions
+  // region LSP Actions
 
   /**
    * Jump to the defining {@link AnyVar} from the psi element position.
@@ -411,7 +418,14 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     }
   }
 
-  /// endregion LSP Actions
+  public @NotNull ImmutableSeq<InlayHints.Hint> collectInlayHint(@NotNull AyaPsiFile psiFile) {
+    var file = sourceFileOf(psiFile);
+    if (file == null) return ImmutableSeq.empty();
+
+    return InlayHints.invoke(AyaPrettierOptions.debug(), file, new XYXY(new XY(0, 0), new XY(Integer.MAX_VALUE, Integer.MAX_VALUE)));
+  }
+
+  // endregion LSP Actions
 
   @Override public void publishAyaProblems(
     @NotNull ImmutableMap<Path, ImmutableSeq<Problem>> problems,
@@ -470,5 +484,37 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return dispatcher;
   }
 
-  // endreigon Coroutine
+  // endregion Coroutine
+
+
+  // region InMemoryCompilerAdvisor
+
+  @Override
+  public boolean isSourceModified(@NotNull LibrarySource source) {
+    if (source instanceof IJLibrarySource) return true;
+    return super.isSourceModified(source);
+  }
+
+  @Override
+  public void updateLastModified(@NotNull LibrarySource source) {
+    if (source instanceof IJLibrarySource) return;
+    super.updateLastModified(source);
+  }
+
+  // endregion InMemoryCompilerAdvisor
+
+  // region LibraryOwnerFactory
+
+
+  @Override
+  public @NotNull LibraryOwner disk(@NotNull LibraryConfig config) throws IOException {
+    return new IJLibraryOwner(Default.INSTANCE.disk(config));
+  }
+
+  @Override
+  public @NotNull LibraryOwner mock(@NotNull Path source) {
+    return Default.INSTANCE.mock(source);
+  }
+
+  // endregion LibraryOwnerFactory
 }

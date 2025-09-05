@@ -56,6 +56,15 @@
     <navbar implementation="org.aya.intellij.ui.structure.AyaNavBar"/>
     <gotoSymbolContributor implementation="org.aya.intellij.actions.search.SearchEverywhere$Symbol"/>
     <searchEverywhereContributor implementation="org.aya.intellij.actions.search.ProofSearchContributorFactory"/>
+    <codeInsight.declarativeInlayProvider
+      language="Aya"
+      implementationClass="org.aya.intellij.actions.InlayHints"
+      group="ANNOTATIONS_GROUP"
+      isEnabledByDefault="true"
+      nameKey="aya.inlay.name"
+      bundle="aya.aya-bundle"
+      providerId="aya.annotation.hints"
+    />
 
     <!-- run configuration -->
     <configurationType

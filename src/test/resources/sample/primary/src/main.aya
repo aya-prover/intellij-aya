@@ -9,7 +9,7 @@ def doId {A : Type}
   (b : A) : A => id a
 
 def badMatch (n : Nat) : Nat
-| zro => n
+| zro => let c d := d in c n
 
 inductive Nat | zro | suc (n : Nat)
 
@@ -42,3 +42,6 @@ open AmbiB
 
 // you should see `AmbiA::ambi` and `AmbiB::ambi` instead of just one `ambi` here.
 def useAmbi => AmbiA::ambi
+
+// aaaaaaa
+def myId (A : Type) : A -> A => fn a => a
