@@ -4,10 +4,10 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.aya.intellij.actions.lsp.library.IJLibraryOwner
 import org.aya.intellij.actions.lsp.library.IJLibrarySource
 import org.aya.intellij.externalSystem.ProjectCoroutineScope
 import org.aya.intellij.psi.AyaPsiFile
+import org.aya.lsp.utils.Log
 import java.util.function.Consumer
 
 /**
@@ -48,13 +48,19 @@ fun Project.useLspAsync(block: Consumer<AyaLsp>) {
 suspend fun <R> Project.useLsp(file: AyaPsiFile, orElse: (Boolean) -> R, block: suspend (AyaLsp) -> R): R {
   return useLsp({ orElse(false) }) { lsp ->
     val source = lsp.sourceFileOf(file) ?: return@useLsp orElse(true)
-    val owner = source.owner
 
-    if (owner is IJLibraryOwner) {
-      owner.inMemorySourcesMut().put(source, IJLibrarySource(owner, source, file))
-      lsp.recompile(null)   // TODO: not sure if we should update the highlights
+    if (source is IJLibrarySource) {
+      // Q: should we save the previous [source.psiFile]?
+      // A: I guess no, this method (useLsp) should not be called in lsp-thread,
+      //    thus [source.psiFile] should be null
+      source.psiFile = file
+      lsp.recompile {
+        // TODO: not sure if we should update the highlights
+        Log.i("[intellij-aya] In Memory Compilation finished.")
+      }
+
       return@useLsp block(lsp).also {
-        owner.inMemorySourcesMut().remove(source)
+        source.psiFile = null
       }
     } else {
       block(lsp)

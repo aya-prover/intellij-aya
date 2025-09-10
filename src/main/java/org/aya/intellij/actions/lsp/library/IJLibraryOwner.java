@@ -2,8 +2,6 @@ package org.aya.intellij.actions.lsp.library;
 
 import kala.collection.SeqView;
 import kala.collection.mutable.MutableList;
-import kala.collection.mutable.MutableMap;
-import kala.control.Option;
 import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
@@ -13,18 +11,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
-/// @param inMemorySourcesMut sources that are replaced with real time content, do not manually modify this.
+/// looks like a DisLibraryOwner but with [IJLibrarySource], maybe we can elim this class by extending [org.aya.cli.library.source.DiskLibraryOwner]
 public record IJLibraryOwner(
   @NotNull MutableLibraryOwner delegate,
-  @NotNull MutableMap<LibrarySource, IJLibrarySource> inMemorySourcesMut,
-  @Override @NotNull MutableList<LibrarySource> librarySourcesMut
+  @Override @NotNull MutableList<LibrarySource> librarySourcesMut     // in fact, this is `MutableList<IJLibrarySource>`
 ) implements MutableLibraryOwner {
   public IJLibraryOwner(@NotNull MutableLibraryOwner owner) {
-    this(owner, MutableMap.create(), MutableList.create());
+    this(owner, MutableList.create());
 
     // transfer owner
     owner.librarySources()
-      .map(it -> LibrarySource.create(this, it.underlyingFile))
+      .map(it -> new IJLibrarySource(this, it, null))
       .forEach(librarySourcesMut::append);
   }
 
@@ -41,17 +38,6 @@ public record IJLibraryOwner(
   @Override
   public @NotNull SeqView<Path> modulePath() {
     return delegate.modulePath();
-  }
-
-  @Override
-  public @NotNull SeqView<LibrarySource> librarySources() {
-    var map = MutableMap.from(librarySourcesMut
-      .associateBy(k -> k.underlyingFile));
-
-    map.replaceAll((p, s) ->
-      Option.<LibrarySource>narrow(inMemorySourcesMut.getOption(s)).getOrDefault(s));
-
-    return SeqView.narrow(map.valuesView().toSeq().view());
   }
 
   @Override

@@ -111,13 +111,12 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     lsp.server.initialize(new InitializeParams());
     project.putUserData(AYA_LSP, lsp);
     project.getMessageBus().connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
-      /// TODO: don't directly invoke fireVfsEvent, execute it in [AyaLsp#dispatcher]
       @Override public void before(@NotNull List<? extends @NotNull VFileEvent> events) {
-        UtilsKt.useLspAsync(project, l -> l.fireVfsEvent(true, ImmutableSeq.from(events)));
+        lsp.fireVfsEvent(true, ImmutableSeq.from(events));
       }
 
       @Override public void after(@NotNull List<? extends VFileEvent> events) {
-        UtilsKt.useLspAsync(project, l -> l.fireVfsEvent(false, ImmutableSeq.from(events)));
+        lsp.fireVfsEvent(false, ImmutableSeq.from(events));
       }
     });
 
@@ -177,6 +176,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     this.server = new AyaLanguageServer(this, this, this);
   }
 
+  /// @apiNote invoke synchronized from vfs listener, see how {@param before} affect [#processVfsEvent]
   void fireVfsEvent(boolean before, @NotNull ImmutableSeq<? extends VFileEvent> events) {
     var lspEvents = events.view()
       .flatMap(e -> processVfsEvent(before, e))
@@ -191,10 +191,10 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     }
     if (lspEvents.anyMatch(VfsAction::shouldRecompile)) {
       Log.d("[intellij-aya] A bunch of files have been changed, recompiling");
-      recompile(() -> {
+      UtilsKt.useLspAsync(project, lsp -> lsp.recompile(() -> {
         DaemonCodeAnalyzer.getInstance(project).restart();
         Log.d("[intellij-aya] Restarted DaemonCodeAnalyzer");
-      });
+      }));
     }
     Log.d("[intellij-aya] =================== FILE EVENTS ====================");
   }
@@ -236,6 +236,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return ImmutableSeq.of(new VfsAction(shouldRecompile, createLspFileEvent(file, FileChangeType.Changed)));
   }
 
+  /// @param before whether {@param event} happened, some file change event need to be handle before/after it happends
   @NotNull ImmutableSeq<@NotNull VfsAction> processVfsEvent(boolean before, @Nullable VFileEvent event) {
     Log.d("[intellij-aya] (%s) VFS event: %s", before ? "Before" : "After", event);
     var after = !before;
@@ -491,13 +492,13 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   @Override
   public boolean isSourceModified(@NotNull LibrarySource source) {
-    if (source instanceof IJLibrarySource) return true;
+    if (source instanceof IJLibrarySource src && src.psiFile != null) {return true;}
     return super.isSourceModified(source);
   }
 
   @Override
   public void updateLastModified(@NotNull LibrarySource source) {
-    if (source instanceof IJLibrarySource) return;
+    if (source instanceof IJLibrarySource src && src.psiFile != null) return;
     super.updateLastModified(source);
   }
 
