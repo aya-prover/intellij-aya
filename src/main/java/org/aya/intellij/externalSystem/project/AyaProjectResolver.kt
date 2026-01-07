@@ -59,7 +59,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     // failed if: 1) lsp is inactivate 2) library not found
     return settings.project.useLsp({ false }) { lsp ->
       val rootLibrary = lsp.getLoadedLibrary(file) ?: return@useLsp false
-      resolver.resolve(null, rootLibrary)
+      resolver.resolve(rootLibrary)
       true
     }
   }

@@ -4,11 +4,11 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.VirtualFileUtil;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.psi.PsiElement;
@@ -16,9 +16,9 @@ import com.intellij.psi.PsiFile;
 import kala.collection.SeqView;
 import kala.collection.immutable.ImmutableMap;
 import kala.collection.immutable.ImmutableSeq;
+import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
-import kala.collection.mutable.MutableSet;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
@@ -74,8 +74,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -93,10 +91,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private static final @NotNull Logger LOG = Logger.getInstance(AyaLsp.class);
   private final @NotNull AyaLanguageServer server;
   private final @NotNull Project project;
-  private final @NotNull MutableSet<VirtualFile> librarySrcPathCache = MutableSet.create();
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
-  /// TODO: reuse [AyaLsp#dispatcher]?
-  private final @NotNull ExecutorService compilerPool = Executors.newFixedThreadPool(1);
 
   public static @NotNull AyaLsp start(@NotNull Project project, @NotNull VirtualFile projectOrFile) {
     var lsp = start(project);
@@ -224,11 +219,19 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   @NotNull ImmutableSeq<@NotNull VfsAction> fileDeletedEvent(boolean shouldRecompile, @Nullable VirtualFile file) {
     if (file == null) return ImmutableSeq.empty();
-    return file.isDirectory()
-      ? ImmutableSeq.of(file.getChildren()).flatMap(c -> fileDeletedEvent(shouldRecompile, c))
-      : isWatched(file)
-      ? ImmutableSeq.of(new VfsAction(shouldRecompile, createLspFileEvent(file, FileChangeType.Deleted)))
-      : ImmutableSeq.empty();
+
+    var result = FreezableMutableList.<VfsAction>create();
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor<Void>() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (isWatched(file)) {
+          result.append(new VfsAction(shouldRecompile, createLspFileEvent(file, FileChangeType.Deleted)));
+        }
+        return true;
+      }
+    });
+
+    return result.toSeq();
   }
 
   @NotNull ImmutableSeq<@NotNull VfsAction> fileModifiedEvent(boolean shouldRecompile, @Nullable VirtualFile file) {
@@ -292,18 +295,18 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   public void registerLibrary(@NotNull VirtualFile projectOrFile) {
     if (JB.fileSupported(projectOrFile)) {
       var root = JB.canonicalize(projectOrFile);
-      var owners = server.registerLibrary(root);
-      var paths = owners.flatMap(registeredLibrary ->
-        registeredLibrary.modulePath()
-          .mapNotNull(path -> projectOrFile.findFileByRelativePath(root.relativize(path).toString())));
-      librarySrcPathCache.addAll(paths);
+      server.registerLibrary(root);
       recompile(null);
     }
   }
 
   boolean isInLibrary(@Nullable VirtualFile file) {
+    // hopefully this won't take too long
+    // everything will get chaos if module roots and lsp desync.
+    var view = ImmutableSeq.from(ModuleManager.getInstance(project).getModules());
+    var roots = view.flatMap(mod -> ImmutableSeq.from(ModuleRootManager.getInstance(mod).getSourceRoots()));
     while (file != null && file.isValid() && JB.fileSupported(file)) {
-      if (librarySrcPathCache.contains(file)) return true;
+      if (roots.contains(file)) return true;
       file = file.getParent();
     }
     return false;

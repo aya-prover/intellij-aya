@@ -43,5 +43,5 @@ open AmbiB
 // you should see `AmbiA::ambi` and `AmbiB::ambi` instead of just one `ambi` here.
 def useAmbi => AmbiA::ambi
 
-// aaaaaaa
+// 114514 1919 81
 def myId (A : Type) : A -> A => fn a => a

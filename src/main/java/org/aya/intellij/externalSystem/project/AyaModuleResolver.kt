@@ -18,13 +18,8 @@ class AyaModuleResolver(
 ) {
   private val resolved: MutableMap<Path, DataNode<ModuleData>> = MutableMap.create()
 
-  fun isInScope(dir: Path): Boolean {
-    // TODO
-    return true
-  }
-
-  @Contract(mutates = "this,param1")
-  fun resolve(parent: DataNode<ModuleData>?, library: LibraryOwner): DataNode<ModuleData> {
+  @Contract(mutates = "this")
+  fun resolve(library: LibraryOwner): DataNode<ModuleData> {
     val config = library.underlyingLibrary()
     val libraryDir = config.libraryRoot.toAbsolutePath()
     val resolvedLib = resolved.getOrNull(libraryDir)
@@ -41,6 +36,10 @@ class AyaModuleResolver(
     // Create modules on rootNode
     // ~~TODO: deal with out-of-scope modules~~
     // no we needn't, idea will solve that
+    // maybe we need for modules those not in project directory.
+    // or maybe we needn't, idea may add a new module in project view,
+    // then you have `primary project`, `dependency project`, `external libraries`, ...
+    // ^ just guessing
     val thisNode = rootNode.createChild(ProjectKeys.MODULE, moduleData).apply {
       val contentRoot = ContentRootData(AyaConstants.SYSTEM_ID, libraryDir.toString()).apply {
         storePath(ExternalSystemSourceType.SOURCE, config.librarySrcRoot.toAbsolutePath().toString())
@@ -53,7 +52,7 @@ class AyaModuleResolver(
     resolved.put(libraryDir, thisNode)
 
     library.libraryDeps().forEach { dep ->
-      val depNode = resolve(thisNode, dep)
+      val depNode = resolve(dep)
       thisNode.createChild(ProjectKeys.MODULE_DEPENDENCY, ModuleDependencyData(thisNode.data, depNode.data))
     }
 

@@ -41,7 +41,7 @@ fun Project.useLspAsync(block: Consumer<AyaLsp>) {
 }
 
 /**
- * The whole thing depends on the lsp is only used in a single thread.
+ * The whole thing depends on a fact that the lsp is only used in a single thread.
  *
  * @param orElse true if lsp is active but no source for [file], false if lsp is inactive
  */
