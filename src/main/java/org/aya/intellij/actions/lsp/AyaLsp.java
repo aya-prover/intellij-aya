@@ -4,9 +4,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -19,6 +17,7 @@ import kala.collection.immutable.ImmutableSeq;
 import kala.collection.mutable.FreezableMutableList;
 import kala.collection.mutable.MutableList;
 import kala.collection.mutable.MutableMap;
+import kala.collection.mutable.MutableSet;
 import kala.function.CheckedConsumer;
 import kala.function.CheckedFunction;
 import kala.function.CheckedSupplier;
@@ -61,6 +60,7 @@ import org.aya.syntax.context.Candidate;
 import org.aya.syntax.ref.AnyVar;
 import org.aya.syntax.ref.DefVar;
 import org.aya.tyck.error.Goal;
+import org.aya.util.FileUtil;
 import org.aya.util.PrettierOptions;
 import org.aya.util.position.WithPos;
 import org.aya.util.reporter.Problem;
@@ -92,6 +92,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   private final @NotNull AyaLanguageServer server;
   private final @NotNull Project project;
   private final @NotNull MutableMap<Path, ImmutableSeq<Problem>> problemCache = MutableMap.create();
+  private final @NotNull MutableSet<Path> librarySrcPathCache = MutableSet.create();
 
   public static @NotNull AyaLsp start(@NotNull Project project, @NotNull VirtualFile projectOrFile) {
     var lsp = start(project);
@@ -295,21 +296,21 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   public void registerLibrary(@NotNull VirtualFile projectOrFile) {
     if (JB.fileSupported(projectOrFile)) {
       var root = JB.canonicalize(projectOrFile);
-      server.registerLibrary(root);
+      var registered = server.registerLibrary(root);
+      var libSrcRoots = registered.flatMap(lib -> LibraryOwner.collectDependencies(lib)
+        .map(it -> FileUtil.canonicalize(it.underlyingLibrary().librarySrcRoot())));
+      librarySrcPathCache.addAll(libSrcRoots);
       recompile(null);
     }
   }
 
   boolean isInLibrary(@Nullable VirtualFile file) {
-    // hopefully this won't take too long
-    // everything will get chaos if module roots and lsp desync.
-    var view = ImmutableSeq.from(ModuleManager.getInstance(project).getModules());
-    var roots = view.flatMap(mod -> ImmutableSeq.from(ModuleRootManager.getInstance(mod).getSourceRoots()));
-    while (file != null && file.isValid() && JB.fileSupported(file)) {
-      if (roots.contains(file)) return true;
-      file = file.getParent();
-    }
-    return false;
+    if (file == null || !file.isValid() || !JB.fileSupported(file)) return false;
+    var fs = file.getFileSystem();
+    var path = fs.getNioPath(file);
+    if (path == null) return false;   // i guess this path is unreachable, cause JB.fileSupported returns true
+    var nf = FileUtil.canonicalize(path);
+    return librarySrcPathCache.anyMatch(nf::startsWith);
   }
 
   public @Nullable LibrarySource sourceFileOf(@NotNull AyaPsiElement element) {
