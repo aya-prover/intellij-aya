@@ -231,7 +231,7 @@ classDecl
       bindBlock?
       (BAR classMember)*
 
-memberModifier ::= KW_CLASSIFIYING | KW_OVERRIDE | KW_COERCE
+private memberModifier ::= KW_CLASSIFIYING | KW_OVERRIDE | KW_COERCE
 classMember
   ::= memberModifier* declNameOrInfix tele* type? IMPLIES expr bindBlock?
     | memberModifier* declNameOrInfix tele* type               bindBlock? {
@@ -264,7 +264,6 @@ expr ::= newExpr
        | lambda1Expr
        | lambda2Expr
        | matchExpr
-       | partialExpr
        | letExpr
        | doExpr
        | selfExpr
@@ -278,6 +277,7 @@ atomExpr ::= uliftAtom
            | tupleAtom
            | idiomAtom
            | arrayAtom
+           | partialAtom
 uliftAtom ::= uliftPrefix* literal
 tupleAtom ::= LPAREN exprList RPAREN
 uliftPrefix ::= KW_ULIFT
@@ -295,9 +295,14 @@ piExpr ::= KW_PI tele+ TO expr
 forallExpr ::= KW_FORALL lambdaTele+ TO expr
 sigmaExpr ::= KW_SIGMA tele+ SUCHTHAT expr
 selfExpr ::= KW_SELF (AT qualifiedId)?
-partialExpr ::= KW_PARTIAL expr
 
-letBind ::= weakId lambdaTele* type? DEFINE_AS expr {
+partialAtom ::= KW_PARTIAL LARRAY <<commaSep partialClause>>? RARRAY
+
+cof ::= cofOperand "=" cofOperand
+private cofOperand ::= refExpr | litIntExpr
+partialClause ::= expr IMPLIES expr
+
+letBind ::= KW_INSTANCE? weakId lambdaTele* type? DEFINE_AS expr {
   mixin="org.aya.intellij.psi.impl.AyaPsiNamedWeakIdImpl"
   implements="org.aya.intellij.psi.AyaPsiNamedWeakId"
 }

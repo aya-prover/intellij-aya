@@ -1,5 +1,6 @@
 package org.aya.intellij.notification
 
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -52,13 +53,17 @@ class InLibraryChecker : EditorNotificationProvider {
     val coroutineScope = ProjectCoroutineScope.getCoroutineScope(project)
     coroutineScope.launch {
       val success = project.useLsp({ false }) { lsp ->
-        lsp.registerLibrary(file)
+        lsp.registerLibrary(file, true)
         true
       }
 
       if (success) {
         EditorNotifications.getInstance(project)
           .updateNotifications(file)
+      } else {
+        AyaNotification.BALLOON
+          .createNotification("Failed to add single file to lsp, the lsp is down.", NotificationType.ERROR)
+          .notify(project)
       }
     }
   }

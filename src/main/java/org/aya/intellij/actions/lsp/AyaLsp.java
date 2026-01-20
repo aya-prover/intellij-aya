@@ -290,13 +290,17 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return null;
   }
 
+  public void registerLibrary(@NotNull VirtualFile projectOrFile) {
+    registerLibrary(projectOrFile, false);
+  }
+
   /// Register an aya project or a single aya file to lsp
   ///
   /// @param projectOrFile a aya project directory, "aya.json" file, or a single aya file
-  public void registerLibrary(@NotNull VirtualFile projectOrFile) {
+  public void registerLibrary(@NotNull VirtualFile projectOrFile, boolean reload) {
     if (JB.fileSupported(projectOrFile)) {
       var root = JB.canonicalize(projectOrFile);
-      var registered = server.registerLibrary(root);
+      var registered = server.registerLibrary(root, reload);
       var libSrcRoots = registered.flatMap(lib -> LibraryOwner.collectDependencies(lib)
         .map(it -> FileUtil.canonicalize(it.underlyingLibrary().librarySrcRoot())));
       librarySrcPathCache.addAll(libSrcRoots);

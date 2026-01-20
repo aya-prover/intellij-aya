@@ -1,6 +1,5 @@
 package org.aya.intellij.externalSystem.project
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
@@ -19,16 +18,13 @@ import org.aya.intellij.actions.lsp.startLsp
 import org.aya.intellij.actions.lsp.useLsp
 import org.aya.intellij.externalSystem.ProjectCoroutineScope
 import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
+import org.aya.lsp.utils.Log
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
 class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
-  companion object {
-    private val LOG = Logger.getInstance(AyaProjectResolver::class.java)
-  }
-
   val moduleType: ModuleType<*> = ModuleTypeManager.getInstance().defaultModuleType
 
   /**
@@ -38,16 +34,13 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    */
   private suspend fun tryInitializeLsp(settings: AyaExecutionSettings) {
     val ayaProjectDir = VfsUtil.findFile(settings.linkedExternalProjectPath, true) ?: return
-    LOG.info("Initializing Lsp")
+    Log.i("[intellij-aya] Initializing Lsp")
 
     startLsp(settings.project)
     settings.project.useLsp { lsp ->
-      if (!lsp.isLibraryLoaded(ayaProjectDir)) {
-        LOG.info("Loading library: ${ayaProjectDir.toNioPath()}")
-        lsp.registerLibrary(ayaProjectDir)
-      } else {
-        LOG.info("Library was loaded: ${ayaProjectDir.toNioPath()}")
-      }
+      val loaded = lsp.isLibraryLoaded(ayaProjectDir)
+      Log.i("[intellij-aya] ${if (loaded) "Reloading" else "Loading"} library: ${ayaProjectDir.toNioPath()}")
+      lsp.registerLibrary(ayaProjectDir, true)
     }
   }
 
@@ -111,13 +104,16 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     settings: AyaExecutionSettings?,
     listener: ExternalSystemTaskNotificationListener,
   ): DataNode<ProjectData>? {
-    LOG.info("Resolving project $projectPath with isPreviewMode=$isPreviewMode")
+    Log.i("[intellij-aya] Resolving project $projectPath with isPreviewMode=$isPreviewMode")
 
     // TODO: When is settings null?
     if (settings == null) return null
 
     val nioProjectPath = Path.of(projectPath).toAbsolutePath()
-    if (!nioProjectPath.exists()) return null
+    if (!nioProjectPath.exists()) {
+      Log.i("[intellij-aya] Project path $projectPath is absent")
+      return null
+    }
 
     assert(nioProjectPath.isDirectory())      // We will solve other cases when assertion failed
 

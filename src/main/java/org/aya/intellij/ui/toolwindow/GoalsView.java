@@ -165,7 +165,7 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
       var meta = goal.hole().ref();
       var state = goal.state();
       var result = switch (meta.req()) {
-        case MetaVar.OfType (var type) -> new Finalizer.Freeze(() -> state).zonk(type);
+        case MetaVar.OfType ofType -> new Finalizer.Freeze(() -> state).zonk(ofType.type());
         case MetaVar.Misc _, MetaVar.PiDom _ -> new ErrorTerm(Doc.plain("???"), false);
       };
       var resultDoc = result.toDoc(options);
