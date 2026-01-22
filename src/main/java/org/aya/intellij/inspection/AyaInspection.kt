@@ -17,6 +17,7 @@ abstract class AyaInspection : LocalInspectionTool() {
 
   override fun getGroupDisplayName() = message("aya.group.name")
 
+  // FIXME: thread problem, PsiElementVisitor must not hold a lsp (although this may slow down the inspection).
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = AyaLsp.use<_, IncorrectOperationException>(
     holder.project,
     { super.buildVisitor(holder, isOnTheFly) },

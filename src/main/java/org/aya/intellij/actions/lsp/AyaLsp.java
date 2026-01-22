@@ -26,7 +26,6 @@ import kotlinx.coroutines.CoroutineDispatcher;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.ThreadPoolDispatcherKt;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
-import org.aya.cli.library.json.LibraryConfig;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
 import org.aya.generic.AyaDocile;
@@ -38,7 +37,6 @@ import org.aya.ide.util.XY;
 import org.aya.ide.util.XYXY;
 import org.aya.intellij.AyaBundle;
 import org.aya.intellij.actions.completion.CompletionsKt;
-import org.aya.intellij.actions.lsp.library.IJLibraryOwner;
 import org.aya.intellij.actions.lsp.library.IJLibrarySource;
 import org.aya.intellij.language.AyaIJParserImpl;
 import org.aya.intellij.notification.AyaNotification;
@@ -55,6 +53,7 @@ import org.aya.lsp.server.AyaLanguageClient;
 import org.aya.lsp.server.AyaLanguageServer;
 import org.aya.lsp.utils.Log;
 import org.aya.prettier.AyaPrettierOptions;
+import org.aya.syntax.AyaFiles;
 import org.aya.syntax.GenericAyaParser;
 import org.aya.syntax.context.Candidate;
 import org.aya.syntax.ref.AnyVar;
@@ -516,8 +515,8 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
 
   @Override
-  public @NotNull LibraryOwner disk(@NotNull LibraryConfig config) throws IOException {
-    return new IJLibraryOwner(Default.INSTANCE.disk(config));
+  public @NotNull LibrarySource source(@NotNull LibraryOwner owner, @NotNull Path file) {
+    return new IJLibrarySource(owner, file, null, AyaFiles.isLiterate(file));
   }
 
   @Override

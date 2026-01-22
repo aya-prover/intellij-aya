@@ -19,7 +19,8 @@ suspend fun <R> Project.useLsp(orElse: () -> R, block: suspend (AyaLsp) -> R): R
   val project = this
   val lsp = AyaLsp.of(project) ?: return orElse()
   val deferred = lsp.async { block(lsp) }
-  return deferred.await()
+  val value = deferred.await()
+  return value
 }
 
 suspend fun Project.useLsp(block: suspend (AyaLsp) -> Unit) {
