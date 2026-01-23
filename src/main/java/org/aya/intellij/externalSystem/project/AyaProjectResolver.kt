@@ -21,9 +21,9 @@ import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
 import org.aya.lsp.utils.Log
 import java.nio.file.Path
 import kotlin.io.path.exists
-import kotlin.io.path.isDirectory
 import kotlin.io.path.name
 
+// TODO: find and fix all places that treat `projectConfigPath` as `projectPath`
 class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
   val moduleType: ModuleType<*> = ModuleTypeManager.getInstance().defaultModuleType
 
@@ -59,7 +59,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
   private fun resolveProjectFileDir(settings: AyaExecutionSettings): Path {
     return settings.projectFileDir?.toAbsolutePath()
-      ?: settings.linkedExternalProjectPath.resolve(AyaConstants.IDEA_PROJECT_FILE_DIR)
+      ?: settings.linkedExternalProjectPath.parent.resolve(AyaConstants.IDEA_PROJECT_FILE_DIR)
   }
 
   private fun createPreviewProjectInfo(projectNode: DataNode<ProjectData>, moduleFileDir: Path, projectPath: Path) {
@@ -93,9 +93,10 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    * TODO: [projectPath] is documented as the path to the config file of external system, but we got a directory.
    *       ^ [projectPath] may comes from [AyaOpenProjectProvider.linkProject] which provides a directory.
    * @param projectPath the project path to the external system project.
-   *                    Note that the path may not exists, for example, the project is deleted externally
-   *                    and idea is trying to resolve that project
-   *                    according to the module data stored in `.idea`.
+   *   Note that the path may not exists, for example, the project is deleted externally
+   *   and idea is trying to resolve that project
+   *   according to the module data stored in `.idea`.
+   *   This path is identical to [org.aya.intellij.externalSystem.settings.AyaProjectSettings.getExternalProjectPath]
    */
   override fun resolveProjectInfo(
     id: ExternalSystemTaskId,
@@ -115,16 +116,17 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
       return null
     }
 
-    assert(nioProjectPath.isDirectory())      // We will solve other cases when assertion failed
+    assert(AyaOpenProjectProvider.isProjectFilePath(nioProjectPath))
 
-    val linkedProjectPath = settings.linkedExternalProjectPath
+    val linkedProjectConfigPath = settings.linkedExternalProjectPath
+    val linkedProjectPath = linkedProjectConfigPath.parent
     // I am not sure if they are equal, so we need some testing
-    if (nioProjectPath != linkedProjectPath) {
-      throw IllegalStateException("projectPath=$nioProjectPath but linkedProjectPath=$linkedProjectPath")
+    if (nioProjectPath != linkedProjectConfigPath) {
+      throw IllegalStateException("projectPath=$nioProjectPath but linkedProjectPath=$linkedProjectConfigPath")
     }
 
     val projectFileDir = resolveProjectFileDir(settings)
-    val projectNode = makeProjectNode(projectFileDir, nioProjectPath)
+    val projectNode = makeProjectNode(projectFileDir, linkedProjectPath)
 
     if (!isPreviewMode) {
       val job = ProjectCoroutineScope.getCoroutineScope(settings.project).async {

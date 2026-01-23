@@ -281,12 +281,18 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   public @Nullable LibraryOwner getLoadedLibrary(@NotNull VirtualFile projectOrFile) {
     if (JB.fileSupported(projectOrFile)) {
+      // TODO: do we need a virtual file version of this function?
       var path = ProjectPath.resolve(projectOrFile.toNioPath());
       if (path == null) return null;
       return server.getRegisteredLibrary(path);
     }
 
     return null;
+  }
+
+  /// Prefer [#getLoadedLibrary(VirtualFile)], unless you can't get a VirtualFile or it is too expensive
+  public @Nullable LibraryOwner getLoadedLibrary(@NotNull ProjectPath path) {
+    return server.getRegisteredLibrary(path);
   }
 
   public void registerLibrary(@NotNull VirtualFile projectOrFile) {

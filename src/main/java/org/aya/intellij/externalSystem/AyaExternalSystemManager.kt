@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver
+import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -33,6 +34,8 @@ class AyaExternalSystemManager : ExternalSystemManager<
   AyaExecutionSettings,
   >,
   ExternalSystemAutoImportAware {
+  private val autoImportAware = CachingExternalSystemAutoImportAware(AyaExternalSystemAutoImportAware())
+
   override fun enhanceRemoteProcessing(parameters: SimpleJavaParameters) {
     throw UnsupportedOperationException()
   }
@@ -66,8 +69,9 @@ class AyaExternalSystemManager : ExternalSystemManager<
     return AyaTaskManager::class.java
   }
 
-  // TODO
   // https://plugins.jetbrains.com/docs/intellij/external-system-integration.html#auto-import
+  // TODO: Even though idea listens (really?) to the `aya.json` that create the project (i.e. the one you used to open the project),
+  //       we still need to handle other `aya.json` that is used by the root project
   override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String? {
     return null
   }

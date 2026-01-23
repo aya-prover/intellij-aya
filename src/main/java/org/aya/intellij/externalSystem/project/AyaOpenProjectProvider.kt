@@ -13,7 +13,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.aya.intellij.AyaConstants
 import org.aya.intellij.externalSystem.settings.AyaProjectSettings
 import org.aya.intellij.service.AyaSettingService
+import org.aya.lsp.utils.Log
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 
 class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
   companion object {
@@ -22,16 +24,24 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
     suspend fun linkAndSyncAyaProject(project: Project, projectFile: String) {
       AyaOpenProjectProvider().linkToExistingProjectAsync(projectFile, project)
     }
+
+    fun isProjectFile(file: VirtualFile): Boolean {
+      return !file.isDirectory && AyaConstants.BUILD_FILE_NAME == file.name
+    }
+
+    fun isProjectFilePath(path: Path): Boolean {
+      return !path.isDirectory() && AyaConstants.BUILD_FILE_NAME == path.fileName.toString()
+    }
   }
 
   override val systemId: ProjectSystemId = AyaConstants.SYSTEM_ID
 
   override fun isProjectFile(file: VirtualFile): Boolean {
-    return !file.isDirectory && AyaConstants.BUILD_FILE_NAME == file.name
+    return AyaOpenProjectProvider.isProjectFile(file)
   }
 
-  suspend fun doLinkProject(projectDir: VirtualFile, project: Project) {
-    val projectSettings = AyaProjectSettings.createLinkSettings(projectDir, project)
+  suspend fun doLinkProject(ayaJson: VirtualFile, project: Project) {
+    val projectSettings = AyaProjectSettings.createLinkSettings(ayaJson, project)
 
     ExternalSystemApiUtil.getSettings(project, AyaConstants.SYSTEM_ID).linkProject(projectSettings)
 
@@ -60,7 +70,7 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
    *                    i.e. `build.gradle` or a directory contains it.
    */
   override suspend fun linkProject(projectFile: VirtualFile, project: Project) {
-    LOG.info("Linking file '${projectFile.path}' to project '${project.name}'")
+    Log.i("[intellij-aya] Linking file '${projectFile.path}' to project '${project.name}'")
 
     val projectDir = getProjectDirectory(projectFile)
     val projectPath = projectDir.toNioPath()
@@ -70,6 +80,7 @@ class AyaOpenProjectProvider : AbstractOpenProjectProvider() {
       return
     }
 
-    doLinkProject(projectDir, project)
+    // projectFile is guaranteed to be [isProjectFile]
+    doLinkProject(projectFile, project)
   }
 }

@@ -51,6 +51,7 @@ suspend fun <R> Project.useLsp(file: AyaPsiFile, orElse: (Boolean) -> R, block: 
     val source = lsp.sourceFileOf(file) ?: return@useLsp orElse(true)
 
     if (source is IJLibrarySource) {
+      // TODO: check if file is unchanged (same as disk version) and avoid unnecessary recompilation
       // Q: should we save the previous [source.psiFile]?
       // A: I guess no, this method (useLsp) should not be called in lsp-thread,
       //    thus [source.psiFile] should be null

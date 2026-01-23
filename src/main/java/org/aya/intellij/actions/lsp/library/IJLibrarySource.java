@@ -38,6 +38,7 @@ public class IJLibrarySource extends LibrarySource {
     this.psiFile = psiFile;
   }
 
+  // TODO: not sure if this better than the origin one
   private @NotNull VirtualFile underlyingFile() throws IOException {
     var vf = this.file;
 
