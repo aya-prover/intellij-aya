@@ -16,6 +16,8 @@ import org.aya.intellij.AyaConstants
 import org.aya.intellij.externalSystem.project.AyaProjectResolver
 import org.aya.intellij.externalSystem.settings.*
 import org.aya.intellij.externalSystem.task.AyaTaskManager
+import org.aya.lsp.utils.Log
+import java.io.File
 import java.nio.file.Path
 
 /**
@@ -72,8 +74,16 @@ class AyaExternalSystemManager : ExternalSystemManager<
   // https://plugins.jetbrains.com/docs/intellij/external-system-integration.html#auto-import
   // TODO: Even though idea listens (really?) to the `aya.json` that create the project (i.e. the one you used to open the project),
   //       we still need to handle other `aya.json` that is used by the root project
+  // This method find the root config file (bottom to top)
   override fun getAffectedExternalProjectPath(changedFileOrDirPath: String, project: Project): String? {
-    return null
+    Log.i("Affect path: %s", changedFileOrDirPath)
+    return autoImportAware.getAffectedExternalProjectPath(changedFileOrDirPath, project)
+  }
+
+  // This method find all config file that affect [projectPath] (top to bottom)
+  override fun getAffectedExternalProjectFiles(projectPath: String?, project: Project): List<File>? {
+    Log.i("Affect files: %s", projectPath)
+    return autoImportAware.getAffectedExternalProjectFiles(projectPath, project)
   }
 
   /**

@@ -28,6 +28,7 @@ import kotlinx.coroutines.ThreadPoolDispatcherKt;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
+import org.aya.cli.library.source.LibraryVisitor;
 import org.aya.generic.AyaDocile;
 import org.aya.generic.Constants;
 import org.aya.ide.Resolver;
@@ -290,9 +291,25 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     return null;
   }
 
-  /// Prefer [#getLoadedLibrary(VirtualFile)], unless you can't get a VirtualFile or it is too expensive
-  public @Nullable LibraryOwner getLoadedLibrary(@NotNull ProjectPath path) {
+  public @Nullable LibraryOwner getLoadedLibrary(@NotNull ProjectPath.Project path) {
     return server.getRegisteredLibrary(path);
+  }
+
+  /// Find the root library (directly loaded by lsp) that depends the library in {@param path}.
+  public @NotNull ImmutableSeq<LibraryOwner> findRootLibrary(@NotNull ProjectPath.Project path) {
+    var found = FreezableMutableList.<LibraryOwner>create();
+    server.libraries().forEach(root -> {
+      LibraryVisitor.visit(root, (o, p) -> {
+        if (o.underlyingLibrary().libraryRoot().equals(path.path())) {
+          found.append(root);
+          return LibraryVisitor.VisitResult.Break;
+        }
+
+        return LibraryVisitor.VisitResult.Recursive;
+      });
+    });
+
+    return found.toSeq();
   }
 
   public void registerLibrary(@NotNull VirtualFile projectOrFile) {
