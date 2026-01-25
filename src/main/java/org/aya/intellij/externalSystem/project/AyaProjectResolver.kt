@@ -18,6 +18,7 @@ import org.aya.intellij.actions.lsp.startLsp
 import org.aya.intellij.actions.lsp.useLsp
 import org.aya.intellij.externalSystem.ProjectCoroutineScope
 import org.aya.intellij.externalSystem.settings.AyaExecutionSettings
+import org.aya.intellij.service.AyaSettingService
 import org.aya.lsp.utils.Log
 import java.nio.file.Path
 import kotlin.io.path.exists
@@ -116,7 +117,15 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
       return null
     }
 
-    assert(AyaOpenProjectProvider.isProjectFilePath(nioProjectPath))
+    // This is possible when:
+    // * we pass an invalid project path to refreshProject or something
+    // * intellij trying to refresh a project that is not linked
+    //
+    // maybe we can trying to load this project
+    if (!AyaOpenProjectProvider.isProjectFilePath(nioProjectPath)) {
+      Log.i("Invalid project path: $projectPath")
+      return null
+    }
 
     val linkedProjectConfigPath = settings.linkedExternalProjectPath
     val linkedProjectPath = linkedProjectConfigPath.parent
@@ -128,7 +137,11 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     val projectFileDir = resolveProjectFileDir(settings)
     val projectNode = makeProjectNode(projectFileDir, linkedProjectPath)
 
-    if (!isPreviewMode) {
+    // i guess it is still possible that isPreviewMode=false when lspEnable=false
+    // i.e. call from idea instead from us
+    val lspEnable = AyaSettingService.getInstance().lspEnable()
+
+    if ((!isPreviewMode) && lspEnable) {
       val job = ProjectCoroutineScope.getCoroutineScope(settings.project).async {
         tryInitializeLsp(settings)
         val moduleResolver = AyaModuleResolver(projectNode, moduleType.id, projectFileDir.toString(), linkedProjectPath.toString())
