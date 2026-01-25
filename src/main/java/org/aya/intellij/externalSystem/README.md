@@ -12,3 +12,13 @@ and `AutoImportProjectNotificationAware#notificationNotify`
 Since external system is under development,
 you may delete `.idea` and re-open the aya project when you get some exception.
 Make sure you delete `.idea` **after** closing the project, as idea will write `.idea` when closing projects.
+
+## Terms
+
+* project path: ambiguous, could be either the directory of the project (i.e. a directory with `aya.json`) or the path
+  to `aya.json`; basically something that can be used to identify a project.
+* project config path: the path to `aya.json`
+* project dir: the path to the directory with `aya.json`
+* linked project path: ambiguous, similar to _project path_. "linked" means it was registered to intellij as an external
+  system project.
+* project file: the project file of intellij (i.e. `*.iml`, `*.ipr`)

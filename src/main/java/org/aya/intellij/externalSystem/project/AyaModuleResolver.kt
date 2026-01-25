@@ -14,6 +14,7 @@ class AyaModuleResolver(
   val rootNode: DataNode<ProjectData>,
   val moduleTypeId: String,
   val moduleFileDirectoryPath: String,
+  // TODO: externalProjectPath is a directory, maybe change to the path to `aya.json`?
   val externalProjectPath: String,
 ) {
   private val resolved: MutableMap<Path, DataNode<ModuleData>> = MutableMap.create()

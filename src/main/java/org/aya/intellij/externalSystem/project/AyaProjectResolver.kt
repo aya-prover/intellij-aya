@@ -76,9 +76,9 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     ).createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPath.toString()))
   }
 
-  private fun makeProjectNode(projectFileDir: Path, projectPath: Path): DataNode<ProjectData> {
-    val projectName = projectPath.name
-    val projectPathString = projectPath.toString()
+  private fun makeProjectNode(projectFileDir: Path, projectDir: Path): DataNode<ProjectData> {
+    val projectName = projectDir.name
+    val projectPathString = projectDir.toString()
     val projectData = ProjectData(AyaConstants.SYSTEM_ID, projectName, projectFileDir.toString(), projectPathString)
     return DataNode(ProjectKeys.PROJECT, projectData, null).apply {
       createChild(ProjectKeys.CONTENT_ROOT, ContentRootData(AyaConstants.SYSTEM_ID, projectPathString))
@@ -91,10 +91,8 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    *
    * This method must be thread-safe.
    *
-   * TODO: [projectPath] is documented as the path to the config file of external system, but we got a directory.
-   *       ^ [projectPath] may comes from [AyaOpenProjectProvider.linkProject] which provides a directory.
    * @param projectPath the project path to the external system project.
-   *   Note that the path may not exists, for example, the project is deleted externally
+   *   Note that the path may not exist, for example, the project is deleted externally
    *   and idea is trying to resolve that project
    *   according to the module data stored in `.idea`.
    *   This path is identical to [org.aya.intellij.externalSystem.settings.AyaProjectSettings.getExternalProjectPath]
@@ -121,21 +119,21 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     // * we pass an invalid project path to refreshProject or something
     // * intellij trying to refresh a project that is not linked
     //
-    // maybe we can trying to load this project
+    // maybe we can load this project by ProjectPath.resolve
     if (!AyaOpenProjectProvider.isProjectFilePath(nioProjectPath)) {
       Log.i("Invalid project path: $projectPath")
       return null
     }
 
     val linkedProjectConfigPath = settings.linkedExternalProjectPath
-    val linkedProjectPath = linkedProjectConfigPath.parent
+    val linkedProjectDir = linkedProjectConfigPath.parent
     // I am not sure if they are equal, so we need some testing
     if (nioProjectPath != linkedProjectConfigPath) {
       throw IllegalStateException("projectPath=$nioProjectPath but linkedProjectPath=$linkedProjectConfigPath")
     }
 
     val projectFileDir = resolveProjectFileDir(settings)
-    val projectNode = makeProjectNode(projectFileDir, linkedProjectPath)
+    val projectNode = makeProjectNode(projectFileDir, linkedProjectDir)
 
     // i guess it is still possible that isPreviewMode=false when lspEnable=false
     // i.e. call from idea instead from us
@@ -144,7 +142,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
     if ((!isPreviewMode) && lspEnable) {
       val job = ProjectCoroutineScope.getCoroutineScope(settings.project).async {
         tryInitializeLsp(settings)
-        val moduleResolver = AyaModuleResolver(projectNode, moduleType.id, projectFileDir.toString(), linkedProjectPath.toString())
+        val moduleResolver = AyaModuleResolver(projectNode, moduleType.id, projectFileDir.toString(), linkedProjectDir.toString())
         val success = doResolveModules(settings, moduleResolver)
         projectNode.takeIf { success }
       }
@@ -156,7 +154,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
 
     // now: isPreviewMode or ! success
 
-    createPreviewProjectInfo(projectNode, projectFileDir, linkedProjectPath)
+    createPreviewProjectInfo(projectNode, projectFileDir, linkedProjectDir)
     return projectNode
   }
 
