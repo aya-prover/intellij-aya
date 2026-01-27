@@ -50,7 +50,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
    */
   private suspend fun doResolveModules(settings: AyaExecutionSettings, resolver: AyaModuleResolver): Boolean {
     val file = VfsUtil.findFile(settings.linkedExternalProjectPath, true) ?: return false
-    // failed if: 1) lsp is inactivate 2) library not found
+    // failed if: 1) lsp is inactivated 2) library not found
     return settings.project.useLsp({ false }) { lsp ->
       val rootLibrary = lsp.getLoadedLibrary(file) ?: return@useLsp false
       resolver.resolve(rootLibrary)

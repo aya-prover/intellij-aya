@@ -45,9 +45,10 @@ public class AyaToolWindow extends AbstractExternalSystemToolWindowFactory {
     });
   }
 
+  /// Copied from [AbstractExternalSystemToolWindowFactory#createToolWindowContent]
   private void initExternalSystemToolWindow(@NotNull Project project, @NotNull ToolWindow toolWindow) {
     ContentManager manager = toolWindow.getContentManager();
-    ExternalProjectsViewImpl projectView = new ExternalProjectsViewImpl(project, (ToolWindowEx)toolWindow, AyaConstants.SYSTEM_ID);
+    ExternalProjectsViewImpl projectView = new ExternalProjectsViewImpl(toolWindow.getDisposable(), project, (ToolWindowEx) toolWindow, AyaConstants.SYSTEM_ID);
     ExternalProjectsManagerImpl.getInstance(project).registerView(projectView);
     ContentImpl taskContent = new ContentImpl(projectView, "Project", true);
     manager.addContent(taskContent);

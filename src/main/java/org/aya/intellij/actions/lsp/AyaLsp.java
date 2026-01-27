@@ -188,7 +188,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     if (lspEvents.anyMatch(VfsAction::shouldRecompile)) {
       Log.d("[intellij-aya] A bunch of files have been changed, recompiling");
       UtilsKt.useLspAsync(project, lsp -> lsp.recompile(() -> {
-        DaemonCodeAnalyzer.getInstance(project).restart();
+        DaemonCodeAnalyzer.getInstance(project).restart("recompile by vfs event");
         Log.d("[intellij-aya] Restarted DaemonCodeAnalyzer");
       }));
     }
@@ -264,6 +264,10 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     recompile(server::reload, callback);
   }
 
+  void recompile(@NotNull LibraryOwner owner, @Nullable Runnable callback) {
+    recompile(() -> server.loadLibrary(owner), callback);
+  }
+
   void recompile(@NotNull Runnable compile, @Nullable Runnable callback) {
     Log.d("[intellij-aya] =================== COMPILATION ====================");
     Log.i("[intellij-aya] Compilation started.");
@@ -325,8 +329,10 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
       var registered = server.registerLibrary(root, reload);
       var libSrcRoots = registered.flatMap(lib -> LibraryOwner.collectDependencies(lib)
         .map(it -> FileUtil.canonicalize(it.underlyingLibrary().librarySrcRoot())));
+      // TODO: we should remove all src root of old libraries, in case the reload change the project layout.
       librarySrcPathCache.addAll(libSrcRoots);
-      recompile(null);
+      // instead of recompile ALL libraries, we only recompile libraries those are changed
+      registered.forEach(lib -> recompile(lib, null));
     }
   }
 

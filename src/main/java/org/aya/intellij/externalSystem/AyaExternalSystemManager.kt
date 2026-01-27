@@ -81,7 +81,7 @@ class AyaExternalSystemManager : ExternalSystemManager<
   }
 
   // This method find all config file that affect [projectPath] (top to bottom)
-  override fun getAffectedExternalProjectFiles(projectPath: String?, project: Project): List<File>? {
+  override fun getAffectedExternalProjectFiles(projectPath: String?, project: Project): List<File> {
     Log.i("Affect files: %s", projectPath)
     return autoImportAware.getAffectedExternalProjectFiles(projectPath, project)
   }
