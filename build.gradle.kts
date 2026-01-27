@@ -24,13 +24,13 @@ plugins {
   // Java support
   java
   // Kotlin support
-  kotlin("jvm") version "2.2.0-Beta2"
+  kotlin("jvm") version "2.3.0"
   // https://github.com/JetBrains/gradle-intellij-plugin
   id("org.jetbrains.intellij.platform") version "2.10.5"
   // https://github.com/JetBrains/gradle-changelog-plugin
   id("org.jetbrains.changelog") version "2.2.1"
   // https://github.com/JetBrains/gradle-grammar-kit-plugin
-  id("org.jetbrains.grammarkit") version "2022.3.2.2"
+  id("org.jetbrains.grammarkit") version "2023.3.0.1"
 }
 
 group = properties("pluginGroup")
@@ -208,7 +208,7 @@ tasks {
 
 dependencies {
   intellijPlatform {
-    intellijIdeaCommunity("2024.3")
+    intellijIdea("2025.3")
     bundledPlugin("com.intellij.java")
     testFramework(TestFrameworkType.Platform)
   }
