@@ -208,9 +208,12 @@ tasks {
 
 dependencies {
   intellijPlatform {
-    intellijIdea("2025.3")
+    intellijIdea(properties("ideaVersion"))
     bundledPlugin("com.intellij.java")
     testFramework(TestFrameworkType.Platform)
+    // find version in https://github.com/JetBrains/JetBrainsRuntime
+    // doesn't work, or need more configuration
+    // jetbrainsRuntimeExplicit("25-b176.4")
   }
 
   val toExclude = listOf(

@@ -1,9 +1,12 @@
 package org.aya.intellij.actions.lsp
 
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import com.intellij.platform.locking.impl.getGlobalNestedLockingThreadingSupport
+import com.intellij.util.concurrency.ThreadingAssertions
+import kotlinx.coroutines.*
 import org.aya.intellij.actions.lsp.library.IJLibrarySource
 import org.aya.intellij.externalSystem.ProjectCoroutineScope
 import org.aya.intellij.psi.AyaPsiFile
@@ -14,24 +17,49 @@ import java.util.function.Consumer
  * Schedule a task that requires an [AyaLsp].
  * Note that all object obtained from [AyaLsp] or [org.aya.lsp.server.AyaLanguageServer] may be
  * invalid (or changed unexpectedly) after the task completed.
+ *
+ * Some lsp operations involve read action, thus DO NOT [runBlocking] inside a read action/read permit and [useLsp], which will cause
+ * a UI freeze/deadlock, see [org.aya.intellij.actions.InlayHints.Collector.collectHintsForFile]
  */
-suspend fun <R> Project.useLsp(orElse: () -> R, block: suspend (AyaLsp) -> R): R {
+fun <R> Project.useLsp(orElse: () -> R, block: (AyaLsp) -> R): Deferred<R> {
   val project = this
-  val lsp = AyaLsp.of(project) ?: return orElse()
-  val deferred = lsp.async { block(lsp) }
-  val value = deferred.await()
-  return value
+  val lsp = AyaLsp.of(project) ?: return CompletableDeferred(orElse())
+  return lsp.async { block(lsp) }
 }
 
-suspend fun Project.useLsp(block: suspend (AyaLsp) -> Unit) {
+/**
+ * Share read action with lsp thread
+ */
+fun <R> Project.useLspWithSharedRead(orElse: () -> R, block: (AyaLsp) -> R): Deferred<R> {
   val project = this
-  val lsp = AyaLsp.of(project) ?: return
-  lsp.launch { block(lsp) }.join()
+  val lsp = AyaLsp.of(project) ?: return CompletableDeferred(orElse())
+
+  ThreadingAssertions.assertReadAccess()
+  val (ctx, cleanUp) = getGlobalNestedLockingThreadingSupport()
+    .getPermitAsContextElement(currentThreadContext(), true)
+
+  return lsp.async {
+    installThreadContext(ctx, true) { block(lsp) }
+  }.also { cleanUp() }
+}
+
+fun <R> Project.useLspSmartRead(orElse: () -> R, block: (AyaLsp) -> R): Deferred<R> {
+  return if (ApplicationManager.getApplication().isReadAccessAllowed) {
+    useLspWithSharedRead(orElse, block)
+  } else {
+    useLsp(orElse, block)
+  }
+}
+
+fun Project.useLsp(block: (AyaLsp) -> Unit): Job {
+  val project = this
+  val lsp = AyaLsp.of(project) ?: return Job().apply { complete() }
+  return lsp.launch { block(lsp) }
 }
 
 fun Project.useLspBlocking(block: Consumer<AyaLsp>) {
   runBlocking {
-    useLsp { block.accept(it) }
+    useLsp { block.accept(it) }.join()
   }
 }
 
@@ -46,9 +74,9 @@ fun Project.useLspAsync(block: Consumer<AyaLsp>) {
  *
  * @param orElse true if lsp is active but no source for [file], false if lsp is inactive
  */
-suspend fun <R> Project.useLsp(file: AyaPsiFile, orElse: (Boolean) -> R, block: suspend (AyaLsp) -> R): R {
-  return useLsp({ orElse(false) }) { lsp ->
-    val source = lsp.sourceFileOf(file) ?: return@useLsp orElse(true)
+fun <R> Project.useLsp(file: AyaPsiFile, orElse: (Boolean) -> R, block: (AyaLsp) -> R): Deferred<R> {
+  return useLspSmartRead({ orElse(false) }) { lsp ->
+    val source = lsp.sourceFileOf(file) ?: return@useLspSmartRead orElse(true)
 
     if (source is IJLibrarySource) {
       // TODO: check if file is unchanged (same as disk version) and avoid unnecessary recompilation
@@ -61,7 +89,7 @@ suspend fun <R> Project.useLsp(file: AyaPsiFile, orElse: (Boolean) -> R, block: 
         Log.i("[intellij-aya] In Memory Compilation finished.")
       }
 
-      return@useLsp block(lsp).also {
+      return@useLspSmartRead block(lsp).also {
         source.psiFile = null
       }
     } else {

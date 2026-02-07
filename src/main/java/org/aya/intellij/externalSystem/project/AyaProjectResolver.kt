@@ -55,7 +55,7 @@ class AyaProjectResolver : ExternalSystemProjectResolver<AyaExecutionSettings> {
       val rootLibrary = lsp.getLoadedLibrary(file) ?: return@useLsp false
       resolver.resolve(rootLibrary)
       true
-    }
+    }.await()
   }
 
   private fun resolveProjectFileDir(settings: AyaExecutionSettings): Path {

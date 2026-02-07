@@ -1,5 +1,6 @@
 package org.aya.intellij.actions.lsp;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.notification.NotificationType;
@@ -24,7 +25,7 @@ import kala.function.CheckedSupplier;
 import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.CoroutineDispatcher;
 import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.ThreadPoolDispatcherKt;
+import kotlinx.coroutines.ExecutorsKt;
 import org.aya.cli.library.incremental.InMemoryCompilerAdvisor;
 import org.aya.cli.library.source.LibraryOwner;
 import org.aya.cli.library.source.LibrarySource;
@@ -73,7 +74,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
+import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -514,7 +515,9 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
 
   // region Coroutine
 
-  private final @NotNull CoroutineDispatcher dispatcher = ThreadPoolDispatcherKt.newSingleThreadContext(Objects.toIdentityString(this));
+  private final @NotNull CoroutineDispatcher dispatcher = ExecutorsKt.from(Executors.newSingleThreadExecutor(
+    new ThreadFactoryBuilder().setNameFormat("AyaLsp-%d").build()
+  ));
 
   @Override
   public @NotNull CoroutineContext getCoroutineContext() {

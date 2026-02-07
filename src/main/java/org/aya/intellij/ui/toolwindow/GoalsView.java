@@ -1,7 +1,5 @@
 package org.aya.intellij.ui.toolwindow;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.wm.ToolWindow;
@@ -68,10 +66,10 @@ public class GoalsView implements AyaTreeView.NodeAdapter<GoalsView.GoalNode> {
 
   public void updateView(@NotNull ImmutableMap<Path, ImmutableSeq<Problem>> goals) {
     updateView(treeView.edit(), goals);
-    ApplicationManager.getApplication().runReadAction(() -> {
-      var editor = FileEditorManager.getInstance(project).getSelectedEditor();
-      if (editor != null) treeView.scrollFromEditor(editor);
-    });
+    // ApplicationManager.getApplication().runReadAction(() -> {
+    //   var editor = FileEditorManager.getInstance(project).getSelectedEditor();
+    //   if (editor != null) treeView.scrollFromEditor(editor);
+    // });
   }
 
   private void updateView(

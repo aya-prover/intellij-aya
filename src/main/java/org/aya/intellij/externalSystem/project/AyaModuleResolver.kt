@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.model.project.*
 import kala.collection.mutable.MutableMap
 import org.aya.cli.library.source.LibraryOwner
 import org.aya.intellij.AyaConstants
+import org.aya.util.FileUtil
 import org.jetbrains.annotations.Contract
 import java.nio.file.Path
 import kotlin.io.path.name
@@ -36,8 +37,11 @@ class AyaModuleResolver(
     // Create modules on rootNode
     val thisNode = rootNode.createChild(ProjectKeys.MODULE, moduleData).apply {
       val contentRoot = ContentRootData(AyaConstants.SYSTEM_ID, libraryDir.toString()).apply {
-        storePath(ExternalSystemSourceType.SOURCE, config.librarySrcRoot.toAbsolutePath().toString())
-        storePath(ExternalSystemSourceType.EXCLUDED, config.libraryBuildRoot.toAbsolutePath().toString())
+        // TODO: not sure if we need to canonicalize the path, as they are all canonical form in practice, but
+        //  no api restriction.
+        storePath(ExternalSystemSourceType.SOURCE, FileUtil.canonicalize(config.librarySrcRoot).toString())
+        storePath(ExternalSystemSourceType.EXCLUDED, FileUtil.canonicalize(config.libraryBuildRoot).toString())
+        storePath(ExternalSystemSourceType.EXCLUDED, FileUtil.canonicalize(config.libraryOutRoot).toString())
       }
 
       createChild(ProjectKeys.CONTENT_ROOT, contentRoot)

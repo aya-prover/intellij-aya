@@ -28,7 +28,7 @@ class InLibraryChecker : EditorNotificationProvider {
 
     // don't report if AyaLsp is not active
     val isInLibrary = runBlocking {
-      project.useLsp({ true }) { it.isWatched(file) }
+      project.useLsp({ true }) { it.isWatched(file) }.await()
     }
     if (isInLibrary) return null
 
@@ -55,7 +55,7 @@ class InLibraryChecker : EditorNotificationProvider {
       val success = project.useLsp({ false }) { lsp ->
         lsp.registerLibrary(file, true)
         true
-      }
+      }.await()
 
       if (success) {
         EditorNotifications.getInstance(project)

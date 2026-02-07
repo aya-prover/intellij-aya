@@ -3,7 +3,9 @@ package org.aya.intellij.externalSystem.project
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportProvider
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.aya.generic.Constants
 import org.aya.intellij.AyaBundle.message
 import org.aya.intellij.AyaConstants
 import org.aya.intellij.externalSystem.canOpenAyaProject
@@ -16,8 +18,16 @@ class AyaProjectImportProvider : AbstractExternalProjectImportProvider(
   AyaProjectImportBuilder(),
   AyaConstants.SYSTEM_ID,
 ) {
-  override fun getPathToBeImported(file: VirtualFile?): String {
-    return getDefaultPath(file)
+  override fun getPathToBeImported(file: VirtualFile): String {
+    return if (file.isDirectory) {
+      file.toNioPath().resolve(Constants.AYA_JSON).toString()
+    } else {
+      file.path
+    }
+  }
+
+  override fun canImport(fileOrDirectory: VirtualFile, project: Project?): Boolean {
+    return canOpenAyaProject(fileOrDirectory)
   }
 
   override fun canImportFromFile(file: VirtualFile?): Boolean {

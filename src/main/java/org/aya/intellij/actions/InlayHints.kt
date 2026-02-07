@@ -7,18 +7,16 @@ import com.intellij.psi.PsiFile
 import kotlinx.coroutines.runBlocking
 import org.aya.intellij.actions.lsp.useLsp
 import org.aya.intellij.psi.AyaPsiFile
-import org.aya.intellij.util.computeReadAction
 
 class InlayHints : InlayHintsProvider {
   class Collector(val project: Project) : OwnBypassCollector {
     override fun collectHintsForFile(file: PsiFile, sink: InlayTreeSink) {
       file as AyaPsiFile
 
-      val hints = computeReadAction {
-        if (project.isDisposed) return@computeReadAction null
-        runBlocking {
-          project.useLsp(file, { null }) { it.collectInlayHint(file) }
-        }
+      if (project.isDisposed) return
+      val job = project.useLsp(file, { null }) { it.collectInlayHint(file) }
+      val hints = runBlocking {
+        job.await()
       } ?: return
 
       hints.forEach { hint ->

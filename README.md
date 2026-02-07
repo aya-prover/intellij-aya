@@ -11,3 +11,8 @@ This is the Aya Prover plugin for IntelliJ IDEA.
 You can download the nightly version of the plugin from GitHub Actions artifact. We decide to upload to JetBrains Marketplace after the first release.
 
 This project is under active development. Demo and screenshots will be uploaded later.
+
+## Build
+
+Unfortunately IntelliJ IDEA uses JBR 21 for default runtime, thus you need to compile aya-prover with JDK 21 (by
+changing `java = "25"` to `java = "21"` in libs.versions.toml), then run `./gradlew publishToMavenLocal`.
