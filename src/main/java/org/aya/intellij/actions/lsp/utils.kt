@@ -1,3 +1,5 @@
+@file:JvmName("AyaLspUtils")
+
 package org.aya.intellij.actions.lsp
 
 import com.intellij.concurrency.currentThreadContext
@@ -74,7 +76,7 @@ fun Project.useLspAsync(block: Consumer<AyaLsp>) {
  *
  * @param orElse true if lsp is active but no source for [file], false if lsp is inactive
  */
-fun <R> Project.useLsp(file: AyaPsiFile, orElse: (Boolean) -> R, block: (AyaLsp) -> R): Deferred<R> {
+fun <R> Project.useLsp(file: AyaPsiFile, orElse: (Boolean) -> R, onCancel: () -> R, block: (AyaLsp) -> R): Deferred<R> {
   return useLspSmartRead({ orElse(false) }) { lsp ->
     val source = lsp.sourceFileOf(file) ?: return@useLspSmartRead orElse(true)
 
@@ -88,6 +90,9 @@ fun <R> Project.useLsp(file: AyaPsiFile, orElse: (Boolean) -> R, block: (AyaLsp)
         // TODO: not sure if we should update the highlights
         Log.i("[intellij-aya] In Memory Compilation finished.")
       }
+
+      // TODO: we may check cancellation here, but the block here is not suspendable
+      // due to installThreadContext is not inline
 
       return@useLspSmartRead block(lsp).also {
         source.psiFile = null

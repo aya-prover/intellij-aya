@@ -124,7 +124,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
    * A fallback behavior when LSP is not available is required.
    * Use {@link #use(Project, CheckedSupplier, CheckedFunction)} instead.
    */
-  static @Nullable AyaLsp of(@NotNull Project project) {
+  public static @Nullable AyaLsp of(@NotNull Project project) {
     return project.getUserData(AYA_LSP);
   }
 
@@ -188,7 +188,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
     }
     if (lspEvents.anyMatch(VfsAction::shouldRecompile)) {
       Log.d("[intellij-aya] A bunch of files have been changed, recompiling");
-      UtilsKt.useLspAsync(project, lsp -> lsp.recompile(() -> {
+      AyaLspUtils.useLspAsync(project, lsp -> lsp.recompile(() -> {
         DaemonCodeAnalyzer.getInstance(project).restart("recompile by vfs event");
         Log.d("[intellij-aya] Restarted DaemonCodeAnalyzer");
       }));
@@ -516,6 +516,7 @@ public final class AyaLsp extends InMemoryCompilerAdvisor implements AyaLanguage
   // region Coroutine
 
   private final @NotNull CoroutineDispatcher dispatcher = ExecutorsKt.from(Executors.newSingleThreadExecutor(
+    // TODO: this uses a suspicious module, try get rid of it
     new ThreadFactoryBuilder().setNameFormat("AyaLsp-%d").build()
   ));
 
